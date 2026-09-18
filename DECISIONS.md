@@ -74,6 +74,12 @@ Decision: objective results carry `exact`, `estimated`, or `unavailable` status 
 
 Reasoning: budget and ranking decisions must remain auditable; silently treating unknown values as exact would make optimization results misleading.
 
+### Use explicit SQLite transactions for lifecycle writes
+
+Decision: keep the first persistence layer on the standard-library `sqlite3` driver with explicit schema initialization and transaction scopes.
+
+Reasoning: V0.1 is single-process and local-first; direct transactions preserve lifecycle atomicity without adding an ORM before a second store backend exists.
+
 ## Update rule
 
 Every important implementation choice records what was chosen, why it fits the design documents, and what alternative was rejected. Entries are added as decisions are made; this file is not a generic project diary.

@@ -3,6 +3,7 @@
 from .domain import Candidate, MetricValue, Secret, UsageRecord, ValueStatus
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .stopping import CostBudget, MaxTrials, StopContext
+from .store import SQLiteStore, StudyRecord, TrialRecord, TrialStatus
 
 __all__ = [
 	"Candidate",
@@ -15,6 +16,10 @@ __all__ = [
 	"ObjectiveTerm",
 	"Secret",
 	"StopContext",
+	"SQLiteStore",
+	"StudyRecord",
+	"TrialRecord",
+	"TrialStatus",
 	"UsageRecord",
 	"ValueStatus",
 	"__version__",

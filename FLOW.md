@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 1 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, typed search spaces, seeded random search, objective aggregation, stop conditions, and contract tests are implemented.
+Phase 2 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, typed search spaces, seeded random search, objective aggregation, stop conditions, SQLite study/trial persistence, and contract tests are implemented.
 
 ## Intended entry points
 
@@ -39,7 +39,7 @@ Load study and terminal observations, mark expired running attempts abandoned, a
 
 ## Current implemented flow
 
-The current executable path is package installation -> import `tunarag` -> construct validated domain values or search spaces -> sample candidates through a seeded strategy -> evaluate weighted objectives and stop conditions -> expose stable values to later orchestration. Tests verify this path without importing optional integrations.
+The current executable path is package installation -> import `tunarag` -> initialize a SQLite store -> create a study and trial -> transition the trial through durable lifecycle states -> reload persisted state. Tests verify this path without importing optional integrations.
 
 ## Update rule
 
