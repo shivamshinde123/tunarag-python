@@ -50,6 +50,18 @@ Decision: publish the distribution as `tunarag-python` and expose it through the
 
 Reasoning: the repository/distribution name follows the requested project name while the shorter import name is idiomatic and leaves room for related tooling without a hyphenated module.
 
+### Use frozen dataclasses for core values
+
+Decision: represent the first domain values with frozen, slotted dataclasses and keep extension points as typing protocols.
+
+Reasoning: immutable values make trial identity and persistence safer, while protocols let callers implement adapters without adopting a package-specific model framework.
+
+### Exclude secret fields from canonical identity
+
+Decision: canonical mappings omit `Secret` values entirely and represent standalone secrets only with a redacted marker.
+
+Reasoning: credentials must never influence cache identity or appear in serialized bytes; nonsecret configuration remains stable and hashable.
+
 ## Update rule
 
 Every important implementation choice records what was chosen, why it fits the design documents, and what alternative was rejected. Entries are added as decisions are made; this file is not a generic project diary.

@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 is in progress. The package metadata, installable `src/tunarag` package, and import smoke test are implemented.
+Phase 1 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, and contract tests are implemented.
 
 ## Intended entry points
 
@@ -39,7 +39,7 @@ Load study and terminal observations, mark expired running attempts abandoned, a
 
 ## Current implemented flow
 
-The current executable path is package installation -> import `tunarag` -> expose `__version__`; the test suite verifies that path without importing optional integrations.
+The current executable path is package installation -> import `tunarag` -> construct validated domain values or call canonical serialization -> expose stable values to later orchestration. Tests verify this path without importing optional integrations.
 
 ## Update rule
 
