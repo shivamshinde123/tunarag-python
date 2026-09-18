@@ -44,6 +44,12 @@ Decision: the first feature branch delivers scaffolding, public models/contracts
 
 Reasoning: the API specification and later persistence/search work depend on stable types and reproducible identity. Establishing those boundaries first reduces rework and makes each later branch reviewable.
 
+### Use `tunarag` as the import package name
+
+Decision: publish the distribution as `tunarag-python` and expose it through the `tunarag` Python import package.
+
+Reasoning: the repository/distribution name follows the requested project name while the shorter import name is idiomatic and leaves room for related tooling without a hyphenated module.
+
 ## Update rule
 
 Every important implementation choice records what was chosen, why it fits the design documents, and what alternative was rejected. Entries are added as decisions are made; this file is not a generic project diary.
