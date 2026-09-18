@@ -2,7 +2,7 @@
 
 ## Status
 
-Planning baseline. No implementation code exists yet.
+Phase 0 is in progress. The package metadata, installable `src/tunarag` package, and import smoke test are implemented.
 
 ## Intended entry points
 
@@ -36,6 +36,10 @@ Studies own ordered trials. Trials own attempts, candidate configurations, metri
 ## Recovery flow
 
 Load study and terminal observations, mark expired running attempts abandoned, apply retry policy, reconstruct exact and estimated budgets, initialize strategy state, replay observations, rebuild candidate hashes, continue sequence numbers, and emit a resume event with counts.
+
+## Current implemented flow
+
+The current executable path is package installation -> import `tunarag` -> expose `__version__`; the test suite verifies that path without importing optional integrations.
 
 ## Update rule
 
