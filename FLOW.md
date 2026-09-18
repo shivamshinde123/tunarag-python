@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 1 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, and contract tests are implemented.
+Phase 1 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, typed search spaces, seeded random search, and contract tests are implemented.
 
 ## Intended entry points
 
@@ -39,7 +39,7 @@ Load study and terminal observations, mark expired running attempts abandoned, a
 
 ## Current implemented flow
 
-The current executable path is package installation -> import `tunarag` -> construct validated domain values or call canonical serialization -> expose stable values to later orchestration. Tests verify this path without importing optional integrations.
+The current executable path is package installation -> import `tunarag` -> construct validated domain values or search spaces -> sample candidates through a seeded strategy -> expose stable values to later orchestration. Tests verify this path without importing optional integrations.
 
 ## Update rule
 

@@ -62,6 +62,12 @@ Decision: canonical mappings omit `Secret` values entirely and represent standal
 
 Reasoning: credentials must never influence cache identity or appear in serialized bytes; nonsecret configuration remains stable and hashable.
 
+### Use package-owned random streams for V0.1 random search
+
+Decision: implement `RandomSearch` with an isolated `random.Random` instance owned by the strategy.
+
+Reasoning: a private seeded stream makes candidate sequences reproducible without mutating application-global random state or coupling search-space sampling to external frameworks.
+
 ## Update rule
 
 Every important implementation choice records what was chosen, why it fits the design documents, and what alternative was rejected. Entries are added as decisions are made; this file is not a generic project diary.
