@@ -68,6 +68,12 @@ Decision: implement `RandomSearch` with an isolated `random.Random` instance own
 
 Reasoning: a private seeded stream makes candidate sequences reproducible without mutating application-global random state or coupling search-space sampling to external frameworks.
 
+### Preserve value confidence during objective aggregation
+
+Decision: objective results carry `exact`, `estimated`, or `unavailable` status instead of converting missing or estimated values to zero.
+
+Reasoning: budget and ranking decisions must remain auditable; silently treating unknown values as exact would make optimization results misleading.
+
 ## Update rule
 
 Every important implementation choice records what was chosen, why it fits the design documents, and what alternative was rejected. Entries are added as decisions are made; this file is not a generic project diary.
