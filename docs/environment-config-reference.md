@@ -33,3 +33,9 @@ inject a `RetryPolicy` with `None` for a deliberately unbounded sample or trial 
 Prefer injected provider clients. Optional integrations may read provider-standard keys only
 when no client is injected. Core settings never retain them. Secrets are never snapshotted or
 included in hashes, persistence, events, logs, errors, or exports.
+
+The optional `MLflowCallback` accepts `tracking_uri` explicitly. When it is `None`, the MLflow
+client applies its standard configuration, including `MLFLOW_TRACKING_URI` and backend-specific
+authentication variables. TunaRAG does not read, persist, hash, or emit those credentials.
+`experiment_id`, not experiment-name lookup, is required to keep callback network behavior
+explicit.

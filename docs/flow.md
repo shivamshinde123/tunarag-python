@@ -48,6 +48,7 @@ Optimizer.aoptimize
   -> evaluate stop conditions or continue
   -> complete study -> build OptimizationResult and UsageSummary
   -> rank objective/metric views or export redacted JSON/CSV reports
+  -> optional MLflowCallback reads committed trial state and mirrors it best-effort
 ```
 
 Adapter, evaluator, and objective exceptions become redacted failed-trial summaries and do not

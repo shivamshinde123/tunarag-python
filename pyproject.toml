@@ -18,6 +18,9 @@ dependencies = [
 ragas = [
     "ragas>=0.4,<0.5",
 ]
+mlflow = [
+    "mlflow>=3,<4",
+]
 dev = [
     "build>=1.2",
     "hypothesis>=6.100",

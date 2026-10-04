@@ -15,6 +15,7 @@ tunarag-python/
 |   |-- errors.py            # Stable structured public errors
 |   |-- objective.py         # Objective aggregation
 |   |-- evaluators.py        # Custom metric helper and optional RAGAS adapter
+|   |-- integrations/        # Optional outward adapters such as MLflow callbacks
 |   |-- search.py            # Search spaces and RandomSearch
 |   |-- serialization.py     # Canonical JSON and hashes
 |   |-- stopping.py          # Stop conditions
