@@ -25,8 +25,16 @@ identity. `SQLiteCache.put` atomically stores bytes with privacy and optional po
 verified hit contains payload bytes. `delete` removes one key, while `prune` removes expired
 entries and optionally quarantined entries. Cache metadata and payloads survive reopen.
 
-Invalid domain values raise `ValueError` or `TypeError`; unknown trial IDs raise `KeyError`;
-database constraints raise `sqlite3.IntegrityError`. A package error hierarchy is planned.
+`Settings.resolve` applies defaults, an explicitly selected `[tunarag]` TOML table, known
+`TUNARAG_` variables, and explicit overrides in ascending precedence. It never loads `.env`,
+reads provider credentials, or creates directories. `Settings.as_dict` is safe to persist.
+
+Public package errors derive from `TunaRAGError` and expose stable `ErrorCode`, message, stage,
+retryability, and recursively redacted structured details. Implemented subclasses cover
+configuration, search space, adapter, evaluation, store, resume, budget, optional dependency,
+and sync-in-async failures. Low-level domain values still raise `ValueError` or `TypeError`;
+unknown trial IDs raise `KeyError`; database constraints raise `sqlite3.IntegrityError` until
+their package-boundary translations are implemented.
 
 ## Planned V0.1 entry point
 

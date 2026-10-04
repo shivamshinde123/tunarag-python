@@ -4,6 +4,7 @@
 
 ```text
 caller
+  -> Settings.resolve(defaults, selected TOML, known environment, overrides)
   -> construct Candidate, MetricValue, and UsageRecord
   -> sample SearchSpace through seeded RandomSearch
   -> aggregate metrics through Objective
@@ -17,7 +18,8 @@ caller
 Canonical serialization produces deterministic JSON and domain-separated hashes. SQLite owns
 durable lifecycle and cache state. A corrupt cache payload is transactionally quarantined and
 never returned; expired payloads become misses and can be pruned. No current entry point
-executes an adapter or evaluator.
+executes an adapter or evaluator. Package boundaries will translate contextual failures into
+structured `TunaRAGError` subclasses; diagnostic details are redacted recursively.
 
 ## Target optimization flow
 
