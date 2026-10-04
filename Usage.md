@@ -148,6 +148,11 @@ The default store is in memory. Use `SQLiteStore(path)` for a durable study.
 A custom adapter implements:
 
 ```python
+from collections.abc import Sequence
+
+from tunarag import UsageRecord
+
+
 async def run(candidate, example) -> tuple[object, Sequence[UsageRecord]]: ...
 ```
 
@@ -283,7 +288,7 @@ class State(TypedDict, total=False):
 
 
 async def answer_node(state: State, config):
-    top_k = config["configurable"]["top_k"]
+    top_k = state["top_k"] if "top_k" in state else config["configurable"]["top_k"]
     return {"answer": f"answer for {state['question']} with {top_k} documents"}
 
 
@@ -351,6 +356,7 @@ dataset = EvaluationDataset.from_records(
             "question": "What is TunaRAG?",
             "expected": "A RAG optimization library.",
             "contexts": ["TunaRAG optimizes existing RAG systems."],
+            "metadata": {"tenant": "demo"},
         }
     ],
     field_map=DatasetFieldMap(
@@ -710,6 +716,8 @@ settings = Settings.resolve(
     },
     environ={},
 )
+settings.home.mkdir(parents=True, exist_ok=True)
+settings.cache_dir.mkdir(parents=True, exist_ok=True)
 store = SQLiteStore(settings.db_path)
 cache = SQLiteCache(settings.cache_dir / "evaluations.db")
 optimizer = Optimizer(
@@ -783,11 +791,21 @@ results and strategy observations preserve trial-sequence order.
 ## Caching
 
 ```python
+from pathlib import Path
+
 from tunarag import CachePolicy, SQLiteCache, Settings
 
+Path(".tunarag").mkdir(parents=True, exist_ok=True)
 cache = SQLiteCache(".tunarag/evaluations.db")
 settings = Settings.resolve(overrides={"cache_policy": CachePolicy.READ_WRITE}, environ={})
-optimizer = Optimizer(..., cache=cache, settings=settings)
+optimizer = Optimizer(
+    adapter=adapter,
+    strategy=strategy,
+    evaluators=evaluators,
+    objective=objective,
+    cache=cache,
+    settings=settings,
+)
 ```
 
 Identity includes dataset version, candidate, adapter, and evaluators. A hit skips adapter and
@@ -803,7 +821,7 @@ key = CacheKey.from_parts("my-feature", {"query": "hello"}, format_version=1)
 cache.put(key, b'{"answer":"world"}', privacy=CachePrivacy.SENSITIVE, ttl_seconds=3600)
 lookup = cache.get(key)
 if lookup.is_hit:
-    payload = lookup.entry.payload
+    payload = lookup.payload
 cache.prune()
 cache.close()
 ```
@@ -815,13 +833,19 @@ labels are metadata, not encryption.
 ## SQLite persistence and resume
 
 ```python
+from pathlib import Path
+
 from tunarag import SQLiteStore
 
+Path(".tunarag").mkdir(parents=True, exist_ok=True)
 store = SQLiteStore(".tunarag/experiments.db")
-optimizer = Optimizer(..., store=store)
+optimizer = build_optimizer(store)
 result = await optimizer.aoptimize(dataset, study_name="production-rag")
-resumed = await optimizer.aresume(dataset, study_id=result.study_id)
-# Sync equivalent: optimizer.resume(dataset, study_id=result.study_id)
+
+# Rebuild stateful components so replay begins from their initial state.
+resumed_optimizer = build_optimizer(store)
+resumed = await resumed_optimizer.aresume(dataset, study_id=result.study_id)
+# Sync equivalent: resumed_optimizer.resume(dataset, study_id=result.study_id)
 ```
 
 Resume validates semantic configuration and dataset identity, returns completed studies without
@@ -852,7 +876,13 @@ class AuditCallback:
         print(event.sequence, event.type, event.study_id, dict(event.payload))
 
 
-optimizer = Optimizer(..., callbacks=(AuditCallback(),))
+optimizer = Optimizer(
+    adapter=adapter,
+    strategy=strategy,
+    evaluators=evaluators,
+    objective=objective,
+    callbacks=(AuditCallback(),),
+)
 ```
 
 Events cover study, trial, and attempt lifecycles plus callback failures. Handle unknown future event
@@ -883,7 +913,14 @@ callback = MLflowCallback(
     tracking_uri="https://mlflow.example.com",
     tags={"team": "search", "environment": "staging"},
 )
-optimizer = Optimizer(..., store=store, callbacks=(callback,))
+optimizer = Optimizer(
+    adapter=adapter,
+    strategy=strategy,
+    evaluators=evaluators,
+    objective=objective,
+    store=store,
+    callbacks=(callback,),
+)
 ```
 
 One MLflow run is created per study. Candidate parameters, committed metrics, statuses, and event
@@ -920,6 +957,8 @@ latency_leaders = result.metric_leaders("latency_seconds", direction=ObjectiveDi
 Inspect and export:
 
 ```python
+from pathlib import Path
+
 if result.ranked_trials:
     trial = result.ranked_trials[0]
     print(trial.candidate.parameters)
@@ -928,6 +967,7 @@ if result.ranked_trials:
     print(trial.attempts, trial.cached, trial.error)
 
 print(result.to_json())
+Path("artifacts").mkdir(parents=True, exist_ok=True)
 result.write_json("artifacts/result.json")
 result.write_csv("artifacts/trials.csv")
 ```
