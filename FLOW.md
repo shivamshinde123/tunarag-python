@@ -6,7 +6,10 @@ flow document in the same feature branch.
 
 ## Status
 
-Phase 2 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, typed search spaces, seeded random search, objective aggregation, stop conditions, SQLite study/trial persistence, and contract tests are implemented.
+Phase 2 is in progress. Package metadata, immutable domain values, extension protocols,
+canonical serialization, typed search spaces, seeded random search, objective aggregation,
+stop conditions, SQLite study/trial persistence, versioned SQLite caching, and contract tests
+are implemented.
 
 ## Intended entry points
 
@@ -43,7 +46,10 @@ Load study and terminal observations, mark expired running attempts abandoned, a
 
 ## Current implemented flow
 
-The current executable path is package installation -> import `tunarag` -> initialize a SQLite store -> create a study and trial -> transition the trial through durable lifecycle states -> reload persisted state. Tests verify this path without importing optional integrations.
+The current executable paths cover durable study/trial lifecycle state and independently
+versioned cache writes and reads. Cache lookups verify checksums, enforce TTLs, persist
+quarantine after corruption, and expose explicit hit/miss/expired/corrupt outcomes. Tests
+verify both paths without optional integrations.
 
 ## Update rule
 

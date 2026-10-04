@@ -6,6 +6,7 @@ tunarag-python/
 |-- docs/                    # DOCX specifications and living Markdown
 |-- src/tunarag/             # Installable package
 |   |-- __init__.py          # Curated public exports and version
+|   |-- cache.py             # Versioned SQLite cache and key model
 |   |-- contracts.py         # User and extension protocols
 |   |-- domain.py            # Immutable values
 |   |-- objective.py         # Objective aggregation

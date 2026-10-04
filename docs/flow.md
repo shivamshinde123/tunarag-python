@@ -10,10 +10,14 @@ caller
   -> evaluate MaxTrials or CostBudget
   -> SQLiteStore.initialize
   -> create_study -> create_trial -> transition_trial -> get_trial
+  -> CacheKey.from_parts
+  -> SQLiteCache.put -> get -> verify checksum/TTL -> hit or explicit miss status
 ```
 
 Canonical serialization produces deterministic JSON and domain-separated hashes. SQLite owns
-durable lifecycle state. No current entry point executes an adapter or evaluator.
+durable lifecycle and cache state. A corrupt cache payload is transactionally quarantined and
+never returned; expired payloads become misses and can be pruned. No current entry point
+executes an adapter or evaluator.
 
 ## Target optimization flow
 
