@@ -19,7 +19,8 @@ The public package is imported as `tunarag`.
 Implemented foundations include typed domain values, canonical identity, typed search spaces,
 seeded random search, objective and stopping primitives, SQLite study/trial persistence, a
 custom metric helper plus an optional lazy RAGAS evaluator integration, and a
-versioned SQLite cache with expiry and corruption quarantine. Typed settings resolve explicit
+normalized JSON/JSONL/CSV evaluation dataset model with deterministic splits and hashing.
+The versioned SQLite cache supports expiry and corruption quarantine. Typed settings resolve explicit
 overrides, selected TOML, and known environment variables; structured package errors expose
 redacted diagnostics. The experiment store includes guarded study/trial state, atomic trial
 reservation and terminal commits, attempt leases and recovery, metrics, usage, and ordered

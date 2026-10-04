@@ -16,6 +16,28 @@ cache types `CacheKey`, `CacheEntry`, `CacheLookup`, `CacheLookupStatus`, `Cache
 The evaluator surface includes `MetricEvaluator`, `MetricScorer`, `RagasEvaluator`, and
 `RagasSampleMapper`.
 
+## Evaluation datasets
+
+`EvaluationExample` is the canonical immutable sample: ID, query, optional reference answer,
+reference contexts, relevant document IDs, tags, JSON metadata, `DatasetSplit`, and a synthetic
+flag. Text is normalized to Unicode NFC and LF line endings, with BOM/outer whitespace removed
+and unsafe control characters rejected. IDs, queries, list entries, tags, and document IDs must
+remain nonempty; tags and document IDs are unique. Metadata is recursively validated as finite
+JSON data and deep-frozen.
+
+`EvaluationDataset.from_records`, `.from_json`, `.from_jsonl`, and `.from_csv` normalize data via
+`DatasetFieldMap`. Missing IDs are deterministic hashes of normalized semantic content. JSON and
+JSONL require objects; CSV collection and metadata cells contain JSON arrays/objects. Duplicate
+IDs, malformed values, empty datasets, and I/O failures raise redacted `DatasetError` values with
+source location and exception type but no record contents. UTF-8 with an optional BOM is accepted.
+
+The dataset version is a domain-separated SHA-256 hash over schema version, ordered normalized
+examples, and split membership; paths and ingestion times are excluded. `with_splits(seed=0,
+ratios=SplitRatios(), group_metadata_key=None)` deterministically assigns 80/10/10 optimize,
+validation, and test splits by default. A group key keeps all examples sharing a string/integer
+metadata value together. `select(split)` returns a nonempty split-specific dataset. The existing
+`InMemoryDataset` remains for arbitrary user-defined examples and explicit external versions.
+
 `Candidate` requires a nonempty parameter mapping. Metrics and usage retain `exact`,
 `estimated`, or `unavailable` provenance. `Objective.evaluate` combines configured terms.
 `SQLiteStore` initializes or migrates experiment schema version 2. It creates and transitions
@@ -44,7 +66,7 @@ retryable failures are structured `TunaRAGError` values marked `retryable`, `Tim
 
 Public package errors derive from `TunaRAGError` and expose stable `ErrorCode`, message, stage,
 retryability, and recursively redacted structured details. Implemented subclasses cover
-configuration, search space, adapter, evaluation, store, resume, budget, optional dependency,
+configuration, search space, dataset, adapter, evaluation, store, resume, budget, optional dependency,
 and sync-in-async failures. Low-level domain values still raise `ValueError` or `TypeError`;
 unknown trial IDs raise `KeyError`; database constraints raise `sqlite3.IntegrityError` until
 their package-boundary translations are implemented.

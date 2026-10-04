@@ -12,6 +12,7 @@
 | Optimizer and trial runner | Bounded trial/sample concurrency, retries, cache, resume, isolation | Partial |
 | LLMSearch | Provider-neutral bounded suggestions, validation, deterministic fallback | Implemented |
 | Evaluators | Custom metric helper and optional lazy RAGAS integration | Implemented |
+| Evaluation datasets | Canonical examples, JSON/JSONL/CSV ingestion, hashes, splits | Implemented |
 | Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
 | Results and reporting | Best/trial/usage summaries implemented; exports planned | Partial |
 | MLflow mirror | Optional post-commit tracking | Later V0.1 |

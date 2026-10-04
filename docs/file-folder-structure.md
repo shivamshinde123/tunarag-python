@@ -9,7 +9,7 @@ tunarag-python/
 |   |-- cache.py             # Versioned SQLite cache and key model
 |   |-- config.py            # Typed configuration resolution
 |   |-- contracts.py         # User and extension protocols
-|   |-- dataset.py           # Repeatable in-memory evaluation dataset
+|   |-- dataset.py           # Evaluation examples, ingestion, hashing, and splits
 |   |-- domain.py            # Immutable values
 |   |-- engine.py            # Async optimizer and sync wrapper
 |   |-- errors.py            # Stable structured public errors

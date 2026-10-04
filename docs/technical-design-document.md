@@ -105,6 +105,21 @@ RAGAS schemas. Missing/nonfinite RAGAS scores are unavailable rather than zero. 
 errors retain only exception types. RAGAS remains an optional `ragas` extra pinned to the 0.4
 compatibility line; version-specific changes remain localized to `evaluators.py`.
 
+## Dataset ingestion and identity
+
+`EvaluationExample` is a normalized frozen boundary model. Text normalization is deliberately
+minimal and meaning-preserving: UTF-8 decode, optional BOM removal, Unicode NFC, CR/CRLF to LF,
+outer trim, and rejection of controls other than tab/newline. Metadata accepts only finite JSON
+types and is recursively frozen. File loaders use the standard library and convert only through a
+declared `DatasetFieldMap`; they do not infer schemas from content.
+
+Missing sample IDs hash normalized semantic fields in the `tunarag:example-id:v1` domain.
+Dataset versions hash schema version plus ordered semantic examples in the
+`tunarag:dataset:v1` domain. Deterministic split assignment converts the first 64 hash bits of
+seed plus example/group identity to a fraction and applies configured thresholds. Split
+selection produces a new dataset version. Source paths and ingestion timestamps never affect
+identity; malformed record values never enter public error messages.
+
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and
 retain the winning reason. Planned rules cover trial count, score target, cost, wall time, no
