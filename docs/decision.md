@@ -190,3 +190,11 @@ types. TunaRAG controls deterministic per-document seeds, bounded concurrency, o
 validation, provenance, and usage capture without owning prompts, credentials, retries, or SDKs.
 Require exact requested cardinality and valid source spans; label every sample synthetic and
 unreviewed. Return generation usage separately from optimization accounting.
+
+## 2026-10-04 Keep the reference RAG in examples
+
+Provide a deterministic, provider-free reference RAG under `examples/` rather than under
+`src/tunarag`. It demonstrates the standard adapter, evaluator, dataset, search, persistence,
+and reporting boundaries through public APIs only. The reference implementation is educational
+application code, not a supported retrieval or generation runtime, preserving TunaRAG's role as
+an optimizer for user-owned pipelines.

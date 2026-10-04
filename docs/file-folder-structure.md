@@ -4,6 +4,7 @@
 tunarag-python/
 |-- .github/workflows/ci.yml # Linux/Windows quality and build matrix
 |-- docs/                    # DOCX specifications and living Markdown
+|-- examples/                # User-owned reference RAG and executable quickstart
 |-- src/tunarag/             # Installable package
 |   |-- __init__.py          # Curated public exports and version
 |   |-- cache.py             # Versioned SQLite cache and key model
@@ -30,7 +31,9 @@ tunarag-python/
 ```
 
 Create focused cache, orchestration, event, configuration, evaluator, integration, result, and
-dataset modules only as features land. Put examples under `examples/` and migrations in a
-package-owned location when schema version 2 exists. Optional integrations depend inward on
-public protocols. Avoid generic `utils.py`, provider imports in core, generated databases in
-source control, and reference application code under `src/tunarag`.
+dataset modules only as features land. `examples/reference_rag.py` owns the local demonstration
+adapter and evaluator; `examples/quickstart.py` composes only public TunaRAG APIs. Put migrations
+in a package-owned location when a future schema version requires explicit migration files.
+Optional integrations depend inward on public protocols. Avoid generic `utils.py`, provider
+imports in core, generated databases in source control, and reference application code under
+`src/tunarag`.

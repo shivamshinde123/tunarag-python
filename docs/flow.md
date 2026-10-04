@@ -111,3 +111,20 @@ never run in database transactions. Resume compares semantic fingerprints. Trial
 concurrency are bounded separately, and a trial failure is isolated unless policy stops the
 study. Dependencies point from public contracts through search/evaluation/storage into
 orchestration, then outward to optional integrations and examples.
+
+## Reference example flow
+
+```text
+examples/quickstart.py
+  -> create a canonical EvaluationDataset from records
+  -> configure an IntegerRange search space for top_k
+  -> pass ReferenceRAGAdapter and ReferenceQualityEvaluator to Optimizer
+  -> run the safe synchronous entry point
+  -> persist the study in SQLite
+  -> write redacted JSON and CSV result reports
+```
+
+`examples/reference_rag.py` is intentionally user-space code. It ranks a fixed corpus by token
+overlap, returns explicit usage, and scores reference-answer token recall. No example type is
+imported by `src/tunarag`, so replacing the example with a production RAG does not require a
+framework fork.

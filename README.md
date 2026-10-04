@@ -16,6 +16,18 @@ python -m pytest
 
 The public package is imported as `tunarag`.
 
+## Quickstart
+
+Run the deterministic, provider-free reference integration from the repository root:
+
+```powershell
+python examples/quickstart.py
+```
+
+It writes a durable SQLite study plus JSON and CSV reports under
+`tunarag-example-output/`. The example shows how a user-owned RAG implements the adapter
+boundary without becoming part of the TunaRAG package.
+
 Implemented foundations include typed domain values, canonical identity, typed search spaces,
 seeded random search, weighted objectives, composable trial/cost/time/score/stagnation/failure
 stopping rules, SQLite study/trial persistence, a
