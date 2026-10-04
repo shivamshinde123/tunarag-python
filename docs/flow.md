@@ -47,6 +47,7 @@ Optimizer.aoptimize
   -> strategy.observe committed success
   -> evaluate stop conditions or continue
   -> complete study -> build OptimizationResult and UsageSummary
+  -> rank objective/metric views or export redacted JSON/CSV reports
 ```
 
 Adapter, evaluator, and objective exceptions become redacted failed-trial summaries and do not
