@@ -1,5 +1,8 @@
 # TunaRAG File and Folder Structure
 
+The root [`Usage.md`](../Usage.md) is the canonical user-facing guide for installing the package,
+connecting custom or framework RAG pipelines, running every public feature, and operating studies.
+
 ```text
 tunarag-python/
 |-- .github/workflows/ci.yml # Linux/Windows quality and build matrix
