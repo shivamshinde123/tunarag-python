@@ -1,6 +1,6 @@
 # TunaRAG File and Folder Structure
 
-The root [`Usage.md`](../Usage.md) is the canonical user-facing guide for installing the package,
+The root [`README.md`](../README.md) is the canonical user-facing guide for installing the package,
 connecting custom or framework RAG pipelines, running every public feature, and operating studies.
 Its Python fences are executed by `tests/test_usage_documentation.py` so examples cannot silently
 drift from the package API.
@@ -36,7 +36,7 @@ tunarag-python/
 |-- CONTRIBUTING.md          # Development and pull-request workflow
 |-- PROJECT_PLAN.md          # Delivery phases and gates
 |-- RELEASE_CHECKLIST.md     # Repository and package-index release gates
-|-- README.md                # Public overview and setup
+|-- README.md                # Comprehensive public usage guide and package-index description
 |-- SECURITY.md              # Vulnerability reporting and trust boundaries
 `-- pyproject.toml           # Build and tool configuration
 ```
