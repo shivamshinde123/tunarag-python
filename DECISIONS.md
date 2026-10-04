@@ -1,5 +1,8 @@
 # Decision Log
 
+The canonical living decision log is [`docs/decision.md`](docs/decision.md). This root file is
+retained for compatibility with existing links. New decisions belong in the canonical file.
+
 ## Planning baseline
 
 ### Use a Python-first library with async-first internals
