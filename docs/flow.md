@@ -91,6 +91,8 @@ Optimizer.aoptimize
   -> suggest, validate, deduplicate, and reserve candidate
   -> read compatible cache or execute bounded adapter samples
   -> collect usage; evaluate and aggregate metrics/objective
+     -> MetricEvaluator calls one sync/async numeric scorer, or
+     -> RagasEvaluator explicitly maps one sample, lazily imports RAGAS, and calls aevaluate
   -> commit terminal state
   -> notify strategy and post-commit callbacks
   -> evaluate stopping rules

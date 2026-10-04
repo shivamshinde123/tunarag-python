@@ -15,6 +15,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ragas = [
+    "ragas>=0.4,<0.5",
+]
 dev = [
     "build>=1.2",
     "hypothesis>=6.100",

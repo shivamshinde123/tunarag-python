@@ -90,6 +90,21 @@ fingerprints are included when a component implements `fingerprint()`; otherwise
 is used. Mandatory fingerprints for every custom component and TTL selection at the optimizer
 boundary remain future work.
 
+## Evaluator adapters
+
+The core optimizer depends only on the `Evaluator` protocol. `MetricEvaluator` normalizes a
+single sync or async scorer into that protocol and fingerprints callable identity. The optional
+`RagasEvaluator` is a boundary adapter, not an engine dependency: it imports RAGAS lazily, creates
+one `SingleTurnSample` and one-row `EvaluationDataset` per engine sample, calls `aevaluate`, and
+maps numeric results to namespaced TunaRAG metrics. This preserves engine-owned sample
+concurrency, timeout, retry, aggregation, and failure-isolation behavior.
+
+An explicit sample mapper is required. TunaRAG never guesses fields from arbitrary adapter
+outputs or examples, which prevents accidental disclosure and avoids coupling the core domain to
+RAGAS schemas. Missing/nonfinite RAGAS scores are unavailable rather than zero. Integration
+errors retain only exception types. RAGAS remains an optional `ragas` extra pinned to the 0.4
+compatibility line; version-specific changes remain localized to `evaluators.py`.
+
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and
 retain the winning reason. Planned rules cover trial count, score target, cost, wall time, no

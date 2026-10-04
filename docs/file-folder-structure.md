@@ -14,6 +14,7 @@ tunarag-python/
 |   |-- engine.py            # Async optimizer and sync wrapper
 |   |-- errors.py            # Stable structured public errors
 |   |-- objective.py         # Objective aggregation
+|   |-- evaluators.py        # Custom metric helper and optional RAGAS adapter
 |   |-- search.py            # Search spaces and RandomSearch
 |   |-- serialization.py     # Canonical JSON and hashes
 |   |-- stopping.py          # Stop conditions

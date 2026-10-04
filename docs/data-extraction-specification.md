@@ -1,5 +1,14 @@
 # TunaRAG Data Extraction Specification
 
+## Evaluator privacy boundary
+
+The optional `RagasEvaluator` never introspects arbitrary adapter outputs or dataset examples.
+Its required `sample_mapper(output, example)` selects the exact fields sent into RAGAS
+`SingleTurnSample`. Applications must omit secrets, personal data, proprietary context, and raw
+documents unless the configured evaluator provider is explicitly allowed to process them. Mapper
+and provider exception messages are not retained by TunaRAG; only exception types cross the
+public error boundary. Metric scores, names, status, and coverage may be persisted and cached.
+
 ## Scope and sample model
 
 Dataset ingestion and optional synthetic generation are planned for V0.1 and are not yet
