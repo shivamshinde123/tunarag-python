@@ -40,6 +40,7 @@ Optimizer.aoptimize
   -> on transient failure: atomically finish attempt with usage -> backoff -> new attempt
   -> on success: commit metrics, usage, attempt, trial, and event atomically
   -> write successful uncached metrics after commit
+  -> dispatch newly durable events to callbacks in sequence order
   -> strategy.observe committed success
   -> evaluate stop conditions or continue
   -> complete study -> build OptimizationResult and UsageSummary
@@ -52,6 +53,13 @@ current-run usage. Cache failures append diagnostic events and fall back to exec
 Cancellation commits the active trial as cancelled, cancels the study, and is re-raised.
 Strategy failures are study-level failures because candidate generation or state observation
 cannot safely continue. Execution is currently sequential.
+
+Callbacks never run inside SQLite transactions. The optimizer advances a per-study event cursor
+and dispatches committed events at study, reservation, attempt, retry, cache, and terminal
+boundaries. Callback exceptions append `callback.failed` with redacted type-level diagnostics;
+these diagnostic events are skipped by dispatch to prevent recursion. Resume initializes the
+cursor at the pre-resume event tail, so callbacks receive new recovery/progress events rather
+than historical duplicates.
 
 ## Implemented resume flow
 

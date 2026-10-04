@@ -29,4 +29,5 @@ apply bounded retries with deterministic backoff, separate sample/trial timeouts
 attempt usage, and versioned evaluation-cache reads/writes. Compatible studies can now resume
 through `aresume` or `resume`: committed successes are replayed, expired attempts are recovered,
 unfinished trials continue, and completed studies reload without provider execution. Callbacks
-and bounded concurrency are subsequent features.
+receive ordered durable lifecycle events after commit; callback failures are isolated and
+recorded. Bounded concurrency is a subsequent feature.

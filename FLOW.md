@@ -61,7 +61,9 @@ events rather than trial failures. Resume validates the study configuration hash
 leases, abandons only expired attempts in the selected study, rebuilds terminal summaries and
 usage, replays successful strategy observations, continues pending/recoverable trials, and
 persists the final stop reason. The sync wrappers reject an active event loop. Callback dispatch
-and bounded concurrency are not implemented yet.
+delivers newly committed events in sequence order, including retry scheduling before backoff;
+callback failures append redacted diagnostics without failing optimization. Bounded concurrency
+is not implemented yet.
 
 ## Update rule
 

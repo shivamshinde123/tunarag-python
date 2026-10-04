@@ -12,7 +12,7 @@
 | Optimizer and trial runner | Sequential execution, retries, cache, resume/replay, isolation, results | Partial |
 | LLMSearch | Provider-guided validated suggestions | Planned |
 | Evaluators | Custom metrics and optional RAGAS | Planned |
-| Events and callbacks | Durable ordered events implemented; dispatch/callbacks planned | Partial |
+| Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
 | Results and reporting | Best/trial/usage summaries implemented; exports planned | Partial |
 | MLflow mirror | Optional post-commit tracking | Later V0.1 |
 

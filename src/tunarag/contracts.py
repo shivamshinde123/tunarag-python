@@ -1,10 +1,15 @@
 """Protocols implemented by user-owned RAG systems and package extensions."""
 
+from __future__ import annotations
+
 from collections.abc import AsyncIterator, Sequence
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from .cache import CacheEntry, CacheKey, CacheLookup, CachePrivacy
 from .domain import Candidate, MetricValue, UsageRecord
+
+if TYPE_CHECKING:
+    from .store import StudyEvent
 
 
 class RAGAdapter(Protocol):
@@ -60,6 +65,12 @@ class Fingerprintable(Protocol):
     """Expose secret-safe semantic configuration for identity checks."""
 
     def fingerprint(self) -> Any: ...
+
+
+class EventCallback(Protocol):
+    """Consume a durable event after its transaction commits."""
+
+    async def on_event(self, event: StudyEvent) -> None: ...
 
 
 class Cache(Protocol):
