@@ -14,7 +14,7 @@
 ## Publish-time gates
 
 - [ ] Confirm the `tunarag-python` name and owner account on the target package index.
-- [ ] Create an annotated `v0.1.0` tag from the final green `main` commit.
+- [x] Create an annotated `v0.1.0` tag from the final green `main` commit.
 - [ ] Build from a clean checkout and inspect wheel/sdist contents.
 - [ ] Publish to TestPyPI and run the quickstart in a fresh environment.
 - [ ] Publish to PyPI, verify metadata links, then create the GitHub release from `CHANGELOG.md`.
