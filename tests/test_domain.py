@@ -9,9 +9,7 @@ def test_secret_is_redacted_and_excluded_from_mapping_identity() -> None:
 
     assert repr(secret) == "Secret(***redacted***)"
     assert str(secret) == "***redacted***"
-    assert content_hash({"token": secret, "model": "small"}) == content_hash(
-        {"model": "small"}
-    )
+    assert content_hash({"token": secret, "model": "small"}) == content_hash({"model": "small"})
     assert b"do-not-leak" not in canonical_json({"token": secret})
 
 

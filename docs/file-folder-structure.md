@@ -2,7 +2,7 @@
 
 ```text
 tunarag-python/
-|-- .github/workflows/       # CI and pull-request verification
+|-- .github/workflows/ci.yml # Linux/Windows quality and build matrix
 |-- docs/                    # DOCX specifications and living Markdown
 |-- src/tunarag/             # Installable package
 |   |-- __init__.py          # Curated public exports and version
