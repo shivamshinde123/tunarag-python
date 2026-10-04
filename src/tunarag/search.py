@@ -81,6 +81,7 @@ class RandomSearch:
 
     def __init__(self, space: SearchSpace, *, seed: int | None = None) -> None:
         self._space = space
+        self._seed = seed
         self._generator = random.Random(seed)
 
     async def suggest(self) -> Candidate:
@@ -88,3 +89,16 @@ class RandomSearch:
 
     async def observe(self, candidate: Candidate, metrics: Any, usage: Any) -> None:
         del candidate, metrics, usage
+
+    async def replay(self, candidate: Candidate, metrics: Any, usage: Any) -> None:
+        """Advance and verify deterministic generator state during resume."""
+
+        del metrics, usage
+        expected = self._space.sample(self._generator)
+        if expected != candidate:
+            raise ValueError("persisted candidate does not match seeded random search state")
+
+    def fingerprint(self) -> Any:
+        """Return stable search-space and seed semantics."""
+
+        return {"space": self._space, "seed": self._seed}

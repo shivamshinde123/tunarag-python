@@ -26,5 +26,7 @@ events. `Optimizer.aoptimize` now runs sequential async studies with per-sample 
 evaluator calls, objective scoring, durable terminal commits, failure isolation, stopping, and
 an inspectable result; `optimize` provides the safe synchronous wrapper. Trial attempts now
 apply bounded retries with deterministic backoff, separate sample/trial timeouts, append-only
-attempt usage, and versioned evaluation-cache reads/writes. Resume, callbacks, and bounded
-concurrency are subsequent features.
+attempt usage, and versioned evaluation-cache reads/writes. Compatible studies can now resume
+through `aresume` or `resume`: committed successes are replayed, expired attempts are recovered,
+unfinished trials continue, and completed studies reload without provider execution. Callbacks
+and bounded concurrency are subsequent features.

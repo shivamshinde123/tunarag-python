@@ -42,7 +42,37 @@ def canonical_json(value: Any) -> bytes:
     ).encode("utf-8")
 
 
+def storage_json(value: Any) -> bytes:
+    """Serialize supported values reversibly while omitting mapping secrets."""
+
+    return json.dumps(
+        _storage_value(value), ensure_ascii=True, separators=(",", ":"), sort_keys=True
+    ).encode("utf-8")
+
+
 def content_hash(value: Any, *, namespace: str = "autorag-tuner:v1") -> str:
     """Return a stable SHA-256 digest for a canonical value."""
 
     return hashlib.sha256(namespace.encode() + b"\0" + canonical_json(value)).hexdigest()
+
+
+def _storage_value(value: Any) -> Any:
+    if isinstance(value, Secret):
+        return {"__secret__": True}
+    if is_dataclass(value):
+        return _storage_value(asdict(cast(Any, value)))
+    if isinstance(value, Mapping):
+        return {
+            str(key): _storage_value(item)
+            for key, item in sorted(value.items(), key=lambda entry: str(entry[0]))
+            if not isinstance(item, Secret)
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_storage_value(item) for item in value]
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("nonfinite numbers are not supported")
+        return value
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    raise TypeError(f"unsupported storage value: {type(value).__name__}")

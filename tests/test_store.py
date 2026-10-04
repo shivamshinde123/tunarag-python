@@ -35,6 +35,17 @@ def test_study_and_trial_lifecycle_survives_store_reopen(tmp_path) -> None:
     reopened.close()
 
 
+def test_candidate_storage_preserves_numeric_types() -> None:
+    store = SQLiteStore()
+    study = store.create_study("numbers", {})
+    store.transition_study(study.id, StudyStatus.RUNNING)
+
+    trial = store.reserve_trial(study.id, Candidate({"ratio": 1.5, "count": 2}))
+
+    assert trial.candidate_json == '{"count":2,"ratio":1.5}'
+    store.close()
+
+
 def test_trial_sequence_is_unique_per_study() -> None:
     store = SQLiteStore()
     study = store.create_study("demo", {})
@@ -96,6 +107,24 @@ def test_attempt_leases_are_recoverable_without_reusing_attempt_numbers() -> Non
     second = store.start_attempt(trial.id, lease_seconds=5.0)
     assert second.number == 1
     assert [attempt.number for attempt in store.list_attempts(trial.id)] == [0, 1]
+    store.close()
+
+
+def test_expired_attempt_recovery_can_be_scoped_to_one_study() -> None:
+    store = SQLiteStore(clock=lambda: 10.0)
+    studies = [store.create_study(name, {}) for name in ("first", "second")]
+    trials = []
+    for study in studies:
+        store.transition_study(study.id, StudyStatus.RUNNING)
+        trial = store.reserve_trial(study.id, Candidate({"study": study.name}))
+        store.start_attempt(trial.id, lease_seconds=1.0, now=0.0)
+        trials.append(trial)
+
+    abandoned = store.abandon_expired_attempts(study_id=studies[0].id)
+
+    assert [attempt.trial_id for attempt in abandoned] == [trials[0].id]
+    assert store.list_attempts(trials[0].id)[0].status is AttemptStatus.ABANDONED
+    assert store.list_attempts(trials[1].id)[0].status is AttemptStatus.RUNNING
     store.close()
 
 

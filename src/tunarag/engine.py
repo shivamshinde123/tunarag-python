@@ -12,14 +12,23 @@ from typing import Any, TypeVar, cast
 
 from .cache import CacheKey, CacheLookupStatus, CachePrivacy
 from .config import CachePolicy, Settings
-from .contracts import Cache, Dataset, Evaluator, RAGAdapter, SearchStrategy
+from .contracts import (
+    Cache,
+    Dataset,
+    Evaluator,
+    Fingerprintable,
+    RAGAdapter,
+    ReplayableSearchStrategy,
+    SearchStrategy,
+)
 from .domain import Candidate, MetricValue, UsageRecord, ValueStatus
-from .errors import SearchSpaceError, SyncInAsyncContextError
+from .errors import ResumeError, SearchSpaceError, SyncInAsyncContextError
 from .objective import Objective, ObjectiveResult
 from .result import OptimizationResult, TrialSummary, UsageSummary
 from .retry import RetryPolicy
+from .serialization import content_hash
 from .stopping import MaxTrials, StopCondition, StopContext
-from .store import AttemptStatus, SQLiteStore, StudyStatus, TrialRecord, TrialStatus
+from .store import AttemptStatus, SQLiteStore, StudyRecord, StudyStatus, TrialRecord, TrialStatus
 
 _OBJECTIVE_METRIC = "tunarag.objective"
 _CACHE_PAYLOAD_VERSION = 1
@@ -90,35 +99,107 @@ class Optimizer:
     async def aoptimize(self, dataset: Dataset, *, study_name: str) -> OptimizationResult:
         """Run a new study and return terminal results."""
 
-        if not dataset.version.strip():
-            raise ValueError("dataset version must not be empty")
-        started_at = self._clock()
+        self._validate_dataset(dataset)
         study = self._store.create_study(study_name, self._study_configuration(dataset))
         study = self._store.transition_study(study.id, StudyStatus.RUNNING)
-        summaries: list[TrialSummary] = []
+        return await self._continue_study(dataset, study, [], [])
+
+    async def aresume(self, dataset: Dataset, *, study_id: str) -> OptimizationResult:
+        """Resume a compatible durable study after replaying committed successes."""
+
+        self._validate_dataset(dataset)
+        try:
+            study = self._store.get_study(study_id)
+        except KeyError as error:
+            raise ResumeError(
+                "cannot resume an unknown study",
+                stage="resume.load",
+                details={"study_id": study_id},
+            ) from error
+        expected_hash = content_hash(self._study_configuration(dataset), namespace="study:v1")
+        if study.config_hash != expected_hash:
+            raise ResumeError(
+                "study configuration is incompatible with the current optimizer",
+                stage="resume.validate",
+                details={"study_id": study_id},
+            )
+        if study.status in {StudyStatus.FAILED, StudyStatus.CANCELLED}:
+            raise ResumeError(
+                "failed or cancelled studies are terminal and cannot resume",
+                stage="resume.validate",
+                details={"study_id": study_id, "status": study.status.value},
+            )
+
+        summaries = self._load_terminal_summaries(study.id)
+        if study.status is StudyStatus.COMPLETED:
+            await self._replay_strategy(study.id, summaries)
+            return _build_result(
+                study.id, study.status, self._persisted_stop_reason(study.id), summaries
+            )
+        if study.status is StudyStatus.CREATED:
+            study = self._store.transition_study(study.id, StudyStatus.RUNNING)
+
+        abandoned = self._store.abandon_expired_attempts(study_id=study.id)
+        recoverable_ids = {trial.id for trial in self._store.list_recoverable_trials(study.id)}
+        unfinished = [
+            trial
+            for trial in self._store.list_trials(study.id)
+            if trial.status is TrialStatus.PENDING or trial.id in recoverable_ids
+        ]
+        active = [
+            trial.id
+            for trial in self._store.list_trials(study.id)
+            if trial.status is TrialStatus.RUNNING and trial.id not in recoverable_ids
+        ]
+        if active:
+            raise ResumeError(
+                "study has attempts with active recovery leases",
+                stage="resume.recover",
+                retryable=True,
+                details={"study_id": study.id, "trial_ids": active},
+            )
+        await self._replay_strategy(study.id, summaries)
+        self._store.append_event(
+            study.id,
+            "study.resumed",
+            {
+                "terminal_trials": len(summaries),
+                "unfinished_trials": len(unfinished),
+                "abandoned_attempts": len(abandoned),
+            },
+        )
+        return await self._continue_study(dataset, study, summaries, unfinished)
+
+    async def _continue_study(
+        self,
+        dataset: Dataset,
+        study: StudyRecord,
+        summaries: list[TrialSummary],
+        unfinished: Sequence[TrialRecord],
+    ) -> OptimizationResult:
+        started_at = self._clock()
+        pending = iter(unfinished)
         stop_reason = "completed"
         try:
             while True:
-                stop_reason = self._matching_stop_reason(summaries, started_at)
-                if stop_reason:
-                    break
-                reservation = await self._reserve_next_trial(study.id)
-                if reservation is None:
-                    stop_reason = "search_exhausted"
-                    self._store.append_event(study.id, "study.search_exhausted", {})
-                    break
-                candidate, trial = reservation
+                trial = next(pending, None)
+                if trial is None:
+                    stop_reason = self._matching_stop_reason(summaries, started_at)
+                    if stop_reason:
+                        break
+                    reservation = await self._reserve_next_trial(study.id)
+                    if reservation is None:
+                        stop_reason = "search_exhausted"
+                        self._store.append_event(study.id, "study.search_exhausted", {})
+                        break
+                    candidate, trial = reservation
+                else:
+                    candidate = _candidate_from_trial(trial)
                 summary = await self._run_trial(dataset, candidate, trial)
                 summaries.append(summary)
                 if summary.status is TrialStatus.SUCCEEDED:
-                    try:
-                        await self._strategy.observe(candidate, summary.metrics, summary.usage)
-                    except Exception as error:
-                        raise SearchSpaceError(
-                            "search strategy failed while observing a committed trial",
-                            stage="strategy.observe",
-                            details={"cause": type(error).__name__, "trial_id": trial.id},
-                        ) from error
+                    await self._observe_success(summary)
+            self._store.append_event(study.id, "study.stopping", {"reason": stop_reason})
             study = self._store.transition_study(study.id, StudyStatus.COMPLETED)
         except asyncio.CancelledError:
             current = self._store.get_study(study.id)
@@ -141,11 +222,108 @@ class Optimizer:
             return asyncio.run(self.aoptimize(dataset, study_name=study_name))
         raise SyncInAsyncContextError()
 
+    def resume(self, dataset: Dataset, *, study_id: str) -> OptimizationResult:
+        """Run `aresume` when no event loop is active."""
+
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(self.aresume(dataset, study_id=study_id))
+        raise SyncInAsyncContextError()
+
     def close(self) -> None:
         """Close an internally created store; caller-owned resources remain open."""
 
         if self._owns_store:
             self._store.close()
+
+    @staticmethod
+    def _validate_dataset(dataset: Dataset) -> None:
+        if not dataset.version.strip():
+            raise ValueError("dataset version must not be empty")
+
+    def _load_terminal_summaries(self, study_id: str) -> list[TrialSummary]:
+        cached_trial_ids = {
+            event.payload.get("trial_id")
+            for event in self._store.list_events(study_id)
+            if event.type == "trial.cache_hit"
+        }
+        summaries: list[TrialSummary] = []
+        for trial in self._store.list_trials(study_id):
+            if trial.status in {TrialStatus.PENDING, TrialStatus.RUNNING}:
+                continue
+            persisted_metrics = self._store.list_metrics(trial.id)
+            objective_values = [
+                metric for metric in persisted_metrics if metric.name == _OBJECTIVE_METRIC
+            ]
+            metrics = tuple(
+                metric for metric in persisted_metrics if metric.name != _OBJECTIVE_METRIC
+            )
+            objective: ObjectiveResult | None = None
+            if trial.status is TrialStatus.SUCCEEDED:
+                if len(objective_values) != 1 or objective_values[0].value is None:
+                    raise ResumeError(
+                        "successful trial is missing its committed objective",
+                        stage="resume.replay",
+                        details={"study_id": study_id, "trial_id": trial.id},
+                    )
+                objective = ObjectiveResult(objective_values[0].value, objective_values[0].status)
+            usage = tuple(item.usage for item in self._store.list_usage(trial.id))
+            summaries.append(
+                TrialSummary(
+                    id=trial.id,
+                    sequence=trial.sequence,
+                    candidate=_candidate_from_trial(trial),
+                    status=trial.status,
+                    metrics=metrics,
+                    usage=usage,
+                    objective=objective,
+                    attempts=len(self._store.list_attempts(trial.id)),
+                    cached=trial.id in cached_trial_ids,
+                    error=trial.error,
+                )
+            )
+        return summaries
+
+    async def _replay_strategy(self, study_id: str, summaries: Sequence[TrialSummary]) -> None:
+        by_id = {summary.id: summary for summary in summaries}
+        current_trial_id: str | None = None
+        try:
+            for trial in self._store.list_trials(study_id):
+                current_trial_id = trial.id
+                summary = by_id.get(trial.id)
+                if isinstance(self._strategy, ReplayableSearchStrategy):
+                    await self._strategy.replay(
+                        _candidate_from_trial(trial),
+                        () if summary is None else summary.metrics,
+                        () if summary is None else summary.usage,
+                    )
+                elif summary is not None and summary.status is TrialStatus.SUCCEEDED:
+                    await self._strategy.observe(summary.candidate, summary.metrics, summary.usage)
+        except Exception as error:
+            raise ResumeError(
+                "search strategy failed while replaying reserved trials",
+                stage="resume.replay",
+                details={"cause": type(error).__name__, "trial_id": current_trial_id},
+            ) from error
+
+    async def _observe_success(self, summary: TrialSummary) -> None:
+        try:
+            await self._strategy.observe(summary.candidate, summary.metrics, summary.usage)
+        except Exception as error:
+            raise SearchSpaceError(
+                "search strategy failed while observing a committed trial",
+                stage="strategy.observe",
+                details={"cause": type(error).__name__, "trial_id": summary.id},
+            ) from error
+
+    def _persisted_stop_reason(self, study_id: str) -> str:
+        reasons = [
+            event.payload.get("reason")
+            for event in self._store.list_events(study_id)
+            if event.type == "study.stopping"
+        ]
+        return reasons[-1] if reasons and isinstance(reasons[-1], str) else "already_completed"
 
     async def _reserve_next_trial(self, study_id: str) -> tuple[Candidate, TrialRecord] | None:
         for _ in range(self._duplicate_suggestion_limit):
@@ -442,8 +620,8 @@ class Optimizer:
                 "payload_version": _CACHE_PAYLOAD_VERSION,
                 "dataset_version": dataset.version,
                 "candidate": candidate.parameters,
-                "adapter": _type_name(self._adapter),
-                "evaluators": [_type_name(evaluator) for evaluator in self._evaluators],
+                "adapter": _component_identity(self._adapter),
+                "evaluators": [_component_identity(item) for item in self._evaluators],
             },
             format_version=_CACHE_PAYLOAD_VERSION,
         )
@@ -458,9 +636,9 @@ class Optimizer:
     def _study_configuration(self, dataset: Dataset) -> dict[str, Any]:
         return {
             "dataset_version": dataset.version,
-            "adapter": _type_name(self._adapter),
-            "strategy": _type_name(self._strategy),
-            "evaluators": [_type_name(evaluator) for evaluator in self._evaluators],
+            "adapter": _component_identity(self._adapter),
+            "strategy": _component_identity(self._strategy),
+            "evaluators": [_component_identity(item) for item in self._evaluators],
             "objective": [
                 {
                     "metric": term.metric,
@@ -545,6 +723,24 @@ def _optional_number(value: Any) -> float | None:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TypeError("cached metric value must be numeric or null")
     return float(value)
+
+
+def _candidate_from_trial(trial: TrialRecord) -> Candidate:
+    parameters = json.loads(trial.candidate_json)
+    if not isinstance(parameters, Mapping):
+        raise ResumeError(
+            "persisted candidate is not an object",
+            stage="resume.replay",
+            details={"trial_id": trial.id},
+        )
+    try:
+        return Candidate(dict(parameters))
+    except (TypeError, ValueError) as error:
+        raise ResumeError(
+            "persisted candidate is invalid",
+            stage="resume.replay",
+            details={"trial_id": trial.id, "cause": type(error).__name__},
+        ) from error
 
 
 def _aggregate_metrics(
@@ -640,3 +836,10 @@ def _usage_summary(usage: Sequence[UsageRecord]) -> UsageSummary:
 def _type_name(value: object) -> str:
     value_type = type(value)
     return f"{value_type.__module__}.{value_type.__qualname__}"
+
+
+def _component_identity(value: object) -> dict[str, Any]:
+    identity: dict[str, Any] = {"type": _type_name(value)}
+    if isinstance(value, Fingerprintable):
+        identity["fingerprint"] = value.fingerprint()
+    return identity

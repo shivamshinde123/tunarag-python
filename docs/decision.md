@@ -91,3 +91,19 @@ record zero current-run usage for cached work. Write only after the authoritativ
 Treat cache transport, corruption, or semantic-decoding problems as observable misses rather
 than trial failures. V0.1 keys use dataset version, candidate, payload format, and component
 type names; richer component configuration fingerprints remain future work.
+
+## 2026-10-04 Compatible resume and strategy replay
+
+Expose separate `aresume` and `resume` entry points rather than overloading new-study creation.
+Resume requires the same semantic configuration hash, preserves failed/cancelled terminality,
+and refuses unexpired leases to avoid duplicate execution. It scopes expired-attempt recovery
+to the requested study, reconstructs terminal results and budgets from SQLite, replays committed
+successes in sequence, and finishes reserved work before requesting new candidates. Completed
+studies are reloadable without provider calls. Persist the winning stop reason as an ordered
+event so a reloaded result remains meaningful.
+
+Allow strategies to implement a distinct replay hook and components to contribute optional
+semantic fingerprints. `RandomSearch` fingerprints its search space and seed, then verifies and
+advances generator state during replay. Components without a fingerprint retain type-only
+identity in V0.1. Store candidate payloads with a reversible, number-preserving, secret-safe JSON
+serializer while retaining the existing canonical serializer exclusively for hashes.
