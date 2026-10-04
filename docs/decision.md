@@ -198,3 +198,11 @@ Provide a deterministic, provider-free reference RAG under `examples/` rather th
 and reporting boundaries through public APIs only. The reference implementation is educational
 application code, not a supported retrieval or generation runtime, preserving TunaRAG's role as
 an optimizer for user-owned pipelines.
+
+## 2026-10-04 Declare the V0.1 implementation contract complete
+
+Release the implemented package as `0.1.0` after the cross-platform quality matrix, built-wheel
+import smoke test, property tests, and reference quickstart pass. Keep formal Pareto semantics,
+distributed execution, CLI design, framework adapters, and package-index publication outside
+the V0.1 implementation contract. Record public changes through semantic versioning and the
+changelog while SQLite and cache formats retain independent schema versions.

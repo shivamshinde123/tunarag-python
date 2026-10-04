@@ -7,6 +7,7 @@ tunarag-python/
 |-- examples/                # User-owned reference RAG and executable quickstart
 |-- src/tunarag/             # Installable package
 |   |-- __init__.py          # Curated public exports and version
+|   |-- py.typed             # PEP 561 marker for downstream type checkers
 |   |-- cache.py             # Versioned SQLite cache and key model
 |   |-- config.py            # Typed configuration resolution
 |   |-- contracts.py         # User and extension protocols
@@ -25,8 +26,12 @@ tunarag-python/
 |   |-- retry.py             # Retry classification, backoff, and timeouts
 |   `-- store.py             # SQLite lifecycle persistence
 |-- tests/                   # Unit and integration tests
+|-- CHANGELOG.md             # Versioned user-visible changes and deferrals
+|-- CONTRIBUTING.md          # Development and pull-request workflow
 |-- PROJECT_PLAN.md          # Delivery phases and gates
+|-- RELEASE_CHECKLIST.md     # Repository and package-index release gates
 |-- README.md                # Public overview and setup
+|-- SECURITY.md              # Vulnerability reporting and trust boundaries
 `-- pyproject.toml           # Build and tool configuration
 ```
 

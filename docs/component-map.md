@@ -9,7 +9,7 @@
 | SQLite experiment store | Lifecycle, attempts, observations, events, migration/recovery | Implemented |
 | Cache | Versioned reusable results, expiry, privacy, checksums, quarantine | Implemented |
 | Retry policy | Retry classification, capped backoff, sample/trial deadlines | Implemented |
-| Optimizer and trial runner | Bounded trial/sample concurrency, retries, cache, resume, isolation | Partial |
+| Optimizer and trial runner | Bounded trial/sample concurrency, retries, cache, resume, isolation | Implemented |
 | LLMSearch | Provider-neutral bounded suggestions, validation, deterministic fallback | Implemented |
 | Evaluators | Custom metric helper and optional lazy RAGAS integration | Implemented |
 | Evaluation datasets | Canonical examples, JSON/JSONL/CSV ingestion, hashes, splits | Implemented |

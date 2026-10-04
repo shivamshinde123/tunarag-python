@@ -6,15 +6,10 @@ flow document in the same feature branch.
 
 ## Status
 
-Phase 2 is in progress. Package metadata, immutable domain values, extension protocols,
-canonical serialization, typed search spaces, seeded random search, objective aggregation,
-stop conditions, typed configuration, structured errors, SQLite study/trial persistence,
-attempt leases and recovery, atomic observations/events, versioned SQLite caching, and contract
-tests are implemented. The first sequential async optimizer path now executes adapters and
-evaluators, aggregates metrics and usage, isolates trial failures, commits outcomes, observes
-successful trials, applies stop conditions, and returns ranked results.
-Retries, separate sample/trial timeouts, retry-attempt usage persistence, and policy-controlled
-evaluation-cache integration are also implemented.
+V0.1 is implementation-complete. The canonical flow covers typed contracts, datasets and
+synthetic generation, RandomSearch and LLMSearch, objectives and stopping, SQLite storage and
+caching, retries and timeouts, bounded concurrency, callbacks, resumability, optional RAGAS and
+MLflow integrations, deterministic reporting, and the reference example.
 
 ## Intended entry points
 

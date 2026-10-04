@@ -51,9 +51,12 @@ The reference Auto-RAG-Research implementation remains an example adapter and is
 ### Phase 5: Integrations and reporting
 
 - Add optional RAGAS evaluation integration, provider integrations, and optional MLflow mirroring without making them core dependencies.
-- Add result ranking, Pareto/frontier reporting, usage and budget summaries, and export APIs.
+- Add result ranking, metric-leader reporting, usage and budget summaries, and export APIs.
 - Add the example adapter and demonstration workflow outside the installable core.
 - Acceptance: optional dependencies are isolated; absent integrations produce actionable errors; reports distinguish exact, estimated, mixed, and unavailable values.
+
+Formal Pareto/frontier semantics are explicitly deferred until a post-V0.1 multiobjective
+contract defines dominance in the presence of unavailable values.
 
 ### Phase 6: Hardening and release readiness
 
@@ -85,6 +88,11 @@ The reference Auto-RAG-Research implementation remains an example adapter and is
 ## Initial feature sequence
 
 The first implementation branch will deliver Phase 0 and the smallest useful slice of Phase 1: package scaffolding, core public models/contracts, deterministic serialization, and tests. Subsequent features will be proposed as separate branches and pull requests.
+
+## V0.1 completion status
+
+All six phases are complete for the documented V0.1 scope. `RELEASE_CHECKLIST.md` separates
+repository readiness from manual package-index publication, signing, and release-tag actions.
 
 ## Risks and mitigations
 

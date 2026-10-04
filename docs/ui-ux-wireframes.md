@@ -32,5 +32,6 @@ Usage        $1.42 estimated  48.2 s elapsed
 
 Required states distinguish validation, create/resume, incompatible resume, provider wait,
 execution, cache hit, retry, cancellation, every stop reason, success, and no-success finish.
-Output remains usable in noninteractive logs. CLI commands, renderer, color/accessibility, and
-machine-output format are `TBD` until implementation.
+Output remains usable in noninteractive logs. V0.1 machine output is deterministic JSON and
+flattened CSV through `OptimizationResult`; a CLI, interactive renderer, and associated
+color/accessibility behavior remain `TBD` for a later version.
