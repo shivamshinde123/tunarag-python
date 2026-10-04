@@ -15,7 +15,7 @@
 | Evaluation datasets | Canonical examples, JSON/JSONL/CSV ingestion, hashes, splits | Implemented |
 | Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
 | Results and reporting | Ranking, metric leaders, usage summaries, JSON/CSV exports | Implemented |
-| MLflow mirror | Optional post-commit tracking | Later V0.1 |
+| MLflow mirror | Optional best-effort post-commit tracking callback | Implemented |
 
 Dependencies flow inward from entry points and integrations toward protocols and immutable
 domain values. The user owns retrieval and generation through `RAGAdapter`. RAGAS, MLflow,

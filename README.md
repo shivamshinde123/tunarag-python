@@ -38,3 +38,4 @@ recorded. Trial batches and per-trial sample execution are independently bounded
 `RandomSearch` and provider-neutral `LLMSearch` share the strategy contract; LLM suggestions are
 strictly validated and fall back deterministically after bounded invalid attempts.
 `OptimizationResult` ranks successful trials and writes redacted JSON or flattened CSV reports.
+An optional post-commit `MLflowCallback` mirrors committed trials without replacing SQLite.

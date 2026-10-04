@@ -121,6 +121,25 @@ users should avoid anonymous lambdas for persisted studies that must remain comp
 code moves. RAGAS metric, LLM, and embedding objects can implement `Fingerprintable` to include
 behavioral configuration without exposing secrets.
 
+## Optional MLflow mirror
+
+`tunarag.integrations.MLflowCallback(store, experiment_id="0", tracking_uri=None, tags=None,
+client=None)` implements `EventCallback`. Install with `pip install 'tunarag-python[mlflow]'`;
+V0.1 supports MLflow `>=3,<4`. Supplying a client enables testing or custom authentication without
+importing MLflow. A callback instance creates one MLflow run per study encountered in the current
+process. On terminal trial events it reads already committed candidates and metrics from SQLite,
+logs redacted candidate parameters under sequence-qualified names, logs metrics at the durable
+trial sequence step, and records trial status. Study completion/failure/cancellation terminates
+the mirror run as `FINISHED`, `FAILED`, or `KILLED`.
+
+SQLite remains authoritative. Local committed state is read before MLflow network calls, and the
+blocking low-level client runs in a worker thread without sharing the SQLite connection there.
+MLflow failures follow normal callback isolation: they append `callback.failed` diagnostics and
+never alter trial or study outcomes. Resume callback delivery does not replay historical events,
+so a newly attached callback creates a new run for resumed events rather than reconstructing the
+old mirror. Sensitive keys and `Secret` values are redacted; MLflow keys are deterministically
+normalized to its supported character and length limits.
+
 ## Optimizer entry point
 
 ```python

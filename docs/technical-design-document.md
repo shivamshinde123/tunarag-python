@@ -151,3 +151,18 @@ lexically ordered dynamic metric columns. Both formats recurse through the centr
 `Secret` values and sensitive keys never leave the result boundary. Exports do not include cache
 payloads, provider prompts, raw dataset examples, or exception messages beyond already bounded
 trial error summaries.
+
+## MLflow event mirror
+
+MLflow is a projection of committed SQLite state, never an authority. `MLflowCallback` consumes
+the same ordered post-commit events as user callbacks. It gathers trial records and metrics on
+the event-loop thread, then calls the blocking low-level MLflow client through `asyncio.to_thread`;
+the SQLite connection never crosses threads. One in-memory run ID is retained per study for the
+callback lifetime. Terminal study events map to MLflow terminal statuses.
+
+The mirror logs only redacted candidate parameters, numeric metrics, durable sequence, and
+lifecycle tags. Keys are normalized and hash-suffixed when unsupported characters or length
+require a change. A missing extra raises `MissingOptionalDependencyError`, which callback
+isolation records without failing optimization. Historical events are not replayed on resume, so
+cross-process continuation intentionally starts a separate run unless a future durable run-ID
+mapping is introduced.

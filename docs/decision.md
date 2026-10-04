@@ -173,3 +173,12 @@ trial and cost budgets. Treat failed trials as non-improvements, require benefit
 comparisons, and preserve declaration order when multiple rules match. Accept bounded overshoot
 from the active concurrency batch; callers requiring exact immediate stopping use concurrency
 one. Fingerprint every built-in rule and include the ordered policy list in resume compatibility.
+
+## 2026-10-04 Best-effort MLflow event mirror
+
+Implement MLflow as an optional `EventCallback` projection rather than a store or engine
+dependency. Read only committed SQLite state, perform blocking MLflow calls off the event loop,
+and rely on callback failure isolation so tracking outages cannot change optimization outcomes.
+Log redacted candidate parameters, numeric metrics, sequence, and lifecycle status; normalize
+tracking keys deterministically. Keep run IDs in callback memory for V0.1, meaning a resumed
+process creates a new mirror run rather than replaying or mutating historical tracking state.
