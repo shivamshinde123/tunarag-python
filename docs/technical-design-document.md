@@ -38,6 +38,15 @@ Resume compares dataset, search-space, objective, adapter, evaluator, strategy, 
 cache fingerprints; abandons expired attempts; reconstructs budgets; replays terminal results;
 and continues sequence numbers. Incompatibility requires an explicit fork.
 
+This flow is implemented for created, running, and completed compatible studies. Failed and
+cancelled studies are terminal. Recovery is scoped to one study, and unexpired attempt leases
+produce a retryable `ResumeError`. Terminal summaries are rebuilt from metrics, append-only
+usage, attempts, trial errors, and cache-hit events. Pending and recoverable trials execute
+before new suggestions. The durable `study.stopping` event preserves the result stop reason.
+Ordinary strategies receive successful observations in sequence order. Replay-aware strategies
+receive every reserved candidate—including failed and unfinished trials—through the optional
+`replay` method. `RandomSearch` verifies and advances seeded generator state.
+
 The implemented store provides attempt leases, persisted abandonment, and a recoverable-trial
 query. A terminal commit transaction writes metrics, append-only usage, terminal attempt state,
 terminal trial state, and the corresponding ordered event. Validation failures roll the whole
@@ -59,7 +68,9 @@ evaluation work; cached usage is intentionally empty because result accounting d
 current run. Cache keys include format version, dataset version, candidate, and adapter and
 evaluator type names. Writes occur only after the durable successful trial commit. Cache read,
 decode, and write failures append events and do not change trial success. Configurable component
-fingerprints and TTL selection at the optimizer boundary remain future work.
+fingerprints are included when a component implements `fingerprint()`; otherwise type identity
+is used. Mandatory fingerprints for every custom component and TTL selection at the optimizer
+boundary remain future work.
 
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and

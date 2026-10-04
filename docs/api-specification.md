@@ -74,19 +74,32 @@ owns an event loop only when none is active and otherwise raises
 `SyncInAsyncContextError`.
 
 When a cache is supplied, `CachePolicy` controls reads and writes. Evaluation cache keys include
-the payload format, dataset version, canonical candidate, and adapter/evaluator type names.
+the payload format, dataset version, canonical candidate, and adapter/evaluator identities.
+Components implementing `Fingerprintable.fingerprint()` contribute semantic configuration;
+other custom components are identified by type only.
 Hits restore aggregate metrics, recompute the current objective, incur no current-run usage,
 and set `TrialSummary.cached=True`. Only successful uncached metrics are written, after the
 trial commit. Cache I/O or semantic-decoding failures produce durable diagnostic events and
-fall back to execution; they do not fail the trial. Users must change the dataset version or
-component type when behavior changes because configurable component fingerprints are not yet
-part of V0.1 keys.
+fall back to execution; they do not fail the trial. Custom components should implement a stable,
+secret-safe fingerprint when behavior can change without changing the Python type.
+
+`await optimizer.aresume(dataset, study_id=...)` is the authoritative resume entry point;
+`optimizer.resume(...)` is its sync wrapper and rejects an active event loop. Resume requires a
+matching configuration hash, abandons expired attempts only in the selected study, rejects live
+leases with retryable `ResumeError`, reconstructs all terminal summaries and usage, replays
+successful trials into the strategy, and continues pending/recoverable work. Compatible
+completed studies load without adapter/evaluator execution. Failed and cancelled studies are
+terminal. The optional `ReplayableSearchStrategy.replay` contract lets a strategy distinguish
+state restoration from live observation. Replay-aware strategies receive every durably reserved
+candidate, including failed or unfinished trials; ordinary strategies receive only successful
+observations. `RandomSearch` uses replay to verify candidates and advance its seeded generator.
 
 `OptimizationResult` exposes study and stop status, all terminal trial summaries, best trial
 and candidate, successful/failed subsets, aggregate usage with exact-versus-estimated cost,
 and a valid no-success outcome. Each `TrialSummary` reports attempt count and whether metrics
-came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Resume, callbacks,
-concurrency, and richer component provenance remain planned V0.1 work.
+came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Callback dispatch,
+concurrency, study forking, and mandatory custom-component fingerprints remain planned V0.1
+work.
 
 ## Versioning
 

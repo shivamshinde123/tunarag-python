@@ -57,8 +57,11 @@ evaluators under separate sample/trial deadlines, aggregates metrics, computes t
 and atomically commits outcomes. Retryable failures persist attempt usage before deterministic
 backoff and a fresh attempt; exhausted failures remain isolated to their trial. Successful
 uncached metrics are cached only after the durable trial commit, while cache failures become
-events rather than trial failures. The sync wrapper rejects an active event loop. Resume,
-callback dispatch, and bounded concurrency are not implemented yet.
+events rather than trial failures. Resume validates the study configuration hash, rejects live
+leases, abandons only expired attempts in the selected study, rebuilds terminal summaries and
+usage, replays successful strategy observations, continues pending/recoverable trials, and
+persists the final stop reason. The sync wrappers reject an active event loop. Callback dispatch
+and bounded concurrency are not implemented yet.
 
 ## Update rule
 

@@ -51,7 +51,26 @@ execution have independent deadlines. Cache hits recompute the objective and rep
 current-run usage. Cache failures append diagnostic events and fall back to execution.
 Cancellation commits the active trial as cancelled, cancels the study, and is re-raised.
 Strategy failures are study-level failures because candidate generation or state observation
-cannot safely continue. Execution is currently sequential and cannot resume an existing study.
+cannot safely continue. Execution is currently sequential.
+
+## Implemented resume flow
+
+```text
+Optimizer.aresume
+  -> load study and compare the current semantic configuration hash
+  -> reject failed/cancelled studies and running attempts with live leases
+  -> abandon expired attempts scoped to the selected study
+  -> rebuild terminal summaries, objective values, usage, attempts, and cache markers
+  -> replay successful observations (or strategy-specific replay)
+  -> continue pending and recoverable trials before suggesting new candidates
+  -> persist stop reason -> complete study -> rebuild OptimizationResult
+```
+
+Completed compatible studies are read and replayed without adapter/evaluator execution. A
+`Fingerprintable` component can contribute stable secret-safe semantics to study and cache
+identity. `RandomSearch` fingerprints its search space and seed and verifies each replayed
+candidate while advancing its private generator. Live leases cause a retryable `ResumeError`
+rather than unsafe duplicate execution. Failed and cancelled studies remain terminal.
 
 ## Target optimization flow
 

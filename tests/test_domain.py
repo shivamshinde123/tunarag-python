@@ -1,7 +1,7 @@
 import pytest
 
 from tunarag import Candidate, MetricValue, Secret, UsageRecord, ValueStatus
-from tunarag.serialization import canonical_json, content_hash
+from tunarag.serialization import canonical_json, content_hash, storage_json
 
 
 def test_secret_is_redacted_and_excluded_from_mapping_identity() -> None:
@@ -11,6 +11,12 @@ def test_secret_is_redacted_and_excluded_from_mapping_identity() -> None:
     assert str(secret) == "***redacted***"
     assert content_hash({"token": secret, "model": "small"}) == content_hash({"model": "small"})
     assert b"do-not-leak" not in canonical_json({"token": secret})
+
+
+def test_storage_json_preserves_numbers_and_omits_mapping_secrets() -> None:
+    payload = storage_json({"ratio": 1.5, "token": Secret("do-not-leak")})
+
+    assert payload == b'{"ratio":1.5}'
 
 
 def test_mapping_order_does_not_change_identity() -> None:

@@ -1,7 +1,7 @@
 """Protocols implemented by user-owned RAG systems and package extensions."""
 
 from collections.abc import AsyncIterator, Sequence
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from .cache import CacheEntry, CacheKey, CacheLookup, CachePrivacy
 from .domain import Candidate, MetricValue, UsageRecord
@@ -41,6 +41,25 @@ class SearchStrategy(Protocol):
         metrics: Sequence[MetricValue],
         usage: Sequence[UsageRecord],
     ) -> None: ...
+
+
+@runtime_checkable
+class ReplayableSearchStrategy(Protocol):
+    """Restore strategy state from one durably reserved trial."""
+
+    async def replay(
+        self,
+        candidate: Candidate,
+        metrics: Sequence[MetricValue],
+        usage: Sequence[UsageRecord],
+    ) -> None: ...
+
+
+@runtime_checkable
+class Fingerprintable(Protocol):
+    """Expose secret-safe semantic configuration for identity checks."""
+
+    def fingerprint(self) -> Any: ...
 
 
 class Cache(Protocol):

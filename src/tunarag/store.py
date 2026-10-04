@@ -13,7 +13,7 @@ from typing import Any, cast
 
 from .domain import Candidate, MetricValue, UsageRecord, ValueStatus
 from .errors import StoreError, redact
-from .serialization import canonical_json, content_hash
+from .serialization import canonical_json, content_hash, storage_json
 
 
 class StudyStatus(str, Enum):
@@ -444,19 +444,32 @@ class SQLiteStore:
             raise
         return self.get_attempt(attempt_id)
 
-    def abandon_expired_attempts(self, *, now: float | None = None) -> list[AttemptRecord]:
-        """Persist abandonment for every running attempt with an expired lease."""
+    def abandon_expired_attempts(
+        self, *, study_id: str | None = None, now: float | None = None
+    ) -> list[AttemptRecord]:
+        """Persist abandonment for expired attempts, optionally scoped to one study."""
 
         timestamp = self._timestamp(now)
         abandoned_ids: list[str] = []
         self._begin_immediate()
         try:
-            rows = self._connection.execute(
-                """SELECT id, trial_id FROM trial_attempts
-                WHERE status = 'running' AND lease_expires_at <= ?
-                ORDER BY started_at, id""",
-                (timestamp,),
-            ).fetchall()
+            if study_id is None:
+                rows = self._connection.execute(
+                    """SELECT id, trial_id FROM trial_attempts
+                    WHERE status = 'running' AND lease_expires_at <= ?
+                    ORDER BY started_at, id""",
+                    (timestamp,),
+                ).fetchall()
+            else:
+                self._get_study_status_locked(study_id)
+                rows = self._connection.execute(
+                    """SELECT a.id, a.trial_id FROM trial_attempts AS a
+                    JOIN trials AS t ON t.id = a.trial_id
+                    WHERE t.study_id = ? AND a.status = 'running'
+                      AND a.lease_expires_at <= ?
+                    ORDER BY a.started_at, a.id""",
+                    (study_id, timestamp),
+                ).fetchall()
             for row in rows:
                 self._connection.execute(
                     """UPDATE trial_attempts
@@ -663,7 +676,7 @@ class SQLiteStore:
     def _insert_trial_locked(
         self, study_id: str, sequence: int, candidate: Candidate
     ) -> TrialRecord:
-        candidate_bytes = canonical_json(candidate.parameters)
+        candidate_bytes = storage_json(candidate.parameters)
         trial_id = str(uuid.uuid4())
         self._connection.execute(
             """INSERT INTO trials(

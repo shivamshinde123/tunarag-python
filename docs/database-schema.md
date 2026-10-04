@@ -10,9 +10,9 @@ version-1 database migrates it transactionally. Unknown or noncontiguous version
 creation/update timestamps. Valid package transitions are created to running, failed, or
 cancelled; running to completed, failed, or cancelled. Completion rejects active trials.
 
-`trials` stores UUID `id`, required `study_id`, nonnegative `sequence`, `candidate_hash`,
-canonical secret-safe `candidate_json`, lifecycle `status`, optional redacted `error`, and
-timestamps. `(study_id, sequence)` and `(study_id, candidate_hash)` are unique. Valid states
+`trials` stores UUID `id`, required `study_id`, nonnegative `sequence`, `candidate_hash`, stable
+secret-safe and number-preserving `candidate_json`, lifecycle `status`, optional redacted
+`error`, and timestamps. `(study_id, sequence)` and `(study_id, candidate_hash)` are unique. Valid states
 are pending, running, succeeded, failed, abandoned, and cancelled. Terminal states are
 immutable.
 
@@ -35,7 +35,7 @@ metrics as a semantic trial result.
 
 ## Planned migrations
 
-Future versions add migration checksums, datasets, samples, semantic component fingerprints,
+Future versions add migration checksums, datasets, samples, persisted expanded fingerprints,
 currency alongside decimal-safe cost, and indexes justified by orchestration queries. Exact
 DDL remains `TBD` until each query and invariant is implemented.
 
@@ -51,6 +51,7 @@ transactional. The cache may use its own database or share a physical SQLite fil
 
 ## Provenance and lifecycle
 
-Studies will persist semantic fingerprints for dataset, search space, adapter, evaluators,
-objective, strategy, schema, and cache format. Resume compares fingerprints before scheduling.
-SQLite remains authoritative when optional systems mirror committed observations.
+The study `config_hash` covers dataset version, objective, execution policies, component type
+identities, and optional component-provided semantic fingerprints. Resume recomputes and
+compares this hash before scheduling. Custom components without `fingerprint()` are identified
+by type only. SQLite remains authoritative when optional systems mirror committed observations.

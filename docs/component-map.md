@@ -9,7 +9,7 @@
 | SQLite experiment store | Lifecycle, attempts, observations, events, migration/recovery | Implemented |
 | Cache | Versioned reusable results, expiry, privacy, checksums, quarantine | Implemented |
 | Retry policy | Retry classification, capped backoff, sample/trial deadlines | Implemented |
-| Optimizer and trial runner | Sequential execution, retries, cache integration, isolation, results | Partial |
+| Optimizer and trial runner | Sequential execution, retries, cache, resume/replay, isolation, results | Partial |
 | LLMSearch | Provider-guided validated suggestions | Planned |
 | Evaluators | Custom metrics and optional RAGAS | Planned |
 | Events and callbacks | Durable ordered events implemented; dispatch/callbacks planned | Partial |
