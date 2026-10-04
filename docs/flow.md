@@ -34,7 +34,7 @@ Optimizer.aoptimize
   -> strategy.suggest -> reserve unique candidate and sequence
   -> start leased attempt
   -> read compatible cached metrics or execute candidate
-  -> for each dataset sample: timed adapter.run -> timed evaluators.evaluate
+  -> materialize finite dataset -> bounded timed sample workers
   -> aggregate metric means, coverage, and confidence
   -> Objective.evaluate
   -> on transient failure: atomically finish attempt with usage -> backoff -> new attempt
@@ -52,7 +52,9 @@ execution have independent deadlines. Cache hits recompute the objective and rep
 current-run usage. Cache failures append diagnostic events and fall back to execution.
 Cancellation commits the active trial as cancelled, cancels the study, and is re-raised.
 Strategy failures are study-level failures because candidate generation or state observation
-cannot safely continue. Execution is currently sequential.
+cannot safely continue. Candidate reservations fill a bounded trial batch; completed summaries
+and strategy observations are then applied in trial-sequence order. Callback dispatch uses a
+per-study async lock so concurrent trial events remain ordered and nonduplicated.
 
 Callbacks never run inside SQLite transactions. The optimizer advances a per-study event cursor
 and dispatches committed events at study, reservation, attempt, retry, cache, and terminal

@@ -30,4 +30,5 @@ attempt usage, and versioned evaluation-cache reads/writes. Compatible studies c
 through `aresume` or `resume`: committed successes are replayed, expired attempts are recovered,
 unfinished trials continue, and completed studies reload without provider execution. Callbacks
 receive ordered durable lifecycle events after commit; callback failures are isolated and
-recorded. Bounded concurrency is a subsequent feature.
+recorded. Trial batches and per-trial sample execution are independently bounded by
+`concurrency` and `sample_concurrency`, with deterministic result/observation ordering.

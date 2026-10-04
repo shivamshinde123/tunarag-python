@@ -72,7 +72,7 @@ the trial/study result: TunaRAG appends a redacted `callback.failed` event with 
 source sequence, and exception type, then continues other callbacks. Diagnostic callback events
 are not recursively dispatched.
 
-`aoptimize` is authoritative. The implemented slice runs sequential trials, aggregates each
+`aoptimize` is authoritative. The implemented slice runs bounded trial batches, aggregates each
 metric by arithmetic mean across samples, preserves coverage and confidence, computes a
 benefit-oriented objective, isolates adapter/evaluator/objective failures, persists partial
 usage on failure, and observes committed successful trials. Each retry creates a new durable
@@ -81,6 +81,14 @@ the sample timeout; the complete candidate execution uses the trial timeout. Dup
 candidates are rejected; a bounded run of duplicates stops as search exhaustion. `optimize`
 owns an event loop only when none is active and otherwise raises
 `SyncInAsyncContextError`.
+
+The optimizer schedules up to `Settings.concurrency` trials per batch and executes up to
+`Settings.sample_concurrency` samples within each trial. Trial outcomes and strategy
+observations are applied in durable sequence order after a batch, regardless of completion
+timing. `MaxTrials` is a hard reservation cap; snapshot-based cost or time stop conditions can
+overshoot by work already in the active batch. Evaluation examples are currently materialized
+once per trial before bounded sample tasks start, so callers should keep V0.1 evaluation splits
+finite and memory-appropriate.
 
 When a cache is supplied, `CachePolicy` controls reads and writes. Evaluation cache keys include
 the payload format, dataset version, canonical candidate, and adapter/evaluator identities.
@@ -106,8 +114,8 @@ observations. `RandomSearch` uses replay to verify candidates and advance its se
 `OptimizationResult` exposes study and stop status, all terminal trial summaries, best trial
 and candidate, successful/failed subsets, aggregate usage with exact-versus-estimated cost,
 and a valid no-success outcome. Each `TrialSummary` reports attempt count and whether metrics
-came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Bounded concurrency,
-study forking, and mandatory custom-component fingerprints remain planned V0.1 work.
+came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Study forking,
+streaming sample windows, and mandatory custom-component fingerprints remain planned V0.1 work.
 
 ## Versioning
 

@@ -44,6 +44,12 @@ class _TrialFailure(Exception):
     retryable: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class _SampleResult:
+    metrics: tuple[MetricValue, ...]
+    usage: tuple[UsageRecord, ...]
+
+
 class Optimizer:
     """Coordinate V0.1 optimization trials through public contracts."""
 
@@ -90,6 +96,7 @@ class Optimizer:
         )
         self._callbacks = tuple(callbacks)
         self._event_cursors: dict[str, int] = {}
+        self._event_locks: dict[str, asyncio.Lock] = {}
         self._sleeper = sleeper
         self._clock = clock
         self._duplicate_suggestion_limit = duplicate_suggestion_limit
@@ -107,6 +114,7 @@ class Optimizer:
         study = self._store.create_study(study_name, self._study_configuration(dataset))
         study = self._store.transition_study(study.id, StudyStatus.RUNNING)
         self._event_cursors[study.id] = -1
+        self._event_locks[study.id] = asyncio.Lock()
         await self._dispatch_events(study.id)
         return await self._continue_study(dataset, study, [], [])
 
@@ -137,6 +145,7 @@ class Optimizer:
             )
 
         self._event_cursors[study.id] = self._latest_event_sequence(study.id)
+        self._event_locks[study.id] = asyncio.Lock()
         summaries = self._load_terminal_summaries(study.id)
         if study.status is StudyStatus.COMPLETED:
             await self._replay_strategy(study.id, summaries)
@@ -187,28 +196,44 @@ class Optimizer:
         unfinished: Sequence[TrialRecord],
     ) -> OptimizationResult:
         started_at = self._clock()
-        pending = iter(unfinished)
+        pending = list(unfinished)
         stop_reason = "completed"
+        search_exhausted = False
         try:
             while True:
-                trial = next(pending, None)
-                if trial is None:
+                recovering = bool(pending)
+                capacity = (
+                    self._settings.concurrency if recovering else self._batch_capacity(summaries)
+                )
+                if capacity == 0:
+                    stop_reason = self._matching_stop_reason(summaries, started_at)
+                    break
+                batch: list[tuple[Candidate, TrialRecord]] = []
+                while pending and len(batch) < capacity:
+                    trial = pending.pop(0)
+                    batch.append((_candidate_from_trial(trial), trial))
+                while not recovering and len(batch) < capacity and not search_exhausted:
                     stop_reason = self._matching_stop_reason(summaries, started_at)
                     if stop_reason:
                         break
                     reservation = await self._reserve_next_trial(study.id)
                     if reservation is None:
-                        stop_reason = "search_exhausted"
+                        search_exhausted = True
                         self._store.append_event(study.id, "study.search_exhausted", {})
                         break
-                    candidate, trial = reservation
+                    batch.append(reservation)
                     await self._dispatch_events(study.id)
-                else:
-                    candidate = _candidate_from_trial(trial)
-                summary = await self._run_trial(dataset, candidate, trial)
-                summaries.append(summary)
-                if summary.status is TrialStatus.SUCCEEDED:
-                    await self._observe_success(summary)
+                if not batch:
+                    if search_exhausted:
+                        stop_reason = "search_exhausted"
+                    break
+                completed = await asyncio.gather(
+                    *(self._run_trial(dataset, candidate, trial) for candidate, trial in batch)
+                )
+                for summary in sorted(completed, key=lambda item: item.sequence):
+                    summaries.append(summary)
+                    if summary.status is TrialStatus.SUCCEEDED:
+                        await self._observe_success(summary)
             self._store.append_event(study.id, "study.stopping", {"reason": stop_reason})
             study = self._store.transition_study(study.id, StudyStatus.COMPLETED)
             await self._dispatch_events(study.id)
@@ -253,27 +278,36 @@ class Optimizer:
         return -1 if not events else events[-1].sequence
 
     async def _dispatch_events(self, study_id: str) -> None:
-        cursor = self._event_cursors.get(study_id, -1)
-        events = self._store.list_events(study_id, after_sequence=cursor)
-        for event in events:
-            self._event_cursors[study_id] = event.sequence
-            if event.type == "callback.failed":
-                continue
-            for index, callback in enumerate(self._callbacks):
-                try:
-                    await callback.on_event(event)
-                except Exception as error:
-                    self._store.append_event(
-                        study_id,
-                        "callback.failed",
-                        {
-                            "source_sequence": event.sequence,
-                            "callback_index": index,
-                            "callback": _type_name(callback),
-                            "cause": type(error).__name__,
-                        },
-                    )
-        self._event_cursors[study_id] = self._latest_event_sequence(study_id)
+        lock = self._event_locks.setdefault(study_id, asyncio.Lock())
+        async with lock:
+            cursor = self._event_cursors.get(study_id, -1)
+            events = self._store.list_events(study_id, after_sequence=cursor)
+            for event in events:
+                self._event_cursors[study_id] = event.sequence
+                if event.type == "callback.failed":
+                    continue
+                for index, callback in enumerate(self._callbacks):
+                    try:
+                        await callback.on_event(event)
+                    except Exception as error:
+                        self._store.append_event(
+                            study_id,
+                            "callback.failed",
+                            {
+                                "source_sequence": event.sequence,
+                                "callback_index": index,
+                                "callback": _type_name(callback),
+                                "cause": type(error).__name__,
+                            },
+                        )
+            self._event_cursors[study_id] = self._latest_event_sequence(study_id)
+
+    def _batch_capacity(self, summaries: Sequence[TrialSummary]) -> int:
+        capacity = self._settings.concurrency
+        for condition in self._stop_conditions:
+            if isinstance(condition, MaxTrials):
+                capacity = min(capacity, max(0, condition.limit - len(summaries)))
+        return capacity
 
     @staticmethod
     def _validate_dataset(dataset: Dataset) -> None:
@@ -547,51 +581,88 @@ class Optimizer:
     ) -> tuple[tuple[MetricValue, ...], tuple[UsageRecord, ...]]:
         observations: dict[str, list[MetricValue]] = defaultdict(list)
         usage: list[UsageRecord] = []
-        sample_count = 0
-        stage = "dataset"
         try:
-            async for example in dataset:
-                sample_count += 1
-                stage = "adapter"
-                output, sample_usage = await _wait_for(
-                    self._adapter.run(candidate, example),
-                    self._retry_policy.sample_timeout_seconds,
-                )
-                sample_usage_values = tuple(sample_usage)
-                if any(not isinstance(item, UsageRecord) for item in sample_usage_values):
-                    raise TypeError("adapter usage must contain UsageRecord values")
-                usage.extend(sample_usage_values)
-                sample_names: set[str] = set()
-                for evaluator in self._evaluators:
-                    stage = "evaluation"
-                    values = tuple(
-                        await _wait_for(
-                            evaluator.evaluate(output, example),
-                            self._retry_policy.sample_timeout_seconds,
-                        )
+            examples = [example async for example in dataset]
+        except Exception as error:
+            raise _TrialFailure(
+                "dataset",
+                type(error).__name__,
+                (),
+                self._retry_policy.is_retryable(error),
+            ) from error
+        if not examples:
+            raise _TrialFailure("dataset", "empty", tuple(usage))
+
+        semaphore = asyncio.Semaphore(self._settings.sample_concurrency)
+
+        async def bounded(example: Any) -> _SampleResult:
+            async with semaphore:
+                return await self._execute_sample(candidate, example)
+
+        outcomes = await asyncio.gather(
+            *(bounded(example) for example in examples), return_exceptions=True
+        )
+        first_failure: _TrialFailure | None = None
+        for outcome in outcomes:
+            if isinstance(outcome, _TrialFailure):
+                usage.extend(outcome.usage)
+                if first_failure is None:
+                    first_failure = outcome
+                continue
+            if isinstance(outcome, BaseException):
+                raise outcome
+            usage.extend(outcome.usage)
+            for metric in outcome.metrics:
+                observations[metric.name].append(metric)
+        if first_failure is not None:
+            raise _TrialFailure(
+                first_failure.stage,
+                first_failure.cause_type,
+                tuple(usage),
+                first_failure.retryable,
+            ) from first_failure
+        if not observations:
+            raise _TrialFailure("evaluation", "no_metrics", tuple(usage))
+        return _aggregate_metrics(observations, len(examples)), tuple(usage)
+
+    async def _execute_sample(self, candidate: Candidate, example: Any) -> _SampleResult:
+        usage: tuple[UsageRecord, ...] = ()
+        stage = "adapter"
+        try:
+            output, sample_usage = await _wait_for(
+                self._adapter.run(candidate, example),
+                self._retry_policy.sample_timeout_seconds,
+            )
+            usage = tuple(sample_usage)
+            if any(not isinstance(item, UsageRecord) for item in usage):
+                raise TypeError("adapter usage must contain UsageRecord values")
+            sample_metrics: list[MetricValue] = []
+            sample_names: set[str] = set()
+            for evaluator in self._evaluators:
+                stage = "evaluation"
+                values = tuple(
+                    await _wait_for(
+                        evaluator.evaluate(output, example),
+                        self._retry_policy.sample_timeout_seconds,
                     )
-                    for metric in values:
-                        if not isinstance(metric, MetricValue):
-                            raise TypeError("evaluator output must contain MetricValue values")
-                        if metric.name == _OBJECTIVE_METRIC:
-                            raise ValueError(f"metric name is reserved: {_OBJECTIVE_METRIC}")
-                        if metric.name in sample_names:
-                            raise ValueError(f"duplicate metric for sample: {metric.name}")
-                        sample_names.add(metric.name)
-                        observations[metric.name].append(metric)
-                stage = "dataset"
+                )
+                for metric in values:
+                    if not isinstance(metric, MetricValue):
+                        raise TypeError("evaluator output must contain MetricValue values")
+                    if metric.name == _OBJECTIVE_METRIC:
+                        raise ValueError(f"metric name is reserved: {_OBJECTIVE_METRIC}")
+                    if metric.name in sample_names:
+                        raise ValueError(f"duplicate metric for sample: {metric.name}")
+                    sample_names.add(metric.name)
+                    sample_metrics.append(metric)
+            return _SampleResult(tuple(sample_metrics), usage)
         except Exception as error:
             raise _TrialFailure(
                 stage,
                 type(error).__name__,
-                tuple(usage),
+                usage,
                 self._retry_policy.is_retryable(error),
             ) from error
-        if sample_count == 0:
-            raise _TrialFailure("dataset", "empty", tuple(usage))
-        if not observations:
-            raise _TrialFailure("evaluation", "no_metrics", tuple(usage))
-        return _aggregate_metrics(observations, sample_count), tuple(usage)
 
     def _evaluate_objective(
         self, metrics: Sequence[MetricValue], usage: tuple[UsageRecord, ...]
