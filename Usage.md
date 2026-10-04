@@ -105,9 +105,7 @@ class SmallRAG:
             reverse=True,
         )
         contexts = ranked[: candidate.parameters["top_k"]]
-        return {"answer": " ".join(contexts)}, (
-            UsageRecord("small-rag", latency_seconds=0.001),
-        )
+        return {"answer": " ".join(contexts)}, (UsageRecord("small-rag", latency_seconds=0.001),)
 
 
 def answer_recall(output, example):
@@ -150,8 +148,7 @@ The default store is in memory. Use `SQLiteStore(path)` for a durable study.
 A custom adapter implements:
 
 ```python
-async def run(candidate, example) -> tuple[object, Sequence[UsageRecord]]:
-    ...
+async def run(candidate, example) -> tuple[object, Sequence[UsageRecord]]: ...
 ```
 
 `candidate.parameters` contains the proposed configuration. The output can be any object understood
@@ -225,9 +222,7 @@ Use a factory when candidates change construction-time components:
 
 ```python
 def build_chain(candidate):
-    retriever = vector_store.as_retriever(
-        search_kwargs={"k": candidate.parameters["top_k"]}
-    )
+    retriever = vector_store.as_retriever(search_kwargs={"k": candidate.parameters["top_k"]})
     return create_retrieval_chain(
         retriever,
         build_qa_chain(candidate.parameters["model"]),
@@ -350,12 +345,14 @@ finite JSON-compatible data. Duplicate tags and relevant document IDs are reject
 from tunarag import DatasetFieldMap, EvaluationDataset
 
 dataset = EvaluationDataset.from_records(
-    [{
-        "question_id": "q-1",
-        "question": "What is TunaRAG?",
-        "expected": "A RAG optimization library.",
-        "contexts": ["TunaRAG optimizes existing RAG systems."],
-    }],
+    [
+        {
+            "question_id": "q-1",
+            "question": "What is TunaRAG?",
+            "expected": "A RAG optimization library.",
+            "contexts": ["TunaRAG optimizes existing RAG systems."],
+        }
+    ],
     field_map=DatasetFieldMap(
         id="question_id",
         query="question",
@@ -459,12 +456,14 @@ using them as gold data. Generation usage is separate from optimization usage.
 ```python
 from tunarag import Categorical, FloatRange, IntegerRange, SearchSpace
 
-space = SearchSpace({
-    "top_k": IntegerRange(1, 10),              # inclusive
-    "temperature": FloatRange(0.0, 0.8),
-    "model": Categorical(("small", "large")),
-    "prompt": Categorical(("concise", "grounded")),
-})
+space = SearchSpace(
+    {
+        "top_k": IntegerRange(1, 10),  # inclusive
+        "temperature": FloatRange(0.0, 0.8),
+        "model": Categorical(("small", "large")),
+        "prompt": Categorical(("concise", "grounded")),
+    }
+)
 ```
 
 `SearchSpace.validate()` requires exactly the declared keys. Prefer JSON-like immutable categorical
@@ -501,8 +500,7 @@ class SuggestionProvider:
                     {
                         "candidate": dict(item.candidate.parameters),
                         "metrics": [
-                            {"name": metric.name, "value": metric.value}
-                            for metric in item.metrics
+                            {"name": metric.name, "value": metric.value} for metric in item.metrics
                         ],
                     }
                     for item in request.observations
@@ -594,17 +592,25 @@ configuration remain owned by your RAGAS components.
 ```python
 from tunarag import Objective, ObjectiveDirection, ObjectiveTerm
 
-objective = Objective((
-    ObjectiveTerm("answer_quality", weight=0.70, minimum=0.0, maximum=1.0),
-    ObjectiveTerm(
-        "cost_usd", weight=0.20, direction=ObjectiveDirection.MINIMIZE,
-        minimum=0.0, maximum=0.05,
-    ),
-    ObjectiveTerm(
-        "latency_seconds", weight=0.10, direction=ObjectiveDirection.MINIMIZE,
-        minimum=0.0, maximum=5.0,
-    ),
-))
+objective = Objective(
+    (
+        ObjectiveTerm("answer_quality", weight=0.70, minimum=0.0, maximum=1.0),
+        ObjectiveTerm(
+            "cost_usd",
+            weight=0.20,
+            direction=ObjectiveDirection.MINIMIZE,
+            minimum=0.0,
+            maximum=0.05,
+        ),
+        ObjectiveTerm(
+            "latency_seconds",
+            weight=0.10,
+            direction=ObjectiveDirection.MINIMIZE,
+            minimum=0.0,
+            maximum=5.0,
+        ),
+    )
+)
 ```
 
 Bounded metrics are normalized and clamped to `[0, 1]`; bounded minimize terms become
@@ -682,18 +688,28 @@ Durable composition:
 ```python
 from pathlib import Path
 from tunarag import (
-    MaxFailures, MaxTrials, NoImprovement, Optimizer, RetryPolicy,
-    SQLiteCache, SQLiteStore, Settings, TargetScore,
+    MaxFailures,
+    MaxTrials,
+    NoImprovement,
+    Optimizer,
+    RetryPolicy,
+    SQLiteCache,
+    SQLiteStore,
+    Settings,
+    TargetScore,
 )
 
-settings = Settings.resolve(overrides={
-    "home": Path(".tunarag"),
-    "db_path": Path(".tunarag/experiments.db"),
-    "cache_dir": Path(".tunarag/cache"),
-    "artifact_dir": Path(".tunarag/artifacts"),
-    "concurrency": 2,
-    "sample_concurrency": 8,
-}, environ={})
+settings = Settings.resolve(
+    overrides={
+        "home": Path(".tunarag"),
+        "db_path": Path(".tunarag/experiments.db"),
+        "cache_dir": Path(".tunarag/cache"),
+        "artifact_dir": Path(".tunarag/artifacts"),
+        "concurrency": 2,
+        "sample_concurrency": 8,
+    },
+    environ={},
+)
 store = SQLiteStore(settings.db_path)
 cache = SQLiteCache(settings.cache_dir / "evaluations.db")
 optimizer = Optimizer(
@@ -705,7 +721,8 @@ optimizer = Optimizer(
     cache=cache,
     settings=settings,
     stop_conditions=(
-        MaxTrials(30), TargetScore(0.90),
+        MaxTrials(30),
+        TargetScore(0.90),
         NoImprovement(patience=6, min_delta=0.01, warmup_trials=8),
         MaxFailures(5),
     ),
@@ -769,9 +786,7 @@ results and strategy observations preserve trial-sequence order.
 from tunarag import CachePolicy, SQLiteCache, Settings
 
 cache = SQLiteCache(".tunarag/evaluations.db")
-settings = Settings.resolve(
-    overrides={"cache_policy": CachePolicy.READ_WRITE}, environ={}
-)
+settings = Settings.resolve(overrides={"cache_policy": CachePolicy.READ_WRITE}, environ={})
 optimizer = Optimizer(..., cache=cache, settings=settings)
 ```
 
@@ -899,9 +914,7 @@ Rank by an individual metric:
 from tunarag import ObjectiveDirection
 
 quality_leaders = result.metric_leaders("answer_quality")
-latency_leaders = result.metric_leaders(
-    "latency_seconds", direction=ObjectiveDirection.MINIMIZE
-)
+latency_leaders = result.metric_leaders("latency_seconds", direction=ObjectiveDirection.MINIMIZE)
 ```
 
 Inspect and export:
@@ -942,8 +955,8 @@ and `SyncInAsyncContextError`.
 from tunarag import Secret
 
 credential = Secret("do-not-log-this")
-print(credential)       # ***redacted***
-print(repr(credential)) # Secret(***redacted***)
+print(credential)  # ***redacted***
+print(repr(credential))  # Secret(***redacted***)
 ```
 
 TunaRAG redacts `Secret` and common sensitive keys from diagnostics, fingerprints, events, and
@@ -981,14 +994,18 @@ class EvenInteger:
 
     def accepts(self, value):
         return (
-            isinstance(value, int) and not isinstance(value, bool)
-            and self.minimum <= value <= self.maximum and value % 2 == 0
+            isinstance(value, int)
+            and not isinstance(value, bool)
+            and self.minimum <= value <= self.maximum
+            and value % 2 == 0
         )
 
     def describe(self):
         return {
-            "type": "integer", "minimum": self.minimum,
-            "maximum": self.maximum, "multiple_of": 2,
+            "type": "integer",
+            "minimum": self.minimum,
+            "maximum": self.maximum,
+            "multiple_of": 2,
         }
 ```
 
