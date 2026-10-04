@@ -17,6 +17,7 @@ from tunarag import (
     StudyRecord,
     StudyStatus,
     SyncInAsyncContextError,
+    TargetScore,
     TrialStatus,
     UsageRecord,
 )
@@ -157,6 +158,30 @@ def test_trial_failure_is_isolated_and_partial_usage_is_persisted(tmp_path) -> N
     assert "sensitive provider payload" not in repr(result)
     assert len(store.list_usage(result.failed_trials[0].id)) == 1
     assert strategy.observations == [Candidate({"multiplier": 2, "fail": False})]
+    store.close()
+
+
+def test_target_score_stops_after_committed_trial(tmp_path) -> None:
+    store = SQLiteStore(tmp_path / "target.sqlite")
+    strategy = SequenceStrategy([Candidate({"multiplier": 2}), Candidate({"multiplier": 3})])
+    optimizer = Optimizer(
+        adapter=MultiplyingAdapter(),
+        strategy=strategy,
+        evaluators=[QualityEvaluator()],
+        objective=Objective((ObjectiveTerm("quality"),)),
+        store=store,
+        settings=Settings.resolve(
+            overrides={"home": tmp_path, "max_trials": 2, "concurrency": 1}, environ={}
+        ),
+        stop_conditions=[TargetScore(2.0)],
+    )
+
+    result = asyncio.run(
+        optimizer.aoptimize(InMemoryDataset((1,), version="v1"), study_name="target")
+    )
+
+    assert result.stop_reason == "TargetScore"
+    assert len(result.trials) == 1
     store.close()
 
 
