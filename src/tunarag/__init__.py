@@ -9,13 +9,21 @@ from .cache import (
     SQLiteCache,
 )
 from .config import CachePolicy, Settings
-from .dataset import InMemoryDataset
+from .dataset import (
+    DatasetFieldMap,
+    DatasetSplit,
+    EvaluationDataset,
+    EvaluationExample,
+    InMemoryDataset,
+    SplitRatios,
+)
 from .domain import Candidate, MetricValue, Secret, UsageRecord, ValueStatus
 from .engine import Optimizer
 from .errors import (
     AdapterError,
     BudgetError,
     ConfigurationError,
+    DatasetError,
     ErrorCode,
     EvaluationError,
     MissingOptionalDependencyError,
@@ -68,8 +76,13 @@ __all__ = [
     "Candidate",
     "ConfigurationError",
     "CostBudget",
+    "DatasetError",
+    "DatasetFieldMap",
+    "DatasetSplit",
     "ErrorCode",
     "EvaluationError",
+    "EvaluationDataset",
+    "EvaluationExample",
     "FloatRange",
     "InMemoryDataset",
     "IntegerRange",
@@ -100,6 +113,7 @@ __all__ = [
     "Settings",
     "SQLiteCache",
     "SQLiteStore",
+    "SplitRatios",
     "StopContext",
     "StoreError",
     "StudyEvent",

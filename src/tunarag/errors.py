@@ -27,6 +27,7 @@ class ErrorCode(str, Enum):
 
     CONFIGURATION = "configuration.invalid"
     SEARCH_SPACE = "search_space.invalid"
+    DATASET = "dataset.invalid"
     ADAPTER = "adapter.failed"
     EVALUATION = "evaluation.failed"
     STORE = "store.failed"
@@ -82,6 +83,15 @@ class SearchSpaceError(TunaRAGError):
     """A search-space definition or candidate is invalid."""
 
     code = ErrorCode.SEARCH_SPACE
+
+
+class DatasetError(TunaRAGError):
+    """An evaluation dataset could not be loaded or validated."""
+
+    code = ErrorCode.DATASET
+
+    def __init__(self, message: str, *, details: Mapping[str, Any] | None = None) -> None:
+        super().__init__(message, stage="dataset", details=details)
 
 
 class AdapterError(TunaRAGError):

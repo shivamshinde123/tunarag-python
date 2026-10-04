@@ -145,3 +145,13 @@ inspecting arbitrary user objects. Evaluate one engine sample at a time so TunaR
 ownership of concurrency, retries, timeouts, aggregation, and failure isolation. Namespace RAGAS
 metrics by default, normalize missing/nonfinite scores to unavailable, redact provider exception
 messages, and keep provider credentials/configuration outside TunaRAG.
+
+## 2026-10-04 Canonical evaluation dataset ingestion
+
+Introduce a provider-neutral `EvaluationExample` and `EvaluationDataset` using only the Python
+standard library. Accept mappings, JSON arrays, JSONL, and explicit-mapping CSV; never guess
+column semantics. Normalize text conservatively, deeply freeze finite JSON metadata, generate
+missing IDs from normalized content, and reject duplicate identities. Version ordered semantic
+content with domain-separated hashing and exclude paths/timestamps. Use stable hash-based
+80/10/10 splits with optional metadata grouping so assignment is independent of input order.
+Keep synthetic generation and rich source-span provenance as a separate feature.

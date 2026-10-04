@@ -6,6 +6,9 @@
 caller
   -> Settings.resolve(defaults, selected TOML, known environment, overrides)
   -> construct Candidate, MetricValue, and UsageRecord
+  -> load EvaluationDataset records and derive a content version
+     -> normalize and validate canonical EvaluationExample values
+     -> optionally assign deterministic grouped splits
   -> sample SearchSpace through seeded RandomSearch
   -> aggregate metrics through Objective
   -> evaluate MaxTrials or CostBudget

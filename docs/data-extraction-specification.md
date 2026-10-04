@@ -11,26 +11,32 @@ public error boundary. Metric scores, names, status, and coverage may be persist
 
 ## Scope and sample model
 
-Dataset ingestion and optional synthetic generation are planned for V0.1 and are not yet
-implemented. TunaRAG is not a production content-ingestion platform. Each sample will carry a
-stable ID, nonempty query, optional answer and reference contexts, relevant document IDs,
-tags, JSON metadata, provenance, and immutable split assignment.
+Dataset ingestion is implemented; optional synthetic generation remains planned for V0.1.
+TunaRAG is not a production content-ingestion platform. `EvaluationExample` carries a stable ID,
+nonempty query, optional reference answer and contexts, relevant document IDs, tags, deeply
+immutable JSON metadata, canonical split, and synthetic flag. Richer source-span and generator
+provenance remains part of the synthetic-generation slice.
 
 ## Inputs, normalization, and validation
 
-V0.1 targets JSONL, JSON arrays, explicit-mapping CSV, and Python iterables. Optional
-generation may read text and Markdown; PDF extraction is optional. Normalize UTF-8, line
-endings, Unicode NFC, a leading BOM, outer whitespace, and disallowed controls without
-silently rewriting meaning. Reject empty queries, conflicting IDs, invalid metadata or split
-labels, malformed records, and fields missing for selected evaluators. Reports include source
-location and bounded examples.
+`EvaluationDataset` accepts mapping iterables, JSONL, JSON arrays, and explicit-mapping CSV.
+`DatasetFieldMap` changes source column names without guessing. CSV collection fields are JSON
+arrays and metadata is a JSON object. Inputs are UTF-8 with an optional BOM. Normalize line
+endings to LF, Unicode to NFC, and remove outer whitespace and leading BOMs. Reject disallowed
+controls without silently rewriting meaning. Reject empty queries, duplicate IDs, invalid finite
+JSON metadata, invalid split labels, malformed records, and non-string collection values.
+`DatasetError` reports source, one-based record/line where available, and exception type without
+including sensitive record values.
 
 ## Splits, hashes, and cache identity
 
-Canonical splits are `optimize`, `validation`, and `test`; exact defaults remain `TBD` until
-implementation. Assignment is deterministic by seed and stable identity, with grouped records
-kept together. Dataset hashes use domain-separated SHA-256 over normalized semantic content,
-schema version, and split membership, excluding local paths and ingestion timestamps.
+Canonical splits are `optimize`, `validation`, and `test`; default ratios are 0.8/0.1/0.1 and
+must be finite, nonnegative, and sum to one. Assignment hashes seed plus stable example ID.
+Optional grouping hashes a required string/integer metadata value so related examples remain
+together. Dataset versions use domain-separated SHA-256 over ordered normalized semantic content,
+schema version, and split membership, excluding local paths and ingestion timestamps. Missing IDs
+are separately domain-hashed from normalized record content; identical implicit records therefore
+collide and are rejected rather than silently duplicated.
 
 ## Synthetic data and privacy
 
