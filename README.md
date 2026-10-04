@@ -2,6 +2,12 @@
 
 `tunarag-python` is a typed, local-first Python library for comparing and optimizing configurations of an existing RAG system.
 
+## Release
+
+The current source release is **V0.1.0**, tagged as `v0.1.0`. See
+[`CHANGELOG.md`](CHANGELOG.md) for delivered capabilities and deferred work. Package-index
+publication is tracked separately in [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
+
 ## Installation
 
 ```powershell
