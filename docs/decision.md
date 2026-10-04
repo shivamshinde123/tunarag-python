@@ -2,6 +2,14 @@
 
 Decisions are chronological. Superseding entries preserve the original reasoning.
 
+## 2026-10-04 Execute every `Usage.md` Python example in CI
+
+Treat every Python fence in `Usage.md` as executable documentation. The documentation test extracts
+all fences, asserts the expected count, runs every example with controlled fixtures, and verifies its
+observable result. Optional provider boundaries may use local test doubles, while installed
+LangChain and LangGraph packages are exercised directly. Any added, removed, or behaviorally changed
+example must update the harness in the same pull request.
+
 ## 2026-10-04 Comprehensive usage guide
 
 Maintain a root-level `Usage.md` as the canonical package usage guide. It covers all public V0.2

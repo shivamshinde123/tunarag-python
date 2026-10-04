@@ -2,6 +2,8 @@
 
 The root [`Usage.md`](../Usage.md) is the canonical user-facing guide for installing the package,
 connecting custom or framework RAG pipelines, running every public feature, and operating studies.
+Its Python fences are executed by `tests/test_usage_documentation.py` so examples cannot silently
+drift from the package API.
 
 ```text
 tunarag-python/
