@@ -2,6 +2,15 @@
 
 `tunarag-python` is a typed, local-first Python library for comparing and optimizing configurations of an existing RAG system.
 
+## Installation
+
+```powershell
+python -m pip install tunarag-python
+```
+
+Optional integrations are installed explicitly with `tunarag-python[ragas]` or
+`tunarag-python[mlflow]`. Python 3.10 through 3.13 is supported.
+
 The implementation is developed against the detailed DOCX baseline and living Markdown
 documents in [`docs/`](docs/), plus the phased delivery plan in
 [`PROJECT_PLAN.md`](PROJECT_PLAN.md). Start with the product requirements, system architecture,

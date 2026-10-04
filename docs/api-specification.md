@@ -241,10 +241,13 @@ value, status, and coverage. Writers replace existing files but do not create pa
 Each `TrialSummary` reports attempt count and whether metrics came from cache. `InMemoryDataset`
 provides a repeatable versioned dataset. Formal Pareto/frontier reporting remains post-V0.1;
 V0.1 ranks the configured scalar objective and individual metrics. Study forking, streaming
-sample windows, and mandatory custom-component fingerprints remain planned V0.1 work.
+sample windows, and mandatory custom-component fingerprints are post-V0.1 work.
 
 ## Versioning
 
 The distribution is `tunarag-python`; the import package is `tunarag`. Public APIs follow
 semantic versioning. SQLite schemas and cache formats have independent versions and explicit
 migration or invalidation rules.
+
+Version `0.1.0` is the first feature-complete V0.1 contract. During the 0.x series, incompatible
+public API changes require a minor-version increase and are recorded in `CHANGELOG.md`.
