@@ -15,3 +15,8 @@ python -m pytest
 ```
 
 The public package is imported as `tunarag`.
+
+Implemented foundations include typed domain values, canonical identity, typed search spaces,
+seeded random search, objective and stopping primitives, SQLite study/trial persistence, and a
+versioned SQLite cache with expiry and corruption quarantine. The optimizer entry point is not
+implemented yet.

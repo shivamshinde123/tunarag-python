@@ -25,10 +25,13 @@ and continues sequence numbers. Incompatibility requires an explicit fork.
 
 ## Cache, objectives, and stopping
 
-Cache keys use domain-separated SHA-256 over canonical semantic inputs and versions. Entries
-carry namespace, format version, timestamps, privacy class, payload checksum, and location.
-Writes are atomic. Corruption is quarantined and treated as a miss. Partial/failed work is not
-cached without an explicit safe negative-cache policy.
+Cache keys use domain-separated SHA-256 over canonical semantic inputs and versions. The
+implemented foundation stores bytes atomically in an independently versioned SQLite table with
+namespace, format version, timestamps, privacy class, checksum, state, hit count, and quarantine
+reason. Reads verify TTL and checksum before exposing bytes. The first corrupt read returns a
+corrupt outcome and persists quarantine; later reads return quarantined. Expired and quarantined
+entries remain inspectable until retention pruning. Partial/failed work is not cached without
+an explicit safe negative-cache policy.
 
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and
@@ -37,5 +40,5 @@ improvement, search exhaustion, failure threshold, and cancellation.
 
 ## Open decisions
 
-Python 3.10 structured concurrency, sortable public IDs, sample checkpoint stability, and the
-SQLite-versus-file cache payload split remain `TBD` until their implementing feature.
+Python 3.10 structured concurrency, sortable public IDs, sample checkpoint stability, and a
+future size threshold for external cache payload files remain `TBD`.

@@ -9,14 +9,21 @@ are separated below so design commitments are not mistaken for runtime behavior.
 ## Implemented surface
 
 `tunarag` exports `Candidate`, `MetricValue`, `UsageRecord`, `Secret`, `ValueStatus`, objective
-types, `MaxTrials`, `CostBudget`, `SQLiteStore`, and study/trial record types. Search-space
-types and `RandomSearch` are currently imported from `tunarag.search`; extension protocols
-live in `tunarag.contracts`.
+types, `MaxTrials`, `CostBudget`, `SQLiteStore`, study/trial records, and the cache types
+`CacheKey`, `CacheEntry`, `CacheLookup`, `CacheLookupStatus`, `CachePrivacy`, and
+`SQLiteCache`. Search-space types and `RandomSearch` are currently imported from
+`tunarag.search`; extension protocols live in `tunarag.contracts`.
 
 `Candidate` requires a nonempty parameter mapping. Metrics and usage retain `exact`,
 `estimated`, or `unavailable` provenance. `Objective.evaluate` combines configured terms.
 `SQLiteStore` initializes schema version 1, creates studies and ordered trials, transitions
 trials, retrieves trials, and closes its connection.
+
+`CacheKey.from_parts(namespace, *parts, format_version=1)` creates secret-safe canonical
+identity. `SQLiteCache.put` atomically stores bytes with privacy and optional positive TTL.
+`SQLiteCache.get` returns explicit hit, miss, expired, corrupt, or quarantined status; only a
+verified hit contains payload bytes. `delete` removes one key, while `prune` removes expired
+entries and optionally quarantined entries. Cache metadata and payloads survive reopen.
 
 Invalid domain values raise `ValueError` or `TypeError`; unknown trial IDs raise `KeyError`;
 database constraints raise `sqlite3.IntegrityError`. A package error hierarchy is planned.

@@ -3,6 +3,7 @@
 from collections.abc import AsyncIterator, Sequence
 from typing import Any, Protocol
 
+from .cache import CacheEntry, CacheKey, CacheLookup, CachePrivacy
 from .domain import Candidate, MetricValue, UsageRecord
 
 
@@ -40,3 +41,18 @@ class SearchStrategy(Protocol):
         metrics: Sequence[MetricValue],
         usage: Sequence[UsageRecord],
     ) -> None: ...
+
+
+class Cache(Protocol):
+    """Persist and retrieve versioned semantic results."""
+
+    def get(self, key: CacheKey) -> CacheLookup: ...
+
+    def put(
+        self,
+        key: CacheKey,
+        payload: bytes | bytearray | memoryview,
+        *,
+        privacy: CachePrivacy = CachePrivacy.STANDARD,
+        ttl_seconds: float | None = None,
+    ) -> CacheEntry: ...

@@ -33,3 +33,12 @@ optional mirror. Defer an ORM until a second relational backend justifies it.
 Run formatting, linting, strict typing, tests, and package builds on Linux and Windows with the
 oldest and newest supported Python versions. Force LF for source and documentation so local
 Git settings do not create formatter-only differences.
+
+## 2026-10-03 SQLite cache foundation
+
+Store foundation cache payloads as SQLite BLOBs with an independently versioned schema,
+canonical namespaced keys, SHA-256 payload checksums, explicit privacy metadata, and persisted
+expiry/quarantine states. Return explicit lookup outcomes and never return unverified bytes.
+
+This keeps V0.1 atomic and zero-infrastructure. External payload files remain a later option if
+measured payload sizes justify the additional atomic-write and cleanup complexity.
