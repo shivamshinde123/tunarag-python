@@ -63,6 +63,15 @@ optimizer = Optimizer(
 result = await optimizer.aoptimize(dataset, study_name="support-rag")
 ```
 
+`callbacks=[...]` accepts objects implementing async
+`on_event(event: StudyEvent) -> None`. Events are delivered only after their database
+transaction commits and in durable sequence order. New studies deliver their full live event
+stream; resume starts after the existing event tail and does not replay historical callback
+notifications. Retry scheduling is delivered before backoff. A callback exception never changes
+the trial/study result: TunaRAG appends a redacted `callback.failed` event with callback identity,
+source sequence, and exception type, then continues other callbacks. Diagnostic callback events
+are not recursively dispatched.
+
 `aoptimize` is authoritative. The implemented slice runs sequential trials, aggregates each
 metric by arithmetic mean across samples, preserves coverage and confidence, computes a
 benefit-oriented objective, isolates adapter/evaluator/objective failures, persists partial
@@ -97,9 +106,8 @@ observations. `RandomSearch` uses replay to verify candidates and advance its se
 `OptimizationResult` exposes study and stop status, all terminal trial summaries, best trial
 and candidate, successful/failed subsets, aggregate usage with exact-versus-estimated cost,
 and a valid no-success outcome. Each `TrialSummary` reports attempt count and whether metrics
-came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Callback dispatch,
-concurrency, study forking, and mandatory custom-component fingerprints remain planned V0.1
-work.
+came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Bounded concurrency,
+study forking, and mandatory custom-component fingerprints remain planned V0.1 work.
 
 ## Versioning
 

@@ -20,6 +20,13 @@ commits terminal results. Duplicate suggestions are retried up to a configured b
 search exhaustion. A later scheduler will increase bounded capacity without changing these
 single-trial semantics.
 
+Configured callbacks implement async `on_event(StudyEvent)`. Dispatch occurs after commit and
+follows durable event sequence. Retry-scheduled events are dispatched before sleeping. Callback
+exceptions are isolated from optimization and recorded as `callback.failed` with source
+sequence, callback index/type, and exception type; exception messages are omitted. Failure
+events are not redispatched, preventing recursive storms. Resume begins callback delivery after
+the historical event tail.
+
 ## Retries and resume
 
 Retry decisions use stage, error code, idempotency, attempt count, and provider hints.

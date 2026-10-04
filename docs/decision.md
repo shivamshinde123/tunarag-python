@@ -107,3 +107,12 @@ semantic fingerprints. `RandomSearch` fingerprints its search space and seed, th
 advances generator state during replay. Components without a fingerprint retain type-only
 identity in V0.1. Store candidate payloads with a reversible, number-preserving, secret-safe JSON
 serializer while retaining the existing canonical serializer exclusively for hashes.
+
+## 2026-10-04 Post-commit callback dispatch
+
+Make callbacks async objects consuming durable `StudyEvent` records. Dispatch only after SQLite
+commits and preserve event sequence, including notifying retry scheduling before backoff. Do not
+replay historical callback notifications on resume; callers can query the event store when they
+want history. Isolate callback exceptions from authoritative optimization state and append a
+redacted `callback.failed` diagnostic containing no exception message. Never dispatch callback
+failure events back through callbacks, preventing recursive failure storms.

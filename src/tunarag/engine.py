@@ -16,6 +16,7 @@ from .contracts import (
     Cache,
     Dataset,
     Evaluator,
+    EventCallback,
     Fingerprintable,
     RAGAdapter,
     ReplayableSearchStrategy,
@@ -58,6 +59,7 @@ class Optimizer:
         settings: Settings | None = None,
         stop_conditions: Sequence[StopCondition] | None = None,
         retry_policy: RetryPolicy | None = None,
+        callbacks: Sequence[EventCallback] = (),
         sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
         clock: Callable[[], float] = time.monotonic,
         duplicate_suggestion_limit: int = 100,
@@ -86,6 +88,8 @@ class Optimizer:
             sample_timeout_seconds=self._settings.sample_timeout_seconds,
             trial_timeout_seconds=self._settings.trial_timeout_seconds,
         )
+        self._callbacks = tuple(callbacks)
+        self._event_cursors: dict[str, int] = {}
         self._sleeper = sleeper
         self._clock = clock
         self._duplicate_suggestion_limit = duplicate_suggestion_limit
@@ -102,6 +106,8 @@ class Optimizer:
         self._validate_dataset(dataset)
         study = self._store.create_study(study_name, self._study_configuration(dataset))
         study = self._store.transition_study(study.id, StudyStatus.RUNNING)
+        self._event_cursors[study.id] = -1
+        await self._dispatch_events(study.id)
         return await self._continue_study(dataset, study, [], [])
 
     async def aresume(self, dataset: Dataset, *, study_id: str) -> OptimizationResult:
@@ -130,6 +136,7 @@ class Optimizer:
                 details={"study_id": study_id, "status": study.status.value},
             )
 
+        self._event_cursors[study.id] = self._latest_event_sequence(study.id)
         summaries = self._load_terminal_summaries(study.id)
         if study.status is StudyStatus.COMPLETED:
             await self._replay_strategy(study.id, summaries)
@@ -152,6 +159,7 @@ class Optimizer:
             if trial.status is TrialStatus.RUNNING and trial.id not in recoverable_ids
         ]
         if active:
+            await self._dispatch_events(study.id)
             raise ResumeError(
                 "study has attempts with active recovery leases",
                 stage="resume.recover",
@@ -168,6 +176,7 @@ class Optimizer:
                 "abandoned_attempts": len(abandoned),
             },
         )
+        await self._dispatch_events(study.id)
         return await self._continue_study(dataset, study, summaries, unfinished)
 
     async def _continue_study(
@@ -193,6 +202,7 @@ class Optimizer:
                         self._store.append_event(study.id, "study.search_exhausted", {})
                         break
                     candidate, trial = reservation
+                    await self._dispatch_events(study.id)
                 else:
                     candidate = _candidate_from_trial(trial)
                 summary = await self._run_trial(dataset, candidate, trial)
@@ -201,6 +211,7 @@ class Optimizer:
                     await self._observe_success(summary)
             self._store.append_event(study.id, "study.stopping", {"reason": stop_reason})
             study = self._store.transition_study(study.id, StudyStatus.COMPLETED)
+            await self._dispatch_events(study.id)
         except asyncio.CancelledError:
             current = self._store.get_study(study.id)
             if current.status is StudyStatus.RUNNING:
@@ -236,6 +247,33 @@ class Optimizer:
 
         if self._owns_store:
             self._store.close()
+
+    def _latest_event_sequence(self, study_id: str) -> int:
+        events = self._store.list_events(study_id)
+        return -1 if not events else events[-1].sequence
+
+    async def _dispatch_events(self, study_id: str) -> None:
+        cursor = self._event_cursors.get(study_id, -1)
+        events = self._store.list_events(study_id, after_sequence=cursor)
+        for event in events:
+            self._event_cursors[study_id] = event.sequence
+            if event.type == "callback.failed":
+                continue
+            for index, callback in enumerate(self._callbacks):
+                try:
+                    await callback.on_event(event)
+                except Exception as error:
+                    self._store.append_event(
+                        study_id,
+                        "callback.failed",
+                        {
+                            "source_sequence": event.sequence,
+                            "callback_index": index,
+                            "callback": _type_name(callback),
+                            "cause": type(error).__name__,
+                        },
+                    )
+        self._event_cursors[study_id] = self._latest_event_sequence(study_id)
 
     @staticmethod
     def _validate_dataset(dataset: Dataset) -> None:
@@ -358,6 +396,7 @@ class Optimizer:
             attempt = self._store.start_attempt(
                 trial.id, lease_seconds=self._retry_policy.lease_seconds
             )
+            await self._dispatch_events(trial.study_id)
             try:
                 if cached_metrics is None:
                     metrics, usage = await _wait_for(
@@ -385,6 +424,7 @@ class Optimizer:
                     )
                 else:
                     self._write_cache(trial, cache_key, metrics)
+                await self._dispatch_events(trial.study_id)
                 return TrialSummary(
                     id=trial.id,
                     sequence=trial.sequence,
@@ -424,6 +464,7 @@ class Optimizer:
                             "delay_seconds": delay,
                         },
                     )
+                    await self._dispatch_events(trial.study_id)
                     try:
                         await self._sleeper(delay)
                     except asyncio.CancelledError:
@@ -438,6 +479,7 @@ class Optimizer:
                     usage=failure.usage,
                     error=failure_message,
                 )
+                await self._dispatch_events(trial.study_id)
                 return TrialSummary(
                     id=trial.id,
                     sequence=trial.sequence,
@@ -472,6 +514,7 @@ class Optimizer:
                             "delay_seconds": delay,
                         },
                     )
+                    await self._dispatch_events(trial.study_id)
                     try:
                         await self._sleeper(delay)
                     except asyncio.CancelledError:
@@ -485,6 +528,7 @@ class Optimizer:
                     attempt_id=attempt.id,
                     error=failure_message,
                 )
+                await self._dispatch_events(trial.study_id)
                 return TrialSummary(
                     id=trial.id,
                     sequence=trial.sequence,
