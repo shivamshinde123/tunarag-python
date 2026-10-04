@@ -27,6 +27,13 @@ Authentication, invalid configuration/output, and missing ground truth are nonre
 rate limits, transient networks, and provider 5xx responses are generally retryable. Exhausted
 trial failure does not fail the study by default.
 
+The implemented `RetryPolicy` retries structured errors explicitly marked retryable plus
+timeouts and connection failures. Attempt numbers start at zero and every retry starts a new
+leased attempt. Backoff is deterministic exponential delay capped by policy. A failed
+retryable attempt commits its observed usage and terminal attempt state in one transaction,
+while the trial remains running. Sample timeout wraps each adapter and evaluator call; trial
+timeout wraps complete dataset execution. Cancellation is never converted into a retry.
+
 Resume compares dataset, search-space, objective, adapter, evaluator, strategy, schema, and
 cache fingerprints; abandons expired attempts; reconstructs budgets; replays terminal results;
 and continues sequence numbers. Incompatibility requires an explicit fork.
@@ -45,6 +52,14 @@ reason. Reads verify TTL and checksum before exposing bytes. The first corrupt r
 corrupt outcome and persists quarantine; later reads return quarantined. Expired and quarantined
 entries remain inspectable until retention pruning. Partial/failed work is not cached without
 an explicit safe negative-cache policy.
+
+The optimizer cache payload is canonical JSON containing only payload version and aggregated
+metrics. Objective scores are recomputed so objective weights can change without invalidating
+evaluation work; cached usage is intentionally empty because result accounting describes the
+current run. Cache keys include format version, dataset version, candidate, and adapter and
+evaluator type names. Writes occur only after the durable successful trial commit. Cache read,
+decode, and write failures append events and do not change trial success. Configurable component
+fingerprints and TTL selection at the optimizer boundary remain future work.
 
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and

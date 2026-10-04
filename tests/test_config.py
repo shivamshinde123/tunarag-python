@@ -37,12 +37,14 @@ def test_settings_read_only_known_environment_variables() -> None:
         overrides={"home": "explicit-home"},
         environ={
             "TUNARAG_CONCURRENCY": "6",
+            "TUNARAG_SAMPLE_TIMEOUT_SECONDS": "12.5",
             "OPENAI_API_KEY": "must-not-enter-settings",
             "UNRELATED": "ignored",
         },
     )
 
     assert settings.concurrency == 6
+    assert settings.sample_timeout_seconds == 12.5
     assert "must-not-enter-settings" not in repr(settings.as_dict())
     assert set(settings.as_dict()) == {
         "home",
@@ -54,6 +56,8 @@ def test_settings_read_only_known_environment_variables() -> None:
         "sample_concurrency",
         "seed",
         "max_retries",
+        "sample_timeout_seconds",
+        "trial_timeout_seconds",
         "cache_policy",
     }
 
@@ -70,6 +74,8 @@ def test_settings_reject_unknown_and_invalid_values(tmp_path) -> None:
         Settings.resolve(overrides={"max_trials": 0}, environ={})
     with pytest.raises(ConfigurationError, match="cache_policy"):
         Settings.resolve(overrides={"cache_policy": "sometimes"}, environ={})
+    with pytest.raises(ConfigurationError, match="positive finite"):
+        Settings.resolve(overrides={"trial_timeout_seconds": 0}, environ={})
 
 
 def test_settings_do_not_load_dotenv_implicitly(tmp_path, monkeypatch) -> None:

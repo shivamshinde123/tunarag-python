@@ -31,6 +31,7 @@ class TrialSummary:
     usage: tuple[UsageRecord, ...]
     objective: ObjectiveResult | None
     attempts: int
+    cached: bool = False
     error: str | None = None
 
 

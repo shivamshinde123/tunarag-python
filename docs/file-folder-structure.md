@@ -18,6 +18,7 @@ tunarag-python/
 |   |-- serialization.py     # Canonical JSON and hashes
 |   |-- stopping.py          # Stop conditions
 |   |-- result.py            # Optimization and trial summaries
+|   |-- retry.py             # Retry classification, backoff, and timeouts
 |   `-- store.py             # SQLite lifecycle persistence
 |-- tests/                   # Unit and integration tests
 |-- PROJECT_PLAN.md          # Delivery phases and gates

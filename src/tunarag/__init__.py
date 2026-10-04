@@ -27,6 +27,7 @@ from .errors import (
 )
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .result import OptimizationResult, TrialSummary, UsageSummary
+from .retry import RetryPolicy
 from .stopping import CostBudget, MaxTrials, StopContext
 from .store import (
     AttemptRecord,
@@ -68,6 +69,7 @@ __all__ = [
     "Optimizer",
     "PersistedUsageRecord",
     "ResumeError",
+    "RetryPolicy",
     "Secret",
     "SearchSpaceError",
     "Settings",
