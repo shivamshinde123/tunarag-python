@@ -9,13 +9,13 @@
 - [x] The provider-free quickstart writes SQLite, JSON, and CSV outputs.
 - [x] README, changelog, contribution, security guidance, and license metadata exist.
 - [x] LangChain and LangGraph remain optional and outside core import paths.
-- [ ] Real LangChain 1.x and LangGraph 1.x compatibility tests pass in CI.
+- [x] Real LangChain 1.x and LangGraph 1.x compatibility tests pass in CI.
 - [x] V0.2 defaults, mapping hooks, usage behavior, and non-goals are documented.
 
 ## Publish-time gates
 
 - [ ] Confirm the `tunarag-python` name and owner account on the target package index.
-- [ ] Create an annotated `v0.2.0` tag from the final green `main` commit.
+- [x] Create an annotated `v0.2.0` tag from the final green `main` commit.
 - [ ] Build from a clean checkout and inspect wheel/sdist contents.
 - [ ] Publish to TestPyPI and run the quickstart in a fresh environment.
 - [ ] Publish to PyPI, verify metadata links, then create the GitHub release from `CHANGELOG.md`.
