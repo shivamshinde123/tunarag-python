@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 
 import pytest
@@ -24,6 +25,7 @@ def test_retry_policy_classifies_only_explicit_transient_failures() -> None:
 
     assert policy.is_retryable(ConnectionError())
     assert policy.is_retryable(TimeoutError())
+    assert policy.is_retryable(asyncio.TimeoutError())
     assert policy.is_retryable(AdapterError("transient", retryable=True))
     assert not policy.is_retryable(AdapterError("permanent"))
     assert not policy.is_retryable(ValueError())

@@ -1,5 +1,6 @@
 """Deterministic retry and timeout policy."""
 
+import asyncio
 import math
 from dataclasses import dataclass
 
@@ -56,7 +57,7 @@ class RetryPolicy:
 
         if isinstance(error, TunaRAGError):
             return error.retryable
-        return isinstance(error, (TimeoutError, ConnectionError))
+        return isinstance(error, (TimeoutError, asyncio.TimeoutError, ConnectionError))
 
 
 def _validate_optional_timeout(name: str, value: float | None) -> None:
