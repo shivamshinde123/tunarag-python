@@ -2,6 +2,13 @@
 
 Decisions are chronological. Superseding entries preserve the original reasoning.
 
+## 2026-10-04 Comprehensive usage guide
+
+Maintain a root-level `Usage.md` as the canonical package usage guide. It covers all public V0.2
+features, copy-oriented examples, lifecycle diagrams, edge cases, and production guidance. Focused
+API and architecture documents remain authoritative for design detail; material behavior changes
+must update both those specifications and the usage guide.
+
 ## 2026-10-03 Naming
 
 Use TunaRAG as the product, `tunarag-python` as the repository and Python distribution, and

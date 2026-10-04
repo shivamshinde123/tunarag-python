@@ -33,6 +33,9 @@ python -m pytest
 
 The public package is imported as `tunarag`.
 
+For comprehensive, feature-by-feature instructions, examples, lifecycle diagrams, and operational
+guidance, read the **[Usage Guide](Usage.md)**.
+
 ## Framework integrations
 
 Existing LangChain runnables and compiled LangGraph graphs require no custom adapter class:
