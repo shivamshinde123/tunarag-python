@@ -1,5 +1,9 @@
 # Code Flow
 
+The canonical living code-flow document is [`docs/flow.md`](docs/flow.md). This root file is
+retained for compatibility with existing links. Update both the implementation and canonical
+flow document in the same feature branch.
+
 ## Status
 
 Phase 2 is in progress. Package metadata, installable `src/tunarag` package, immutable domain values, extension protocols, canonical serialization, typed search spaces, seeded random search, objective aggregation, stop conditions, SQLite study/trial persistence, and contract tests are implemented.
