@@ -94,6 +94,14 @@ The first implementation branch will deliver Phase 0 and the smallest useful sli
 All six phases are complete for the documented V0.1 scope. `RELEASE_CHECKLIST.md` separates
 repository readiness from manual package-index publication, signing, and release-tag actions.
 
+## V0.2 framework integrations
+
+V0.2 adds first-party adapters for existing LangChain runnables and compiled LangGraph graphs.
+The adapters preserve the standard `RAGAdapter` boundary, use the frameworks' shared async
+invocation shape, provide default candidate configuration plus explicit mapping/factory hooks,
+and capture latency and standard message usage. Dedicated CI installs the optional 1.x framework
+extras and runs compatibility tests; the core matrix remains framework-independent.
+
 ## Risks and mitigations
 
 - **Contract breadth:** start from the API specification and keep models independent of providers.

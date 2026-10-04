@@ -18,6 +18,7 @@ tunarag-python/
 |   |-- objective.py         # Objective aggregation
 |   |-- evaluators.py        # Custom metric helper and optional RAGAS adapter
 |   |-- integrations/        # Optional outward adapters such as MLflow callbacks
+|   |   `-- runnables.py     # LangChain and LangGraph async runnable adapters
 |   |-- search.py            # Search spaces and RandomSearch
 |   |-- serialization.py     # Canonical JSON and hashes
 |   |-- stopping.py          # Stop conditions

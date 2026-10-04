@@ -206,3 +206,14 @@ import smoke test, property tests, and reference quickstart pass. Keep formal Pa
 distributed execution, CLI design, framework adapters, and package-index publication outside
 the V0.1 implementation contract. Record public changes through semantic versioning and the
 changelog while SQLite and cache formats retain independent schema versions.
+
+## 2026-10-04 Add structural LangChain and LangGraph integrations in V0.2
+
+Provide first-party adapters for LangChain runnables and compiled LangGraph graphs through their
+shared asynchronous `ainvoke` shape. Keep framework imports out of core runtime modules and offer
+explicit 1.x optional extras plus real compatibility CI. Default canonical queries to a
+`question` input and candidate parameters to the `configurable` namespace, while preserving
+custom mappers and per-candidate factories for pipeline-specific state and construction needs.
+Capture latency and standard message token usage without introspecting framework internals or
+credentials. This reduces integration boilerplate without changing the provider-neutral
+optimizer contract.

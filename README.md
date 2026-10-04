@@ -4,7 +4,7 @@
 
 ## Release
 
-The current source release is **V0.1.0**, tagged as `v0.1.0`. See
+The current source release is **V0.2.0**, tagged as `v0.2.0`. See
 [`CHANGELOG.md`](CHANGELOG.md) for delivered capabilities and deferred work. Package-index
 publication is tracked separately in [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
 
@@ -15,7 +15,9 @@ python -m pip install tunarag-python
 ```
 
 Optional integrations are installed explicitly with `tunarag-python[ragas]` or
-`tunarag-python[mlflow]`. Python 3.10 through 3.13 is supported.
+`tunarag-python[mlflow]`. Install `tunarag-python[langchain]`,
+`tunarag-python[langgraph]`, or `tunarag-python[frameworks]` for framework integrations.
+Python 3.10 through 3.13 is supported.
 
 The implementation is developed against the detailed DOCX baseline and living Markdown
 documents in [`docs/`](docs/), plus the phased delivery plan in
@@ -30,6 +32,35 @@ python -m pytest
 ```
 
 The public package is imported as `tunarag`.
+
+## Framework integrations
+
+Existing LangChain runnables and compiled LangGraph graphs require no custom adapter class:
+
+```python
+from tunarag import LangChainAdapter, LangGraphAdapter
+
+langchain_adapter = LangChainAdapter(existing_chain)
+langgraph_adapter = LangGraphAdapter(compiled_graph)
+```
+
+By default, TunaRAG sends an `EvaluationExample` as `{"question": example.query}` and exposes
+candidate parameters under `config["configurable"]`. Override `input_mapper`, `config_mapper`,
+or `output_mapper` only when the pipeline uses a different state shape:
+
+```python
+adapter = LangGraphAdapter(
+    compiled_graph,
+    input_mapper=lambda example, candidate: {
+        "question": example.query,
+        "top_k": candidate.parameters["top_k"],
+    },
+    output_mapper=lambda state: state["answer"],
+)
+```
+
+Use `factory=lambda candidate: build_chain(candidate.parameters)` when a candidate must rebuild
+retrievers, splitters, prompts, or models instead of configuring one reusable runnable.
 
 ## Quickstart
 
