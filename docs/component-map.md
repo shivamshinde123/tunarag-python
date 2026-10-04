@@ -11,7 +11,7 @@
 | Retry policy | Retry classification, capped backoff, sample/trial deadlines | Implemented |
 | Optimizer and trial runner | Bounded trial/sample concurrency, retries, cache, resume, isolation | Partial |
 | LLMSearch | Provider-neutral bounded suggestions, validation, deterministic fallback | Implemented |
-| Evaluators | Custom metrics and optional RAGAS | Planned |
+| Evaluators | Custom metric helper and optional lazy RAGAS integration | Implemented |
 | Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
 | Results and reporting | Best/trial/usage summaries implemented; exports planned | Partial |
 | MLflow mirror | Optional post-commit tracking | Later V0.1 |

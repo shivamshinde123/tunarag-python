@@ -13,6 +13,8 @@ types, `MaxTrials`, `CostBudget`, `RetryPolicy`, `SQLiteStore`, study/trial reco
 cache types `CacheKey`, `CacheEntry`, `CacheLookup`, `CacheLookupStatus`, `CachePrivacy`, and
 `SQLiteCache`, search-space types, `RandomSearch`, `LLMSearch`, `LLMSuggestionRequest`, and
 `LLMSearchProvider`. Extension protocols also live in `tunarag.contracts`.
+The evaluator surface includes `MetricEvaluator`, `MetricScorer`, `RagasEvaluator`, and
+`RagasSampleMapper`.
 
 `Candidate` requires a nonempty parameter mapping. Metrics and usage retain `exact`,
 `estimated`, or `unavailable` provenance. `Objective.evaluate` combines configured terms.
@@ -66,6 +68,28 @@ provider fingerprint, limits, fallback seed, and fallback policy.
 Provider-call token/cost accounting is not yet part of the `SearchStrategy.suggest` return
 contract; providers should retain their own usage until the planned strategy-usage extension is
 implemented. This limitation is explicit rather than reporting unknown search cost as zero.
+
+## Evaluators
+
+`MetricEvaluator(name, scorer, status=ValueStatus.EXACT)` adapts one synchronous or asynchronous
+numeric callable to the evaluator protocol. A finite numeric result becomes one metric. `None`,
+NaN, and infinity become an unavailable metric with zero coverage. Booleans and nonnumeric
+values raise `EvaluationError`. The reserved `tunarag.objective` metric name is rejected.
+
+`RagasEvaluator(metrics, sample_mapper, metric_prefix="ragas.", llm=None, embeddings=None,
+raise_exceptions=False)` is available without importing RAGAS at package import time. The caller
+must explicitly map `(output, example)` to keyword fields accepted by RAGAS `SingleTurnSample`;
+this mapping is the privacy boundary controlling which application data reaches evaluator
+providers. Each call builds a one-row `EvaluationDataset`, invokes async `ragas.aevaluate` with
+progress disabled, and converts the one-row score mapping into `MetricValue` observations.
+Missing/nonfinite scores are unavailable with zero coverage. Provider exception messages are not
+included in public errors. Install with `pip install 'tunarag-python[ragas]'`. The supported V0.1
+integration range is RAGAS `>=0.4,<0.5`; TunaRAG does not configure provider credentials.
+
+Both built-ins implement semantic fingerprints. Callable identity uses module and qualified name;
+users should avoid anonymous lambdas for persisted studies that must remain compatible across
+code moves. RAGAS metric, LLM, and embedding objects can implement `Fingerprintable` to include
+behavioral configuration without exposing secrets.
 
 ## Optimizer entry point
 

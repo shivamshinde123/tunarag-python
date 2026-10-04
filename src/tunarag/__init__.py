@@ -25,6 +25,7 @@ from .errors import (
     SyncInAsyncContextError,
     TunaRAGError,
 )
+from .evaluators import MetricEvaluator, MetricScorer, RagasEvaluator, RagasSampleMapper
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .result import OptimizationResult, TrialSummary, UsageSummary
 from .retry import RetryPolicy
@@ -76,6 +77,8 @@ __all__ = [
     "LLMSearchProvider",
     "LLMSuggestionRequest",
     "MaxTrials",
+    "MetricEvaluator",
+    "MetricScorer",
     "MetricValue",
     "MissingOptionalDependencyError",
     "Objective",
@@ -87,6 +90,8 @@ __all__ = [
     "PersistedUsageRecord",
     "ResumeError",
     "RandomSearch",
+    "RagasEvaluator",
+    "RagasSampleMapper",
     "RetryPolicy",
     "Secret",
     "SearchSpaceError",

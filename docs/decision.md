@@ -135,3 +135,13 @@ errors. Use stateless deterministic fallback keyed by seed and suggestion number
 not depend on hidden random state. Include optional provider fingerprints in compatibility.
 Keep strategy-provider usage explicitly unreported until the common strategy contract gains a
 durable usage channel; never silently count unknown provider cost as zero.
+
+## 2026-10-04 Optional RAGAS boundary adapter
+
+Keep the optimizer coupled only to the small `Evaluator` protocol. Provide a built-in
+`MetricEvaluator` for ordinary sync or async numeric functions and a lazy `RagasEvaluator` for
+RAGAS 0.4. Require an explicit sample mapper as a privacy and schema boundary rather than
+inspecting arbitrary user objects. Evaluate one engine sample at a time so TunaRAG retains
+ownership of concurrency, retries, timeouts, aggregation, and failure isolation. Namespace RAGAS
+metrics by default, normalize missing/nonfinite scores to unavailable, redact provider exception
+messages, and keep provider credentials/configuration outside TunaRAG.
