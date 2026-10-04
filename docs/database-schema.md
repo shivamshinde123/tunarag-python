@@ -28,6 +28,10 @@ attempt. `study_events` stores canonical redacted JSON with an atomic per-study 
 Foreign keys are enabled. Candidate/sequence allocation uses `BEGIN IMMEDIATE`. Terminal
 result commit writes metrics, usage, attempt state, trial state, and final event in one
 transaction. Provider calls and callbacks never occur inside these transactions.
+When a retryable attempt fails, its terminal attempt state and any usage already observed are
+committed together while the parent trial remains running. The next attempt receives the next
+monotonic attempt number. This preserves real cost across retries without exposing partial
+metrics as a semantic trial result.
 
 ## Planned migrations
 

@@ -1,5 +1,6 @@
 """Typed settings and deterministic configuration resolution."""
 
+import math
 import os
 import sys
 from collections.abc import Mapping
@@ -25,6 +26,8 @@ _ENV_TO_FIELD = {
     "TUNARAG_SAMPLE_CONCURRENCY": "sample_concurrency",
     "TUNARAG_SEED": "seed",
     "TUNARAG_MAX_RETRIES": "max_retries",
+    "TUNARAG_SAMPLE_TIMEOUT_SECONDS": "sample_timeout_seconds",
+    "TUNARAG_TRIAL_TIMEOUT_SECONDS": "trial_timeout_seconds",
     "TUNARAG_CACHE_POLICY": "cache_policy",
 }
 _FIELDS = frozenset(_ENV_TO_FIELD.values())
@@ -36,6 +39,7 @@ _INTEGER_FIELDS = {
     "max_retries",
 }
 _PATH_FIELDS = {"home", "db_path", "cache_dir", "artifact_dir"}
+_FLOAT_FIELDS = {"sample_timeout_seconds", "trial_timeout_seconds"}
 
 
 class CachePolicy(str, Enum):
@@ -60,6 +64,8 @@ class Settings:
     sample_concurrency: int = 8
     seed: int = 0
     max_retries: int = 2
+    sample_timeout_seconds: float = 60.0
+    trial_timeout_seconds: float = 300.0
     cache_policy: CachePolicy = CachePolicy.READ_WRITE
 
     def __post_init__(self) -> None:
@@ -70,6 +76,8 @@ class Settings:
         _require_integer("max_retries", self.max_retries)
         if self.max_retries < 0:
             raise ConfigurationError("max_retries must not be negative", stage="config")
+        for field in _FLOAT_FIELDS:
+            _require_positive_float(field, getattr(self, field))
 
     @classmethod
     def resolve(
@@ -87,6 +95,8 @@ class Settings:
             "sample_concurrency": 8,
             "seed": 0,
             "max_retries": 2,
+            "sample_timeout_seconds": 60.0,
+            "trial_timeout_seconds": 300.0,
             "cache_policy": CachePolicy.READ_WRITE,
         }
         if config_path is not None:
@@ -106,10 +116,12 @@ class Settings:
             values[field] = _as_path(field, values[field])
         for field in _INTEGER_FIELDS:
             values[field] = _as_integer(field, values[field])
+        for field in _FLOAT_FIELDS:
+            values[field] = _as_float(field, values[field])
         values["cache_policy"] = _as_cache_policy(values["cache_policy"])
         return cls(**values)
 
-    def as_dict(self) -> dict[str, str | int]:
+    def as_dict(self) -> dict[str, str | int | float]:
         """Return a serializable settings view containing no secrets."""
 
         return {
@@ -122,6 +134,8 @@ class Settings:
             "sample_concurrency": self.sample_concurrency,
             "seed": self.seed,
             "max_retries": self.max_retries,
+            "sample_timeout_seconds": self.sample_timeout_seconds,
+            "trial_timeout_seconds": self.trial_timeout_seconds,
             "cache_policy": self.cache_policy.value,
         }
 
@@ -203,6 +217,18 @@ def _as_cache_policy(value: Any) -> CachePolicy:
         ) from error
 
 
+def _as_float(field: str, value: Any) -> float:
+    if isinstance(value, bool):
+        raise ConfigurationError(f"{field} must be a number", stage="config")
+    try:
+        converted = float(value)
+    except (TypeError, ValueError) as error:
+        raise ConfigurationError(f"{field} must be a number", stage="config") from error
+    if not math.isfinite(converted):
+        raise ConfigurationError(f"{field} must be finite", stage="config")
+    return converted
+
+
 def _require_integer(field: str, value: int) -> None:
     if not isinstance(value, int) or isinstance(value, bool):
         raise ConfigurationError(f"{field} must be an integer", stage="config")
@@ -212,6 +238,13 @@ def _require_positive(field: str, value: int) -> None:
     _require_integer(field, value)
     if value < 1:
         raise ConfigurationError(f"{field} must be positive", stage="config")
+
+
+def _require_positive_float(field: str, value: float) -> None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise ConfigurationError(f"{field} must be a number", stage="config")
+    if not math.isfinite(value) or value <= 0:
+        raise ConfigurationError(f"{field} must be a positive finite number", stage="config")
 
 
 def _default_home() -> Path:

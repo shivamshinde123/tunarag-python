@@ -13,6 +13,8 @@ attempt leases and recovery, atomic observations/events, versioned SQLite cachin
 tests are implemented. The first sequential async optimizer path now executes adapters and
 evaluators, aggregates metrics and usage, isolates trial failures, commits outcomes, observes
 successful trials, applies stop conditions, and returns ranked results.
+Retries, separate sample/trial timeouts, retry-attempt usage persistence, and policy-controlled
+evaluation-cache integration are also implemented.
 
 ## Intended entry points
 
@@ -49,15 +51,14 @@ Load study and terminal observations, mark expired running attempts abandoned, a
 
 ## Current implemented flow
 
-The current optimization path resolves a new study, reserves candidates, starts one attempt,
-iterates the repeatable dataset, calls the adapter and evaluators, aggregates metrics, computes
-the objective, atomically commits the terminal outcome, observes successful trials, and checks
-stopping rules. Failures are isolated to their trial. The sync wrapper rejects an active event
-loop. Supporting persistence paths cover guarded study/trial state, atomic candidate reservation,
-attempt leases, expired-attempt recovery, terminal metric/usage/event commits, replay queries,
-and independently versioned cache writes and reads. Cache lookups verify checksums, enforce
-TTLs, persist quarantine after corruption, and expose explicit outcomes. Tests verify these
-paths without optional integrations.
+The current optimization path resolves a new study, reserves candidates, checks the compatible
+evaluation cache, starts leased attempts, iterates the repeatable dataset, calls the adapter and
+evaluators under separate sample/trial deadlines, aggregates metrics, computes the objective,
+and atomically commits outcomes. Retryable failures persist attempt usage before deterministic
+backoff and a fresh attempt; exhausted failures remain isolated to their trial. Successful
+uncached metrics are cached only after the durable trial commit, while cache failures become
+events rather than trial failures. The sync wrapper rejects an active event loop. Resume,
+callback dispatch, and bounded concurrency are not implemented yet.
 
 ## Update rule
 

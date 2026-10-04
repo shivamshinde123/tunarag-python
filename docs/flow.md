@@ -22,8 +22,9 @@ Canonical serialization produces deterministic JSON and domain-separated hashes.
 durable lifecycle, observations, events, and cache state. Immediate transactions allocate
 monotonic sequences; short terminal transactions preserve all-or-nothing outcomes. Attempt
 leases make interrupted running trials discoverable without reusing attempt numbers. A corrupt
-cache payload is quarantined and never returned. No current entry point executes an adapter or
-evaluator. Package boundaries translate contextual failures into structured errors.
+cache payload is quarantined and never returned. The optimizer is the sole current entry point
+that executes adapters and evaluators. Package boundaries translate contextual failures into
+structured errors.
 
 ## Implemented optimizer flow
 
@@ -32,20 +33,25 @@ Optimizer.aoptimize
   -> fingerprint components and create running study
   -> strategy.suggest -> reserve unique candidate and sequence
   -> start leased attempt
-  -> for each dataset sample: adapter.run -> evaluators.evaluate
+  -> read compatible cached metrics or execute candidate
+  -> for each dataset sample: timed adapter.run -> timed evaluators.evaluate
   -> aggregate metric means, coverage, and confidence
   -> Objective.evaluate
-  -> commit metrics, usage, attempt, trial, and event atomically
+  -> on transient failure: atomically finish attempt with usage -> backoff -> new attempt
+  -> on success: commit metrics, usage, attempt, trial, and event atomically
+  -> write successful uncached metrics after commit
   -> strategy.observe committed success
   -> evaluate stop conditions or continue
   -> complete study -> build OptimizationResult and UsageSummary
 ```
 
 Adapter, evaluator, and objective exceptions become redacted failed-trial summaries and do not
-stop the study. Cancellation commits the active trial as cancelled, cancels the study, and is
-re-raised. Strategy failures are study-level failures because candidate generation or state
-observation cannot safely continue. Execution is currently sequential and does not read cache
-or resume an existing study.
+stop the study. Retryable failures use a bounded `RetryPolicy`; sample calls and whole-trial
+execution have independent deadlines. Cache hits recompute the objective and report zero
+current-run usage. Cache failures append diagnostic events and fall back to execution.
+Cancellation commits the active trial as cancelled, cancels the study, and is re-raised.
+Strategy failures are study-level failures because candidate generation or state observation
+cannot safely continue. Execution is currently sequential and cannot resume an existing study.
 
 ## Target optimization flow
 

@@ -1,24 +1,29 @@
-"""Sequential async optimization engine and synchronous convenience wrapper."""
+"""Async optimization engine with retries, timeouts, caching, and sync wrapper."""
 
 import asyncio
+import json
 import sqlite3
 import time
 from collections import defaultdict
-from collections.abc import Callable, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from statistics import fmean
-from typing import Any
+from typing import Any, TypeVar, cast
 
-from .config import Settings
-from .contracts import Dataset, Evaluator, RAGAdapter, SearchStrategy
+from .cache import CacheKey, CacheLookupStatus, CachePrivacy
+from .config import CachePolicy, Settings
+from .contracts import Cache, Dataset, Evaluator, RAGAdapter, SearchStrategy
 from .domain import Candidate, MetricValue, UsageRecord, ValueStatus
 from .errors import SearchSpaceError, SyncInAsyncContextError
 from .objective import Objective, ObjectiveResult
 from .result import OptimizationResult, TrialSummary, UsageSummary
+from .retry import RetryPolicy
 from .stopping import MaxTrials, StopCondition, StopContext
-from .store import SQLiteStore, StudyStatus, TrialRecord, TrialStatus
+from .store import AttemptStatus, SQLiteStore, StudyStatus, TrialRecord, TrialStatus
 
 _OBJECTIVE_METRIC = "tunarag.objective"
+_CACHE_PAYLOAD_VERSION = 1
+_T = TypeVar("_T")
 
 
 @dataclass(slots=True)
@@ -26,10 +31,11 @@ class _TrialFailure(Exception):
     stage: str
     cause_type: str
     usage: tuple[UsageRecord, ...]
+    retryable: bool = False
 
 
 class Optimizer:
-    """Coordinate sequential V0.1 optimization trials through public contracts."""
+    """Coordinate V0.1 optimization trials through public contracts."""
 
     def __init__(
         self,
@@ -39,8 +45,11 @@ class Optimizer:
         evaluators: Sequence[Evaluator],
         objective: Objective,
         store: SQLiteStore | None = None,
+        cache: Cache | None = None,
         settings: Settings | None = None,
         stop_conditions: Sequence[StopCondition] | None = None,
+        retry_policy: RetryPolicy | None = None,
+        sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
         clock: Callable[[], float] = time.monotonic,
         duplicate_suggestion_limit: int = 100,
     ) -> None:
@@ -54,6 +63,7 @@ class Optimizer:
         self._objective = objective
         self._store = SQLiteStore() if store is None else store
         self._owns_store = store is None
+        self._cache = cache
         self._settings = Settings.resolve(environ={}) if settings is None else settings
         self._stop_conditions = (
             (MaxTrials(self._settings.max_trials),)
@@ -62,6 +72,12 @@ class Optimizer:
         )
         if not self._stop_conditions:
             raise ValueError("optimizer requires at least one stop condition")
+        self._retry_policy = retry_policy or RetryPolicy(
+            max_retries=self._settings.max_retries,
+            sample_timeout_seconds=self._settings.sample_timeout_seconds,
+            trial_timeout_seconds=self._settings.trial_timeout_seconds,
+        )
+        self._sleeper = sleeper
         self._clock = clock
         self._duplicate_suggestion_limit = duplicate_suggestion_limit
 
@@ -126,7 +142,7 @@ class Optimizer:
         raise SyncInAsyncContextError()
 
     def close(self) -> None:
-        """Close an internally created store; caller-owned stores remain open."""
+        """Close an internally created store; caller-owned resources remain open."""
 
         if self._owns_store:
             self._store.close()
@@ -157,63 +173,152 @@ class Optimizer:
     async def _run_trial(
         self, dataset: Dataset, candidate: Candidate, trial: TrialRecord
     ) -> TrialSummary:
-        attempt = self._store.start_attempt(trial.id, lease_seconds=86_400.0)
-        try:
-            metrics, usage = await self._execute_candidate(dataset, candidate)
+        cache_key = self._cache_key(dataset, candidate)
+        cached_metrics = self._read_cache(trial, cache_key)
+        accumulated_usage: list[UsageRecord] = []
+        while True:
+            attempt = self._store.start_attempt(
+                trial.id, lease_seconds=self._retry_policy.lease_seconds
+            )
             try:
-                objective = self._objective.evaluate(metrics)
-            except Exception as objective_error:
-                raise _TrialFailure(
-                    "objective", type(objective_error).__name__, usage
-                ) from objective_error
-            if objective.score is None:
-                raise _TrialFailure("objective", "unavailable", usage)
-            objective_metric = MetricValue(_OBJECTIVE_METRIC, objective.score, objective.status)
-            self._store.commit_trial_result(
-                trial.id,
-                status=TrialStatus.SUCCEEDED,
-                attempt_id=attempt.id,
-                metrics=(*metrics, objective_metric),
-                usage=usage,
-            )
-            return TrialSummary(
-                id=trial.id,
-                sequence=trial.sequence,
-                candidate=candidate,
-                status=TrialStatus.SUCCEEDED,
-                metrics=metrics,
-                usage=usage,
-                objective=objective,
-                attempts=attempt.number + 1,
-            )
-        except asyncio.CancelledError:
-            self._store.commit_trial_result(
-                trial.id,
-                status=TrialStatus.CANCELLED,
-                attempt_id=attempt.id,
-                error="trial cancelled",
-            )
-            raise
-        except _TrialFailure as failure:
-            failure_message = f"{failure.stage} failed: {failure.cause_type}"
-            self._store.commit_trial_result(
-                trial.id,
-                status=TrialStatus.FAILED,
-                attempt_id=attempt.id,
-                usage=failure.usage,
-                error=failure_message,
-            )
-            return TrialSummary(
-                id=trial.id,
-                sequence=trial.sequence,
-                candidate=candidate,
-                status=TrialStatus.FAILED,
-                metrics=(),
-                usage=failure.usage,
-                objective=None,
-                attempts=attempt.number + 1,
-                error=failure_message,
-            )
+                if cached_metrics is None:
+                    metrics, usage = await _wait_for(
+                        self._execute_candidate(dataset, candidate),
+                        self._retry_policy.trial_timeout_seconds,
+                    )
+                else:
+                    metrics, usage = cached_metrics, ()
+                objective = self._evaluate_objective(metrics, usage)
+                accumulated_usage.extend(usage)
+                objective_metric = MetricValue(
+                    _OBJECTIVE_METRIC, cast(float, objective.score), objective.status
+                )
+                self._store.commit_trial_result(
+                    trial.id,
+                    status=TrialStatus.SUCCEEDED,
+                    attempt_id=attempt.id,
+                    metrics=(*metrics, objective_metric),
+                    usage=usage,
+                )
+                cached = cached_metrics is not None
+                if cached:
+                    self._store.append_event(
+                        trial.study_id, "trial.cache_hit", {"trial_id": trial.id}
+                    )
+                else:
+                    self._write_cache(trial, cache_key, metrics)
+                return TrialSummary(
+                    id=trial.id,
+                    sequence=trial.sequence,
+                    candidate=candidate,
+                    status=TrialStatus.SUCCEEDED,
+                    metrics=metrics,
+                    usage=tuple(accumulated_usage),
+                    objective=objective,
+                    attempts=attempt.number + 1,
+                    cached=cached,
+                )
+            except asyncio.CancelledError:
+                self._store.commit_trial_result(
+                    trial.id,
+                    status=TrialStatus.CANCELLED,
+                    attempt_id=attempt.id,
+                    error="trial cancelled",
+                )
+                raise
+            except _TrialFailure as failure:
+                accumulated_usage.extend(failure.usage)
+                failure_message = f"{failure.stage} failed: {failure.cause_type}"
+                if failure.retryable and attempt.number < self._retry_policy.max_retries:
+                    self._store.finish_attempt(
+                        attempt.id,
+                        AttemptStatus.FAILED,
+                        usage=failure.usage,
+                        error=failure_message,
+                    )
+                    delay = self._retry_policy.delay_before_retry(attempt.number)
+                    self._store.append_event(
+                        trial.study_id,
+                        "trial.retry_scheduled",
+                        {
+                            "trial_id": trial.id,
+                            "attempt": attempt.number,
+                            "delay_seconds": delay,
+                        },
+                    )
+                    try:
+                        await self._sleeper(delay)
+                    except asyncio.CancelledError:
+                        self._store.transition_trial(trial.id, TrialStatus.CANCELLED)
+                        raise
+                    cached_metrics = None
+                    continue
+                self._store.commit_trial_result(
+                    trial.id,
+                    status=TrialStatus.FAILED,
+                    attempt_id=attempt.id,
+                    usage=failure.usage,
+                    error=failure_message,
+                )
+                return TrialSummary(
+                    id=trial.id,
+                    sequence=trial.sequence,
+                    candidate=candidate,
+                    status=TrialStatus.FAILED,
+                    metrics=(),
+                    usage=tuple(accumulated_usage),
+                    objective=None,
+                    attempts=attempt.number + 1,
+                    cached=cached_metrics is not None,
+                    error=failure_message,
+                )
+            except Exception as error:
+                classified_failure = _TrialFailure(
+                    "trial", type(error).__name__, (), self._retry_policy.is_retryable(error)
+                )
+                accumulated_usage.extend(classified_failure.usage)
+                failure_message = (
+                    f"{classified_failure.stage} failed: {classified_failure.cause_type}"
+                )
+                if classified_failure.retryable and attempt.number < self._retry_policy.max_retries:
+                    self._store.finish_attempt(
+                        attempt.id, AttemptStatus.FAILED, error=failure_message
+                    )
+                    delay = self._retry_policy.delay_before_retry(attempt.number)
+                    self._store.append_event(
+                        trial.study_id,
+                        "trial.retry_scheduled",
+                        {
+                            "trial_id": trial.id,
+                            "attempt": attempt.number,
+                            "delay_seconds": delay,
+                        },
+                    )
+                    try:
+                        await self._sleeper(delay)
+                    except asyncio.CancelledError:
+                        self._store.transition_trial(trial.id, TrialStatus.CANCELLED)
+                        raise
+                    cached_metrics = None
+                    continue
+                self._store.commit_trial_result(
+                    trial.id,
+                    status=TrialStatus.FAILED,
+                    attempt_id=attempt.id,
+                    error=failure_message,
+                )
+                return TrialSummary(
+                    id=trial.id,
+                    sequence=trial.sequence,
+                    candidate=candidate,
+                    status=TrialStatus.FAILED,
+                    metrics=(),
+                    usage=tuple(accumulated_usage),
+                    objective=None,
+                    attempts=attempt.number + 1,
+                    cached=False,
+                    error=failure_message,
+                )
 
     async def _execute_candidate(
         self, dataset: Dataset, candidate: Candidate
@@ -226,7 +331,10 @@ class Optimizer:
             async for example in dataset:
                 sample_count += 1
                 stage = "adapter"
-                output, sample_usage = await self._adapter.run(candidate, example)
+                output, sample_usage = await _wait_for(
+                    self._adapter.run(candidate, example),
+                    self._retry_policy.sample_timeout_seconds,
+                )
                 sample_usage_values = tuple(sample_usage)
                 if any(not isinstance(item, UsageRecord) for item in sample_usage_values):
                     raise TypeError("adapter usage must contain UsageRecord values")
@@ -234,7 +342,12 @@ class Optimizer:
                 sample_names: set[str] = set()
                 for evaluator in self._evaluators:
                     stage = "evaluation"
-                    values = tuple(await evaluator.evaluate(output, example))
+                    values = tuple(
+                        await _wait_for(
+                            evaluator.evaluate(output, example),
+                            self._retry_policy.sample_timeout_seconds,
+                        )
+                    )
                     for metric in values:
                         if not isinstance(metric, MetricValue):
                             raise TypeError("evaluator output must contain MetricValue values")
@@ -246,12 +359,94 @@ class Optimizer:
                         observations[metric.name].append(metric)
                 stage = "dataset"
         except Exception as error:
-            raise _TrialFailure(stage, type(error).__name__, tuple(usage)) from error
+            raise _TrialFailure(
+                stage,
+                type(error).__name__,
+                tuple(usage),
+                self._retry_policy.is_retryable(error),
+            ) from error
         if sample_count == 0:
             raise _TrialFailure("dataset", "empty", tuple(usage))
         if not observations:
             raise _TrialFailure("evaluation", "no_metrics", tuple(usage))
         return _aggregate_metrics(observations, sample_count), tuple(usage)
+
+    def _evaluate_objective(
+        self, metrics: Sequence[MetricValue], usage: tuple[UsageRecord, ...]
+    ) -> ObjectiveResult:
+        try:
+            objective = self._objective.evaluate(metrics)
+        except Exception as error:
+            raise _TrialFailure(
+                "objective",
+                type(error).__name__,
+                usage,
+                self._retry_policy.is_retryable(error),
+            ) from error
+        if objective.score is None:
+            raise _TrialFailure("objective", "unavailable", usage)
+        return objective
+
+    def _read_cache(self, trial: TrialRecord, key: CacheKey) -> tuple[MetricValue, ...] | None:
+        if self._cache is None or self._settings.cache_policy not in {
+            CachePolicy.READ_ONLY,
+            CachePolicy.READ_WRITE,
+        }:
+            return None
+        try:
+            lookup = self._cache.get(key)
+        except Exception as error:
+            self._store.append_event(
+                trial.study_id,
+                "trial.cache_read_failed",
+                {"trial_id": trial.id, "cause": type(error).__name__},
+            )
+            return None
+        if lookup.status is not CacheLookupStatus.HIT or lookup.payload is None:
+            return None
+        try:
+            return _decode_cached_metrics(lookup.payload)
+        except (TypeError, ValueError, json.JSONDecodeError) as error:
+            self._store.append_event(
+                trial.study_id,
+                "trial.cache_decode_failed",
+                {"trial_id": trial.id, "cause": type(error).__name__},
+            )
+            return None
+
+    def _write_cache(
+        self, trial: TrialRecord, key: CacheKey, metrics: Sequence[MetricValue]
+    ) -> None:
+        if self._cache is None or self._settings.cache_policy not in {
+            CachePolicy.WRITE_ONLY,
+            CachePolicy.READ_WRITE,
+        }:
+            return
+        try:
+            self._cache.put(
+                key,
+                _encode_cached_metrics(metrics),
+                privacy=CachePrivacy.SENSITIVE,
+            )
+        except Exception as error:
+            self._store.append_event(
+                trial.study_id,
+                "trial.cache_write_failed",
+                {"trial_id": trial.id, "cause": type(error).__name__},
+            )
+
+    def _cache_key(self, dataset: Dataset, candidate: Candidate) -> CacheKey:
+        return CacheKey.from_parts(
+            "evaluation",
+            {
+                "payload_version": _CACHE_PAYLOAD_VERSION,
+                "dataset_version": dataset.version,
+                "candidate": candidate.parameters,
+                "adapter": _type_name(self._adapter),
+                "evaluators": [_type_name(evaluator) for evaluator in self._evaluators],
+            },
+            format_version=_CACHE_PAYLOAD_VERSION,
+        )
 
     def _matching_stop_reason(self, summaries: Sequence[TrialSummary], started_at: float) -> str:
         context = _stop_context(summaries, max(0.0, self._clock() - started_at))
@@ -277,7 +472,79 @@ class Optimizer:
                 for term in self._objective.terms
             ],
             "max_trials": self._settings.max_trials,
+            "max_retries": self._retry_policy.max_retries,
+            "sample_timeout_seconds": self._retry_policy.sample_timeout_seconds,
+            "trial_timeout_seconds": self._retry_policy.trial_timeout_seconds,
+            "cache_policy": self._settings.cache_policy.value,
         }
+
+
+async def _wait_for(awaitable: Awaitable[_T], timeout: float | None) -> _T:
+    if timeout is None:
+        return await awaitable
+    return await asyncio.wait_for(awaitable, timeout)
+
+
+def _encode_cached_metrics(metrics: Sequence[MetricValue]) -> bytes:
+    document = {
+        "version": _CACHE_PAYLOAD_VERSION,
+        "metrics": [
+            {
+                "name": metric.name,
+                "value": metric.value,
+                "status": metric.status.value,
+                "coverage": metric.coverage,
+            }
+            for metric in metrics
+        ],
+    }
+    return json.dumps(document, ensure_ascii=True, separators=(",", ":"), sort_keys=True).encode()
+
+
+def _decode_cached_metrics(payload: bytes) -> tuple[MetricValue, ...]:
+    document = json.loads(payload.decode("utf-8"))
+    if not isinstance(document, dict) or document.get("version") != _CACHE_PAYLOAD_VERSION:
+        raise ValueError("unsupported cached evaluation payload")
+    items = document.get("metrics")
+    if not isinstance(items, list) or not items:
+        raise ValueError("cached evaluation metrics must be a nonempty list")
+    metrics: list[MetricValue] = []
+    for item in items:
+        if not isinstance(item, Mapping):
+            raise TypeError("cached metric must be an object")
+        metrics.append(
+            MetricValue(
+                name=_required_string(item, "name"),
+                value=_optional_number(item.get("value")),
+                status=ValueStatus(_required_string(item, "status")),
+                coverage=_required_number(item, "coverage"),
+            )
+        )
+    if len({metric.name for metric in metrics}) != len(metrics):
+        raise ValueError("cached evaluation contains duplicate metric names")
+    return tuple(metrics)
+
+
+def _required_string(item: Mapping[str, Any], key: str) -> str:
+    value = item.get(key)
+    if not isinstance(value, str):
+        raise TypeError(f"cached metric {key} must be a string")
+    return value
+
+
+def _required_number(item: Mapping[str, Any], key: str) -> float:
+    value = item.get(key)
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"cached metric {key} must be numeric")
+    return float(value)
+
+
+def _optional_number(value: Any) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError("cached metric value must be numeric or null")
+    return float(value)
 
 
 def _aggregate_metrics(

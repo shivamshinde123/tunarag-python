@@ -76,3 +76,18 @@ least-confident observed status. Persist partial usage when a trial fails, but d
 third-party exception messages. Observe only committed successful trials under the current
 strategy contract. Add retries, cache use, replay/resume, callbacks, and concurrency in focused
 follow-up branches.
+
+## 2026-10-04 Retry, timeout, and evaluation-cache semantics
+
+Treat a trial as one semantic candidate and each execution as a durable attempt. Retry only
+explicitly transient structured failures, timeouts, and connection failures; use deterministic
+capped exponential backoff. Persist each failed attempt and its observed usage atomically so
+retries never erase real spend. Apply a timeout to each adapter/evaluator call and a separate
+deadline to the complete candidate execution.
+
+Cache only successfully aggregated evaluation metrics, never objective scores or usage. Read
+and write according to the explicit cache policy, recompute the current objective on hits, and
+record zero current-run usage for cached work. Write only after the authoritative trial commit.
+Treat cache transport, corruption, or semantic-decoding problems as observable misses rather
+than trial failures. V0.1 keys use dataset version, candidate, payload format, and component
+type names; richer component configuration fingerprints remain future work.

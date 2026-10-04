@@ -412,6 +412,7 @@ class SQLiteStore:
         attempt_id: str,
         status: AttemptStatus,
         *,
+        usage: Sequence[UsageRecord] = (),
         error: str | None = None,
         now: float | None = None,
     ) -> AttemptRecord:
@@ -430,6 +431,7 @@ class SQLiteStore:
                 WHERE id = ?""",
                 (status.value, finished_at, error, attempt_id),
             )
+            self._insert_usage_locked(row["trial_id"], attempt_id, usage)
             trial = self._get_trial_row_locked(row["trial_id"])
             self._append_event_locked(
                 trial["study_id"],
@@ -535,25 +537,7 @@ class SQLiteStore:
                     ) VALUES (?, ?, ?, ?, ?)""",
                     (trial_id, metric.name, metric.value, metric.status.value, metric.coverage),
                 )
-            for item in usage:
-                self._connection.execute(
-                    """INSERT INTO usage_records(
-                        id, trial_id, attempt_id, component, input_tokens, output_tokens,
-                        cost_text, latency_seconds, status, pricing_version
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        str(uuid.uuid4()),
-                        trial_id,
-                        attempt_id,
-                        item.component,
-                        item.input_tokens,
-                        item.output_tokens,
-                        None if item.cost is None else format(item.cost, ".17g"),
-                        item.latency_seconds,
-                        item.status.value,
-                        item.pricing_version,
-                    ),
-                )
+            self._insert_usage_locked(trial_id, attempt_id, usage)
             self._connection.execute(
                 """UPDATE trials SET status = ?, error = ?, updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?""",
@@ -649,6 +633,32 @@ class SQLiteStore:
         """Close the underlying SQLite connection."""
 
         self._connection.close()
+
+    def _insert_usage_locked(
+        self,
+        trial_id: str,
+        attempt_id: str | None,
+        usage: Sequence[UsageRecord],
+    ) -> None:
+        for item in usage:
+            self._connection.execute(
+                """INSERT INTO usage_records(
+                    id, trial_id, attempt_id, component, input_tokens, output_tokens,
+                    cost_text, latency_seconds, status, pricing_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    str(uuid.uuid4()),
+                    trial_id,
+                    attempt_id,
+                    item.component,
+                    item.input_tokens,
+                    item.output_tokens,
+                    None if item.cost is None else format(item.cost, ".17g"),
+                    item.latency_seconds,
+                    item.status.value,
+                    item.pricing_version,
+                ),
+            )
 
     def _insert_trial_locked(
         self, study_id: str, sequence: int, candidate: Candidate

@@ -19,12 +19,16 @@ or changes semantics through a hidden environment mode.
 | `TUNARAG_SAMPLE_CONCURRENCY` | `8` | Per-trial sample concurrency |
 | `TUNARAG_SEED` | `0` | Root seed |
 | `TUNARAG_MAX_RETRIES` | `2` | Retry limit |
+| `TUNARAG_SAMPLE_TIMEOUT_SECONDS` | `60.0` | Deadline for each adapter or evaluator call |
+| `TUNARAG_TRIAL_TIMEOUT_SECONDS` | `300.0` | Deadline for one complete candidate execution |
 | `TUNARAG_CACHE_POLICY` | `read_write` | Cache behavior |
 
 `TUNARAG_CACHE_POLICY` accepts `off`, `read_only`, `write_only`, or `read_write`. Trial and
 concurrency values must be positive; retries are nonnegative; integer strings must be canonical
-base-10 values. `TUNARAG_HOME` uses the platform data directory when omitted. Dependent paths
-derive from the resolved home unless set independently.
+base-10 values; timeout values must be positive finite numbers. `TUNARAG_HOME` uses the
+platform data directory when omitted. Dependent paths derive from the resolved home unless set
+independently. Environment/TOML settings always enable finite timeouts; advanced callers may
+inject a `RetryPolicy` with `None` for a deliberately unbounded sample or trial timeout.
 
 Prefer injected provider clients. Optional integrations may read provider-standard keys only
 when no client is injected. Core settings never retain them. Secrets are never snapshotted or
