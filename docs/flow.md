@@ -9,17 +9,21 @@ caller
   -> sample SearchSpace through seeded RandomSearch
   -> aggregate metrics through Objective
   -> evaluate MaxTrials or CostBudget
-  -> SQLiteStore.initialize
-  -> create_study -> create_trial -> transition_trial -> get_trial
+  -> SQLiteStore.initialize or migrate to schema version 2
+  -> create and run study -> atomically reserve unique ordered trial
+  -> start leased attempt -> execute outside transaction
+  -> atomically commit attempt, metrics, usage, terminal trial, and event
+  -> abandon expired leases -> list recoverable trials -> replay ordered events
   -> CacheKey.from_parts
   -> SQLiteCache.put -> get -> verify checksum/TTL -> hit or explicit miss status
 ```
 
 Canonical serialization produces deterministic JSON and domain-separated hashes. SQLite owns
-durable lifecycle and cache state. A corrupt cache payload is transactionally quarantined and
-never returned; expired payloads become misses and can be pruned. No current entry point
-executes an adapter or evaluator. Package boundaries will translate contextual failures into
-structured `TunaRAGError` subclasses; diagnostic details are redacted recursively.
+durable lifecycle, observations, events, and cache state. Immediate transactions allocate
+monotonic sequences; short terminal transactions preserve all-or-nothing outcomes. Attempt
+leases make interrupted running trials discoverable without reusing attempt numbers. A corrupt
+cache payload is quarantined and never returned. No current entry point executes an adapter or
+evaluator. Package boundaries translate contextual failures into structured errors.
 
 ## Target optimization flow
 

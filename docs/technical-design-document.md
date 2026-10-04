@@ -2,10 +2,11 @@
 
 ## Lifecycle and scheduling
 
-Target studies move from created to running, stopping, then completed, with failed and
-cancelled terminals. Current trials support pending, running, succeeded, failed, and abandoned.
-Retries create attempts instead of moving terminal attempts backward. Sequence numbers are
-monotonic and never reused.
+Implemented studies move from created to running then completed, with failed and cancelled
+terminals; a separate stopping state may be added with orchestration. Trials support pending,
+running, succeeded, failed, abandoned, and cancelled. Terminal states are immutable. Completed
+studies cannot contain active trials. Retries create attempts instead of moving terminal
+attempts backward. Trial, attempt, and event sequence numbers are monotonic and never reused.
 
 The scheduler asks the strategy for capacity-sized candidates, validates them through the
 search space, hashes canonical values, and reserves uniqueness in SQLite. The trial runner
@@ -22,6 +23,11 @@ trial failure does not fail the study by default.
 Resume compares dataset, search-space, objective, adapter, evaluator, strategy, schema, and
 cache fingerprints; abandons expired attempts; reconstructs budgets; replays terminal results;
 and continues sequence numbers. Incompatibility requires an explicit fork.
+
+The implemented store provides attempt leases, persisted abandonment, and a recoverable-trial
+query. A terminal commit transaction writes metrics, append-only usage, terminal attempt state,
+terminal trial state, and the corresponding ordered event. Validation failures roll the whole
+transaction back. Strategy replay consumes ordered committed events only.
 
 ## Cache, objectives, and stopping
 
