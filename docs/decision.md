@@ -52,3 +52,14 @@ environment mode. Keep settings immutable and provider-secret free.
 Represent package-boundary failures with stable codes, stage, retryability, and recursively
 redacted details. Keep low-level validation exceptions until the boundary that can add useful
 context, rather than obscuring their causes prematurely.
+
+## 2026-10-03 Experiment schema version 2
+
+Migrate version-1 databases transactionally and add guarded study/trial lifecycle state,
+unique per-study candidates, leased attempts, aggregate metrics, append-only usage, and ordered
+events. Allocate trial and event sequences under immediate write transactions. Commit terminal
+attempt state, observations, trial state, and event atomically.
+
+Keep a retryable trial running after a failed or abandoned attempt; each retry receives a new
+monotonic attempt number. Resume first abandons expired leases, then queries running trials with
+no active attempt. This separates execution attempts from the semantic candidate trial.

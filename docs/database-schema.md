@@ -1,23 +1,39 @@
 # TunaRAG Database Schema
 
-## Current schema version 1
+## Experiment schema version 2
 
-`schema_version(version INTEGER PRIMARY KEY)` records version 1.
+`schema_version(version INTEGER PRIMARY KEY)` records applied versions 1 and 2. Opening a
+version-1 database migrates it transactionally. Unknown or noncontiguous version sets fail with
+`StoreError` rather than being opened optimistically.
 
-`studies` stores UUID `id`, nonempty `name`, canonical `config_hash`, and `created_at`.
+`studies` stores UUID `id`, nonempty `name`, canonical `config_hash`, lifecycle `status`, and
+creation/update timestamps. Valid package transitions are created to running, failed, or
+cancelled; running to completed, failed, or cancelled. Completion rejects active trials.
 
 `trials` stores UUID `id`, required `study_id`, nonnegative `sequence`, `candidate_hash`,
 canonical secret-safe `candidate_json`, lifecycle `status`, optional redacted `error`, and
-`created_at`. `(study_id, sequence)` is unique and `study_id` references `studies.id`.
-Foreign keys are enabled and lifecycle writes use explicit transactions.
+timestamps. `(study_id, sequence)` and `(study_id, candidate_hash)` are unique. Valid states
+are pending, running, succeeded, failed, abandoned, and cancelled. Terminal states are
+immutable.
+
+`trial_attempts` stores UUID, parent trial, monotonic attempt number, state, start/finish epoch
+timestamps, lease expiry, and redacted error. One running attempt per trial is enforced by a
+partial unique index; a state/lease index supports recovery.
+
+`metric_values` stores one aggregate metric name per trial with nullable value, confidence
+status, coverage, and creation time. `usage_records` is append-only and stores component,
+tokens, decimal-preserving cost text, latency, confidence, pricing version, and optional
+attempt. `study_events` stores canonical redacted JSON with an atomic per-study sequence.
+
+Foreign keys are enabled. Candidate/sequence allocation uses `BEGIN IMMEDIATE`. Terminal
+result commit writes metrics, usage, attempt state, trial state, and final event in one
+transaction. Provider calls and callbacks never occur inside these transactions.
 
 ## Planned migrations
 
-Future versions add migration checksums, unique candidates per study, attempts and leases,
-metrics, usage, ordered events, datasets, samples, recovery indexes, and atomic
-terminal commits. Terminal trials and append-only observations remain immutable. Monetary
-values retain currency and decimal-safe representation. Exact DDL is `TBD` until each query
-and invariant is implemented.
+Future versions add migration checksums, datasets, samples, semantic component fingerprints,
+currency alongside decimal-safe cost, and indexes justified by orchestration queries. Exact
+DDL remains `TBD` until each query and invariant is implemented.
 
 ## Cache schema version 1
 

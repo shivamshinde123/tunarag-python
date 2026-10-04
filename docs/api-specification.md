@@ -16,8 +16,12 @@ types, `MaxTrials`, `CostBudget`, `SQLiteStore`, study/trial records, and the ca
 
 `Candidate` requires a nonempty parameter mapping. Metrics and usage retain `exact`,
 `estimated`, or `unavailable` provenance. `Objective.evaluate` combines configured terms.
-`SQLiteStore` initializes schema version 1, creates studies and ordered trials, transitions
-trials, retrieves trials, and closes its connection.
+`SQLiteStore` initializes or migrates experiment schema version 2. It creates and transitions
+studies; atomically reserves unique ordered trials; starts, finishes, and recovers leased
+attempts; atomically commits terminal metrics, usage, attempt state, trial state, and event;
+lists replayable trials, attempt history, metrics, usage, recoverable work, and ordered events;
+and closes its connection. Only running studies reserve trials. Terminal states are immutable. Unknown IDs
+raise `KeyError`; invalid transitions raise `ValueError`.
 
 `CacheKey.from_parts(namespace, *parts, format_version=1)` creates secret-safe canonical
 identity. `SQLiteCache.put` atomically stores bytes with privacy and optional positive TTL.

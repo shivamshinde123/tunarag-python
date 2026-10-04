@@ -25,10 +25,22 @@ from .errors import (
 )
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .stopping import CostBudget, MaxTrials, StopContext
-from .store import SQLiteStore, StudyRecord, TrialRecord, TrialStatus
+from .store import (
+    AttemptRecord,
+    AttemptStatus,
+    PersistedUsageRecord,
+    SQLiteStore,
+    StudyEvent,
+    StudyRecord,
+    StudyStatus,
+    TrialRecord,
+    TrialStatus,
+)
 
 __all__ = [
     "AdapterError",
+    "AttemptRecord",
+    "AttemptStatus",
     "BudgetError",
     "CacheEntry",
     "CacheKey",
@@ -48,6 +60,7 @@ __all__ = [
     "ObjectiveDirection",
     "ObjectiveResult",
     "ObjectiveTerm",
+    "PersistedUsageRecord",
     "ResumeError",
     "Secret",
     "SearchSpaceError",
@@ -56,8 +69,10 @@ __all__ = [
     "SQLiteStore",
     "StopContext",
     "StoreError",
+    "StudyEvent",
     "SyncInAsyncContextError",
     "StudyRecord",
+    "StudyStatus",
     "TrialRecord",
     "TrialStatus",
     "TunaRAGError",

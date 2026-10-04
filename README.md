@@ -20,4 +20,6 @@ Implemented foundations include typed domain values, canonical identity, typed s
 seeded random search, objective and stopping primitives, SQLite study/trial persistence, and a
 versioned SQLite cache with expiry and corruption quarantine. Typed settings resolve explicit
 overrides, selected TOML, and known environment variables; structured package errors expose
-redacted diagnostics. The optimizer entry point is not implemented yet.
+redacted diagnostics. The experiment store includes guarded study/trial state, atomic trial
+reservation and terminal commits, attempt leases and recovery, metrics, usage, and ordered
+events. The optimizer entry point is not implemented yet.
