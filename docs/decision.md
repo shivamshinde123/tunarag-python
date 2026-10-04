@@ -2,13 +2,20 @@
 
 Decisions are chronological. Superseding entries preserve the original reasoning.
 
+## 2026-10-04 Promote the comprehensive guide to `README.md`
+
+Supersede the separate-root-guide portion of the decisions below. `README.md` is now the single
+canonical package guide used by GitHub and distribution metadata. The separate `Usage.md` is removed
+to avoid duplicate content and drift. Executable documentation tests now read Python fences directly
+from `README.md`.
+
 ## 2026-10-04 Execute every `Usage.md` Python example in CI
 
-Treat every Python fence in `Usage.md` as executable documentation. The documentation test extracts
-all fences, asserts the expected count, runs every example with controlled fixtures, and verifies its
-observable result. Optional provider boundaries may use local test doubles, while installed
-LangChain and LangGraph packages are exercised directly. Any added, removed, or behaviorally changed
-example must update the harness in the same pull request.
+Treat every Python fence in the canonical usage guide as executable documentation. The documentation
+test extracts all fences, asserts the expected count, runs every example with controlled fixtures,
+and verifies its observable result. Optional provider boundaries may use local test doubles, while
+installed LangChain and LangGraph packages are exercised directly. Any added, removed, or
+behaviorally changed example must update the harness in the same pull request.
 
 ## 2026-10-04 Comprehensive usage guide
 

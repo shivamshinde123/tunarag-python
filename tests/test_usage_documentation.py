@@ -35,20 +35,20 @@ EXPECTED_EXAMPLE_COUNT = 36
 
 
 def _usage_blocks() -> list[str]:
-    lines = (ROOT / "Usage.md").read_text(encoding="utf-8").splitlines()
+    lines = (ROOT / "README.md").read_text(encoding="utf-8").splitlines()
     blocks: list[str] = []
     current: list[str] | None = None
     for line in lines:
         if line == "```python":
             if current is not None:
-                raise AssertionError("nested Python fence in Usage.md")
+                raise AssertionError("nested Python fence in README.md")
             current = []
         elif line == "```" and current is not None:
             blocks.append("\n".join(current))
             current = None
         elif current is not None:
             current.append(line)
-    assert current is None, "unclosed Python fence in Usage.md"
+    assert current is None, "unclosed Python fence in README.md"
     assert len(blocks) == EXPECTED_EXAMPLE_COUNT
     return blocks
 
@@ -60,7 +60,7 @@ def _run(index: int, namespace: dict[str, Any] | None = None) -> dict[str, Any]:
     scope = {} if namespace is None else namespace
     code = compile(
         BLOCKS[index - 1],
-        f"Usage.md example {index}",
+        f"README.md example {index}",
         "exec",
         flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT,
     )
