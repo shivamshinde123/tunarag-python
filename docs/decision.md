@@ -182,3 +182,11 @@ and rely on callback failure isolation so tracking outages cannot change optimiz
 Log redacted candidate parameters, numeric metrics, sequence, and lifecycle status; normalize
 tracking keys deterministically. Keep run IDs in callback memory for V0.1, meaning a resumed
 process creates a new mirror run rather than replaying or mutating historical tracking state.
+
+## 2026-10-04 Provider-neutral synthetic QA generation
+
+Keep synthetic generation behind an injected async provider and structured request/response
+types. TunaRAG controls deterministic per-document seeds, bounded concurrency, ordering,
+validation, provenance, and usage capture without owning prompts, credentials, retries, or SDKs.
+Require exact requested cardinality and valid source spans; label every sample synthetic and
+unreviewed. Return generation usage separately from optimization accounting.

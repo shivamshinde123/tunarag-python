@@ -9,6 +9,8 @@ caller
   -> load EvaluationDataset records and derive a content version
      -> normalize and validate canonical EvaluationExample values
      -> optionally assign deterministic grouped splits
+  -> optionally generate SyntheticQA from approved SourceDocument values
+     -> validate counts/spans/usage -> create provenance-bearing EvaluationExample values
   -> sample SearchSpace through seeded RandomSearch
   -> aggregate metrics through Objective
   -> evaluate trial, cost, time, target, stagnation, and failure conditions

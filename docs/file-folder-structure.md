@@ -19,6 +19,7 @@ tunarag-python/
 |   |-- search.py            # Search spaces and RandomSearch
 |   |-- serialization.py     # Canonical JSON and hashes
 |   |-- stopping.py          # Stop conditions
+|   |-- synthetic.py         # Provider-neutral synthetic QA generation
 |   |-- result.py            # Optimization and trial summaries
 |   |-- retry.py             # Retry classification, backoff, and timeouts
 |   `-- store.py             # SQLite lifecycle persistence
