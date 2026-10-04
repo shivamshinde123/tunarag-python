@@ -34,6 +34,7 @@ from .errors import (
     TunaRAGError,
 )
 from .evaluators import MetricEvaluator, MetricScorer, RagasEvaluator, RagasSampleMapper
+from .integrations.runnables import LangChainAdapter, LangGraphAdapter
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .result import OptimizationResult, TrialSummary, UsageSummary
 from .retry import RetryPolicy
@@ -104,6 +105,8 @@ __all__ = [
     "FloatRange",
     "InMemoryDataset",
     "IntegerRange",
+    "LangChainAdapter",
+    "LangGraphAdapter",
     "LLMSearch",
     "LLMSearchProvider",
     "LLMSuggestionRequest",
@@ -160,4 +163,4 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"

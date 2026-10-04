@@ -17,9 +17,11 @@
 | Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
 | Results and reporting | Ranking, metric leaders, usage summaries, JSON/CSV exports | Implemented |
 | MLflow mirror | Optional best-effort post-commit tracking callback | Implemented |
+| Framework runnable adapters | First-party LangChain runnable and compiled LangGraph bridges | Implemented in V0.2 |
 | Reference RAG example | Deterministic local adapter, evaluator, dataset, optimization, exports | Implemented |
 
 Dependencies flow inward from entry points and integrations toward protocols and immutable
 domain values. The user owns retrieval and generation through `RAGAdapter`. RAGAS, MLflow,
-provider SDKs, LangChain, and LlamaIndex never become core dependencies. The reference RAG in
+provider SDKs and LlamaIndex never become core dependencies. LangChain and LangGraph remain
+optional extras behind structural runnable adapters. The reference RAG in
 `examples/` demonstrates that boundary and is not shipped as package runtime code.

@@ -146,6 +146,26 @@ batch. All built-in rule parameters participate in the study configuration hash.
 Python 3.10 structured concurrency, sortable public IDs, sample checkpoint stability, and a
 future size threshold for external cache payload files remain `TBD`.
 
+## LangChain and LangGraph runnable design
+
+The V0.2 adapters depend structurally on `ainvoke` and do not import framework classes. A fixed
+runnable supports cheap runtime configuration; `factory(candidate)` supports construction-time
+parameters. Exactly one source is required and every resolved object is validated before use.
+For canonical examples, the default input is `{"question": query}` and the default config is
+`{"configurable": candidate.parameters}`. Each mapping stage is replaceable independently.
+
+Raw output is preserved unless an output mapper is supplied, ensuring evaluators can inspect
+answers, contexts, messages, and graph state. Standard message usage is discovered recursively
+with object-identity deduplication; malformed or negative token counts are ignored rather than
+invented. An explicit usage mapper replaces discovery. Invocation latency is always appended as
+a separate framework usage record. Provider exceptions are not wrapped here because the engine
+already owns retry classification, timeout conversion, redaction, and failure isolation.
+
+Fingerprinting includes callable/type names and explicit caller identity but never serializes
+framework internals. This avoids credential leakage and unstable hashes. Users must provide
+`identity` when two same-type pipelines have different behavior not represented by candidates or
+mapper identities.
+
 ## Result reporting and export
 
 `OptimizationResult` remains an immutable in-memory report and adds derived views rather than

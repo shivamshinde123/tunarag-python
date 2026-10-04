@@ -2,7 +2,7 @@
 
 ## Status
 
-This is the living V0.1 Python API contract. The companion
+This is the living V0.2 Python API contract. The companion
 `01_API_Specification.docx` contains the full design narrative. Implemented and planned APIs
 are separated below so design commitments are not mistaken for runtime behavior.
 
@@ -15,6 +15,59 @@ cache types `CacheKey`, `CacheEntry`, `CacheLookup`, `CacheLookupStatus`, `Cache
 `LLMSearchProvider`. Extension protocols also live in `tunarag.contracts`.
 The evaluator surface includes `MetricEvaluator`, `MetricScorer`, `RagasEvaluator`, and
 `RagasSampleMapper`.
+
+## LangChain and LangGraph adapters
+
+V0.2 exports `LangChainAdapter` and `LangGraphAdapter` from both `tunarag` and
+`tunarag.integrations`. They accept any object with an asynchronous
+`ainvoke(input, config=...)` method, including LangChain runnables and compiled LangGraph graphs.
+The integration module does not import either framework, so core imports remain dependency-free.
+
+```python
+LangChainAdapter(
+    runnable=None,
+    *,
+    factory=None,
+    input_key="question",
+    input_mapper=None,
+    config_mapper=None,
+    output_mapper=None,
+    usage_mapper=None,
+    capture_message_usage=True,
+    identity=None,
+)
+
+LangGraphAdapter(
+    graph=None,
+    *,
+    factory=None,
+    input_key="question",
+    input_mapper=None,
+    config_mapper=None,
+    output_mapper=None,
+    usage_mapper=None,
+    capture_message_usage=True,
+    identity=None,
+)
+```
+
+Exactly one fixed runnable/graph or `factory(candidate)` is required. Canonical
+`EvaluationExample` values become `{input_key: example.query}`; arbitrary examples pass through
+unchanged. Candidate parameters become `{"configurable": dict(candidate.parameters)}`. Custom
+input and config mappers receive the current `Candidate`, allowing parameters to enter graph
+state or rebuild retrievers, prompts, splitters, and models. Output mappers receive raw framework
+output. Usage mappers return `UsageRecord` values.
+
+The adapters always report exact invocation latency. With automatic message usage enabled, they
+recursively collect unique mapping, sequence, or message objects exposing standard
+`usage_metadata.input_tokens` and `usage_metadata.output_tokens`. Provider costs remain unknown
+unless an explicit usage mapper supplies them. Framework exceptions propagate to the optimizer's
+normal timeout, retry, redaction, and trial-isolation boundaries.
+
+Adapter fingerprints include framework, schema version, runnable/factory type identity, mapper
+identities, usage behavior, and caller-supplied semantic `identity`. They never introspect a
+framework object's internal configuration because it may contain credentials. Install supported
+framework releases with `tunarag-python[langchain]`, `[langgraph]`, or `[frameworks]`.
 
 ## Evaluation datasets
 
@@ -251,3 +304,4 @@ migration or invalidation rules.
 
 Version `0.1.0` is the first feature-complete V0.1 contract. During the 0.x series, incompatible
 public API changes require a minor-version increase and are recorded in `CHANGELOG.md`.
+Version `0.2.0` adds optional framework adapters without changing the V0.1 optimizer contracts.

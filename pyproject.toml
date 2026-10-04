@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tunarag-python"
-version = "0.1.0"
+version = "0.2.0"
 description = "Typed, durable optimization workflows for existing RAG systems"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -39,6 +39,16 @@ ragas = [
 mlflow = [
     "mlflow>=3,<4",
 ]
+langchain = [
+    "langchain>=1,<2",
+]
+langgraph = [
+    "langgraph>=1,<2",
+]
+frameworks = [
+    "langchain>=1,<2",
+    "langgraph>=1,<2",
+]
 dev = [
     "build>=1.2",
     "hypothesis>=6.100",
@@ -55,6 +65,9 @@ packages = ["src/tunarag"]
 addopts = "--strict-markers"
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = [
+    "frameworks: compatibility tests requiring optional LangChain and LangGraph packages",
+]
 
 [tool.ruff]
 line-length = 100

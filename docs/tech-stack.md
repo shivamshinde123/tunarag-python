@@ -12,10 +12,13 @@
 | Tests | pytest, pytest-asyncio, Hypothesis | Sync, async, and property tests |
 | Quality | Ruff and strict mypy | Fast consistent checks |
 | CI | GitHub Actions | Native pull-request verification |
+| Framework adapters | Structural `ainvoke` protocol | Supports LangChain/LangGraph without core imports |
 
 RAGAS `>=0.4,<0.5` is an optional evaluator extra loaded only when `RagasEvaluator` executes.
 MLflow `>=3,<4` is an optional tracking extra loaded only when `MLflowCallback` first handles an
-event without an injected client. Provider SDKs, LangChain, and LlamaIndex remain optional. SQLAlchemy is deferred
+event without an injected client. LangChain `>=1,<2` and LangGraph `>=1,<2` are optional extras;
+real compatibility tests run separately from the dependency-free core matrix. Provider SDKs and
+LlamaIndex remain optional. SQLAlchemy is deferred
 until a second relational backend warrants an ORM. AnyIO is deferred until backend neutrality
 removes real complexity. Pydantic may validate external boundaries but will not constrain user
 models without measured benefit. Optuna may support later search behind TunaRAG protocols.

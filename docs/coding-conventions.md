@@ -31,3 +31,12 @@ Unit tests avoid networks, real sleeps, and shared state. Contract tests cover r
 boundaries. Behavior changes test success plus relevant validation, failure, retry,
 cancellation, cache, and resume paths. Material changes update the affected documents in this
 directory in the same branch.
+
+## Optional framework integrations
+
+Framework adapters depend on narrow structural protocols instead of importing third-party base
+classes. Keep framework calls async, accept explicit mapping hooks instead of guessing arbitrary
+state, and include semantic adapter behavior in fingerprints without serializing framework
+internals. Unit tests use fakes; a separate optional-dependency CI job verifies real supported
+framework versions. Framework exceptions remain owned by the optimizer's existing retry,
+timeout, redaction, and trial-isolation boundaries.

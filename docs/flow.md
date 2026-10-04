@@ -128,3 +128,21 @@ examples/quickstart.py
 overlap, returns explicit usage, and scores reference-answer token recall. No example type is
 imported by `src/tunarag`, so replacing the example with a production RAG does not require a
 framework fork.
+
+## Framework runnable flow
+
+```text
+LangChainAdapter.run or LangGraphAdapter.run
+  -> resolve fixed runnable or factory(candidate)
+  -> map EvaluationExample to framework input
+  -> map Candidate parameters to config["configurable"]
+  -> await runnable.ainvoke(input, config=config)
+  -> optionally map raw output
+  -> collect standard message usage or custom usage
+  -> append exact runnable latency
+  -> return through the standard RAGAdapter contract
+```
+
+Framework execution therefore uses the existing optimizer path unchanged. Cache identity includes
+the adapter fingerprint and candidate; framework exceptions remain subject to the engine retry,
+timeout, redaction, and failure-isolation policy.
