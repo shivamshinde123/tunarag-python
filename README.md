@@ -17,7 +17,8 @@ python -m pytest
 The public package is imported as `tunarag`.
 
 Implemented foundations include typed domain values, canonical identity, typed search spaces,
-seeded random search, objective and stopping primitives, SQLite study/trial persistence, a
+seeded random search, weighted objectives, composable trial/cost/time/score/stagnation/failure
+stopping rules, SQLite study/trial persistence, a
 custom metric helper plus an optional lazy RAGAS evaluator integration, and a
 normalized JSON/JSONL/CSV evaluation dataset model with deterministic splits and hashing.
 The versioned SQLite cache supports expiry and corruption quarantine. Typed settings resolve explicit

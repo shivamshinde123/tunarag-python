@@ -11,7 +11,7 @@ caller
      -> optionally assign deterministic grouped splits
   -> sample SearchSpace through seeded RandomSearch
   -> aggregate metrics through Objective
-  -> evaluate MaxTrials or CostBudget
+  -> evaluate trial, cost, time, target, stagnation, and failure conditions
   -> SQLiteStore.initialize or migrate to schema version 2
   -> create and run study -> atomically reserve unique ordered trial
   -> start leased attempt -> execute outside transaction

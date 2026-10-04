@@ -164,3 +164,12 @@ direction-aware metric leaders. Define JSON report schema version 1 as the lossl
 format and CSV as a flattened one-row-per-trial analysis format. Apply central recursive
 redaction to candidate parameters in every export and retain usage confidence provenance.
 Defer formal Pareto/frontier semantics until the post-V0.1 multiobjective design.
+
+## 2026-10-04 Complete composable stopping rules
+
+Extend committed stop snapshots with success/failure counts and objective history in durable
+sequence. Add wall-time, target-score, total/consecutive failure, and no-improvement rules beside
+trial and cost budgets. Treat failed trials as non-improvements, require benefit-oriented target
+comparisons, and preserve declaration order when multiple rules match. Accept bounded overshoot
+from the active concurrency batch; callers requiring exact immediate stopping use concurrency
+one. Fingerprint every built-in rule and include the ordered policy list in resume compatibility.

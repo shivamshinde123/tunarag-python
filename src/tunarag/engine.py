@@ -769,6 +769,9 @@ class Optimizer:
             "sample_timeout_seconds": self._retry_policy.sample_timeout_seconds,
             "trial_timeout_seconds": self._retry_policy.trial_timeout_seconds,
             "cache_policy": self._settings.cache_policy.value,
+            "stop_conditions": [
+                _component_identity(condition) for condition in self._stop_conditions
+            ],
         }
 
 
@@ -889,7 +892,23 @@ def _stop_context(summaries: Sequence[TrialSummary], elapsed_seconds: float) -> 
                 exact_cost += item.cost
             else:
                 estimated_cost += item.cost
-    return StopContext(len(summaries), exact_cost, estimated_cost, elapsed_seconds)
+    successful = sum(summary.status is TrialStatus.SUCCEEDED for summary in summaries)
+    failed = sum(summary.status is TrialStatus.FAILED for summary in summaries)
+    scores = tuple(
+        summary.objective.score
+        if summary.status is TrialStatus.SUCCEEDED and summary.objective is not None
+        else None
+        for summary in summaries
+    )
+    return StopContext(
+        completed_trials=len(summaries),
+        exact_cost=exact_cost,
+        estimated_cost=estimated_cost,
+        elapsed_seconds=elapsed_seconds,
+        successful_trials=successful,
+        failed_trials=failed,
+        objective_scores=scores,
+    )
 
 
 def _build_result(

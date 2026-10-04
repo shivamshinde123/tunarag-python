@@ -9,7 +9,7 @@ are separated below so design commitments are not mistaken for runtime behavior.
 ## Implemented surface
 
 `tunarag` exports `Candidate`, `MetricValue`, `UsageRecord`, `Secret`, `ValueStatus`, objective
-types, `MaxTrials`, `CostBudget`, `RetryPolicy`, `SQLiteStore`, study/trial records, and the
+types, built-in stop conditions, `RetryPolicy`, `SQLiteStore`, study/trial records, and the
 cache types `CacheKey`, `CacheEntry`, `CacheLookup`, `CacheLookupStatus`, `CachePrivacy`, and
 `SQLiteCache`, search-space types, `RandomSearch`, `LLMSearch`, `LLMSuggestionRequest`, and
 `LLMSearchProvider`. Extension protocols also live in `tunarag.contracts`.
@@ -63,6 +63,14 @@ max_delay_seconds=30.0)` validates bounded attempts and deterministic capped exp
 backoff. `None` disables an individual timeout when constructing the policy directly. Known
 retryable failures are structured `TunaRAGError` values marked `retryable`, `TimeoutError`, and
 `ConnectionError`; arbitrary exceptions are nonretryable.
+
+`StopContext` carries committed totals, elapsed time, success/failure counts, and objective score
+history in durable trial order. Built-in conditions are `MaxTrials(limit)`, `CostBudget(limit,
+count_estimated=True)`, `TimeBudget(seconds)`, `TargetScore(target)`, `MaxFailures(limit,
+consecutive=False)`, and `NoImprovement(patience, min_delta=0, warmup_trials=1)`. Objective scores
+are benefit-oriented, so targets and improvements always use larger-is-better comparisons.
+Failures count as non-improving trials; consecutive failures are represented by trailing missing
+objective scores. Every built-in condition fingerprints its parameters for resume compatibility.
 
 Public package errors derive from `TunaRAGError` and expose stable `ErrorCode`, message, stage,
 retryability, and recursively redacted structured details. Implemented subclasses cover
@@ -152,7 +160,9 @@ The optimizer schedules up to `Settings.concurrency` trials per batch and execut
 `Settings.sample_concurrency` samples within each trial. Trial outcomes and strategy
 observations are applied in durable sequence order after a batch, regardless of completion
 timing. `MaxTrials` is a hard reservation cap; snapshot-based cost or time stop conditions can
-overshoot by work already in the active batch. Evaluation examples are currently materialized
+overshoot by work already in the active batch. Score, stagnation, and failure rules have the same
+bounded batch overshoot; use `concurrency=1` when exact immediate stopping is required.
+Evaluation examples are currently materialized
 once per trial before bounded sample tasks start, so callers should keep V0.1 evaluation splits
 finite and memory-appropriate.
 

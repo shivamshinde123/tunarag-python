@@ -122,8 +122,15 @@ identity; malformed record values never enter public error messages.
 
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and
-retain the winning reason. Planned rules cover trial count, score target, cost, wall time, no
-improvement, search exhaustion, failure threshold, and cancellation.
+retain the winning reason. Implemented rules cover trial count, score target, cost, wall time,
+no improvement, search exhaustion, and total/consecutive failure thresholds. Cancellation is an
+external async control path rather than a polling rule.
+
+`StopContext.objective_scores` follows durable trial sequence and uses `None` for failed trials.
+`NoImprovement` establishes the first available score as baseline and resets patience only when a
+later score exceeds best plus `min_delta`; failures consume patience. Concurrent scheduling checks
+conditions between committed batches, so every snapshot rule may overshoot by at most the active
+batch. All built-in rule parameters participate in the study configuration hash.
 
 ## Open decisions
 

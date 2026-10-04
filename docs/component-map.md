@@ -5,7 +5,7 @@
 | Domain and serialization | Immutable values, redaction, canonical identity | Implemented |
 | Configuration and errors | Typed precedence, validation, stable redacted failures | Implemented |
 | Search space and RandomSearch | Typed sampling and seeded suggestions | Implemented |
-| Objectives and stopping | Weighted score and initial budgets | Partially implemented |
+| Objectives and stopping | Weighted score; trial, cost, time, target, stagnation, failure rules | Implemented |
 | SQLite experiment store | Lifecycle, attempts, observations, events, migration/recovery | Implemented |
 | Cache | Versioned reusable results, expiry, privacy, checksums, quarantine | Implemented |
 | Retry policy | Retry classification, capped backoff, sample/trial deadlines | Implemented |

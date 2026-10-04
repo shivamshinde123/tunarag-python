@@ -48,7 +48,15 @@ from .search import (
     SearchObservation,
     SearchSpace,
 )
-from .stopping import CostBudget, MaxTrials, StopContext
+from .stopping import (
+    CostBudget,
+    MaxFailures,
+    MaxTrials,
+    NoImprovement,
+    StopContext,
+    TargetScore,
+    TimeBudget,
+)
 from .store import (
     AttemptRecord,
     AttemptStatus,
@@ -90,6 +98,7 @@ __all__ = [
     "LLMSearchProvider",
     "LLMSuggestionRequest",
     "MaxTrials",
+    "MaxFailures",
     "MetricEvaluator",
     "MetricScorer",
     "MetricValue",
@@ -98,6 +107,7 @@ __all__ = [
     "ObjectiveDirection",
     "ObjectiveResult",
     "ObjectiveTerm",
+    "NoImprovement",
     "OptimizationResult",
     "Optimizer",
     "PersistedUsageRecord",
@@ -120,6 +130,8 @@ __all__ = [
     "SyncInAsyncContextError",
     "StudyRecord",
     "StudyStatus",
+    "TargetScore",
+    "TimeBudget",
     "TrialRecord",
     "TrialSummary",
     "TrialStatus",
