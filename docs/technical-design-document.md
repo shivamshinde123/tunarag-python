@@ -29,6 +29,15 @@ sequence, callback index/type, and exception type; exception messages are omitte
 events are not redispatched, preventing recursive storms. Resume begins callback delivery after
 the historical event tail.
 
+`LLMSearch` sends an immutable structured request to an injected provider and validates every
+response as untrusted input through `SearchSpace.validate`. Attempts are bounded. Exhaustion
+uses a stateless deterministic fallback derived from fallback seed and durable suggestion number,
+which makes resume independent of hidden RNG state. Disabling fallback produces a structured
+error containing only exception type names. Prior candidate observations are recursively
+redacted at the provider boundary. Provider semantic configuration participates in resume when
+it implements `fingerprint()`. Strategy-provider usage accounting remains an explicit extension
+because the current strategy contract returns only a candidate.
+
 ## Retries and resume
 
 Retry decisions use stage, error code, idempotency, attempt count, and provider hints.
@@ -53,7 +62,7 @@ produce a retryable `ResumeError`. Terminal summaries are rebuilt from metrics, 
 usage, attempts, trial errors, and cache-hit events. Pending and recoverable trials execute
 before new suggestions. The durable `study.stopping` event preserves the result stop reason.
 Ordinary strategies receive successful observations in sequence order. Replay-aware strategies
-receive every reserved candidate—including failed and unfinished trials—through the optional
+receive every reserved candidate, including failed and unfinished trials, through the optional
 `replay` method. `RandomSearch` verifies and advances seeded generator state.
 
 The implemented store provides attempt leases, persisted abandonment, and a recoverable-trial
