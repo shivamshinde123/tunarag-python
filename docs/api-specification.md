@@ -11,8 +11,8 @@ are separated below so design commitments are not mistaken for runtime behavior.
 `tunarag` exports `Candidate`, `MetricValue`, `UsageRecord`, `Secret`, `ValueStatus`, objective
 types, `MaxTrials`, `CostBudget`, `RetryPolicy`, `SQLiteStore`, study/trial records, and the
 cache types `CacheKey`, `CacheEntry`, `CacheLookup`, `CacheLookupStatus`, `CachePrivacy`, and
-`SQLiteCache`. Search-space types and `RandomSearch` are currently imported from
-`tunarag.search`; extension protocols live in `tunarag.contracts`.
+`SQLiteCache`, search-space types, `RandomSearch`, `LLMSearch`, `LLMSuggestionRequest`, and
+`LLMSearchProvider`. Extension protocols also live in `tunarag.contracts`.
 
 `Candidate` requires a nonempty parameter mapping. Metrics and usage retain `exact`,
 `estimated`, or `unavailable` provenance. `Objective.evaluate` combines configured terms.
@@ -46,6 +46,26 @@ configuration, search space, adapter, evaluation, store, resume, budget, optiona
 and sync-in-async failures. Low-level domain values still raise `ValueError` or `TypeError`;
 unknown trial IDs raise `KeyError`; database constraints raise `sqlite3.IntegrityError` until
 their package-boundary translations are implemented.
+
+## Search strategies
+
+`SearchSpace.validate(parameters)` requires exact keys and validates integer, float, and
+categorical bounds. `SearchSpace.describe()` produces structured provider input rather than a
+package-owned natural-language prompt. `RandomSearch` remains seeded and isolated.
+
+`LLMSearch(space, provider, max_suggestion_attempts=3, fallback_seed=0, fallback=True)` calls an
+injected async `LLMSearchProvider.suggest(LLMSuggestionRequest)`. Each provider result is treated
+as untrusted data and validated against the search space. Provider exceptions and invalid
+outputs consume a bounded attempt without exposing exception messages. Exhaustion either samples
+a deterministic fallback keyed by suggestion number or raises redacted `SearchSpaceError` when
+fallback is disabled. Requests include provider-safe prior observations; sensitive keys and
+`Secret` values are redacted recursively. Replay advances suggestion numbering and restores
+observation context. The strategy fingerprint includes search space, provider type and optional
+provider fingerprint, limits, fallback seed, and fallback policy.
+
+Provider-call token/cost accounting is not yet part of the `SearchStrategy.suggest` return
+contract; providers should retain their own usage until the planned strategy-usage extension is
+implemented. This limitation is explicit rather than reporting unknown search cost as zero.
 
 ## Optimizer entry point
 

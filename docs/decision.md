@@ -125,3 +125,13 @@ strategy observations in durable trial-sequence order so completion timing does 
 state. Keep `MaxTrials` as a hard cap; allow snapshot cost/time budgets to overshoot only by the
 active batch and document that bound. Serialize callback draining per study. Materialize each
 finite evaluation split before sample work in V0.1; streaming windows remain a later extension.
+
+## 2026-10-04 Provider-neutral LLMSearch
+
+Define LLM-guided search around an injected structured provider rather than any provider SDK or
+prompt framework. Validate exact candidate keys and value bounds, bound invalid/provider-failure
+attempts, redact prior observations before provider calls, and record only exception types in
+errors. Use stateless deterministic fallback keyed by seed and suggestion number so replay does
+not depend on hidden random state. Include optional provider fingerprints in compatibility.
+Keep strategy-provider usage explicitly unreported until the common strategy contract gains a
+durable usage channel; never silently count unknown provider cost as zero.

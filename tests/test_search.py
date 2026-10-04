@@ -52,3 +52,7 @@ def test_search_space_rejects_invalid_ranges() -> None:
         Categorical(())
     with pytest.raises(ValueError, match="at least one"):
         SearchSpace({})
+    with pytest.raises(TypeError, match="integers"):
+        IntegerRange(True, 2)
+    with pytest.raises(ValueError, match="finite"):
+        FloatRange(0.0, float("nan"))

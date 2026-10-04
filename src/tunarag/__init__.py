@@ -28,6 +28,17 @@ from .errors import (
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .result import OptimizationResult, TrialSummary, UsageSummary
 from .retry import RetryPolicy
+from .search import (
+    Categorical,
+    FloatRange,
+    IntegerRange,
+    LLMSearch,
+    LLMSearchProvider,
+    LLMSuggestionRequest,
+    RandomSearch,
+    SearchObservation,
+    SearchSpace,
+)
 from .stopping import CostBudget, MaxTrials, StopContext
 from .store import (
     AttemptRecord,
@@ -52,12 +63,18 @@ __all__ = [
     "CacheLookupStatus",
     "CachePolicy",
     "CachePrivacy",
+    "Categorical",
     "Candidate",
     "ConfigurationError",
     "CostBudget",
     "ErrorCode",
     "EvaluationError",
+    "FloatRange",
     "InMemoryDataset",
+    "IntegerRange",
+    "LLMSearch",
+    "LLMSearchProvider",
+    "LLMSuggestionRequest",
     "MaxTrials",
     "MetricValue",
     "MissingOptionalDependencyError",
@@ -69,9 +86,12 @@ __all__ = [
     "Optimizer",
     "PersistedUsageRecord",
     "ResumeError",
+    "RandomSearch",
     "RetryPolicy",
     "Secret",
     "SearchSpaceError",
+    "SearchObservation",
+    "SearchSpace",
     "Settings",
     "SQLiteCache",
     "SQLiteStore",

@@ -32,3 +32,5 @@ unfinished trials continue, and completed studies reload without provider execut
 receive ordered durable lifecycle events after commit; callback failures are isolated and
 recorded. Trial batches and per-trial sample execution are independently bounded by
 `concurrency` and `sample_concurrency`, with deterministic result/observation ordering.
+`RandomSearch` and provider-neutral `LLMSearch` share the strategy contract; LLM suggestions are
+strictly validated and fall back deterministically after bounded invalid attempts.
