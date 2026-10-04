@@ -68,6 +68,16 @@ from .store import (
     TrialRecord,
     TrialStatus,
 )
+from .synthetic import (
+    SourceDocument,
+    SourceSpan,
+    SyntheticDatasetBuilder,
+    SyntheticDatasetResult,
+    SyntheticGenerationRequest,
+    SyntheticGenerationResponse,
+    SyntheticQA,
+    SyntheticQAProvider,
+)
 
 __all__ = [
     "AdapterError",
@@ -123,6 +133,8 @@ __all__ = [
     "Settings",
     "SQLiteCache",
     "SQLiteStore",
+    "SourceDocument",
+    "SourceSpan",
     "SplitRatios",
     "StopContext",
     "StoreError",
@@ -130,6 +142,12 @@ __all__ = [
     "SyncInAsyncContextError",
     "StudyRecord",
     "StudyStatus",
+    "SyntheticDatasetBuilder",
+    "SyntheticDatasetResult",
+    "SyntheticGenerationRequest",
+    "SyntheticGenerationResponse",
+    "SyntheticQA",
+    "SyntheticQAProvider",
     "TargetScore",
     "TimeBudget",
     "TrialRecord",

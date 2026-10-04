@@ -38,6 +38,23 @@ validation, and test splits by default. A group key keeps all examples sharing a
 metadata value together. `select(split)` returns a nonempty split-specific dataset. The existing
 `InMemoryDataset` remains for arbitrary user-defined examples and explicit external versions.
 
+## Synthetic QA generation
+
+`SyntheticDatasetBuilder(provider, samples_per_document=3, concurrency=4, seed=0,
+generator_version="unspecified")` generates an `EvaluationDataset` from `SourceDocument` values.
+Providers implement async `SyntheticQAProvider.generate(SyntheticGenerationRequest)` and return a
+`SyntheticGenerationResponse` containing exactly the requested number of typed `SyntheticQA`
+items plus `UsageRecord` values. TunaRAG owns bounded document concurrency and validates response
+type, count, usage, confidence, and half-open `SourceSpan` bounds. Provider exception messages are
+discarded; `DatasetError` retains only document ID and exception type.
+
+Each generated example is marked synthetic and stores source document ID/metadata, spans,
+provider type and optional fingerprint, generator version, deterministic per-document seed,
+confidence, and `unreviewed` status. Supporting span text becomes reference context; the whole
+document is used when no spans are supplied. IDs and dataset versions are deterministic for
+identical validated outputs. Provider credentials, prompts, caching, and retry policy remain
+provider-owned in V0.1; exact/estimated generation usage is returned separately.
+
 `Candidate` requires a nonempty parameter mapping. Metrics and usage retain `exact`,
 `estimated`, or `unavailable` provenance. `Objective.evaluate` combines configured terms.
 `SQLiteStore` initializes or migrates experiment schema version 2. It creates and transitions

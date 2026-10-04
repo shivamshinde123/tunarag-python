@@ -13,6 +13,7 @@
 | LLMSearch | Provider-neutral bounded suggestions, validation, deterministic fallback | Implemented |
 | Evaluators | Custom metric helper and optional lazy RAGAS integration | Implemented |
 | Evaluation datasets | Canonical examples, JSON/JSONL/CSV ingestion, hashes, splits | Implemented |
+| Synthetic generation | Provider-neutral bounded QA generation with spans/provenance/usage | Implemented |
 | Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
 | Results and reporting | Ranking, metric leaders, usage summaries, JSON/CSV exports | Implemented |
 | MLflow mirror | Optional best-effort post-commit tracking callback | Implemented |

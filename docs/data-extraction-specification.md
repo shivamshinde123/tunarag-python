@@ -11,11 +11,11 @@ public error boundary. Metric scores, names, status, and coverage may be persist
 
 ## Scope and sample model
 
-Dataset ingestion is implemented; optional synthetic generation remains planned for V0.1.
+Dataset ingestion and optional provider-neutral synthetic generation are implemented.
 TunaRAG is not a production content-ingestion platform. `EvaluationExample` carries a stable ID,
 nonempty query, optional reference answer and contexts, relevant document IDs, tags, deeply
 immutable JSON metadata, canonical split, and synthetic flag. Richer source-span and generator
-provenance remains part of the synthetic-generation slice.
+provenance is retained for generated examples.
 
 ## Inputs, normalization, and validation
 
@@ -44,3 +44,10 @@ Generated samples retain source spans, model, prompt/generator versions, seed, u
 confidence, and review status. They are always labeled synthetic. Queries, answers, contexts,
 documents, rationales, and spans are sensitive; default logs/events contain identifiers and
 aggregates only. External-provider transmission is an explicit user decision.
+
+`SyntheticDatasetBuilder` accepts only caller-approved `SourceDocument` values and sends one
+document per structured provider request. It validates exact item count, 0..1 confidence,
+half-open span bounds, and usage types. Generation is bounded by document concurrency and output
+ordering follows source ordering regardless of completion timing. Provider messages are not
+retained. Returned usage remains outside optimization-study accounting until callers explicitly
+choose how to budget dataset creation.

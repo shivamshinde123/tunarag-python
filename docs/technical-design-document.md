@@ -120,6 +120,15 @@ seed plus example/group identity to a fraction and applies configured thresholds
 selection produces a new dataset version. Source paths and ingestion timestamps never affect
 identity; malformed record values never enter public error messages.
 
+## Synthetic generation
+
+Synthetic generation is a typed provider boundary, not a provider SDK integration. The builder
+derives a domain-separated seed per document, bounds concurrent calls, gathers in source order,
+and validates exact response cardinality, span ranges, confidence, and usage. Generated IDs hash
+document ID, output index, query, answer, and provenance. Every example is labeled synthetic and
+unreviewed. Source text is transmitted only because the caller explicitly supplies it; exception
+messages and generated content never enter errors or events.
+
 Objectives preserve direction, normalization, weight, coverage, and confidence. Unknown values
 do not become zero. Stop rules evaluate a committed snapshot with deterministic precedence and
 retain the winning reason. Implemented rules cover trial count, score target, cost, wall time,
