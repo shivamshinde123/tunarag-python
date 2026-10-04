@@ -36,11 +36,7 @@ jobs:
         run: python -m pytest
       - name: Build distributions
         run: python -m build
-      - name: Install and import built wheel
-        run: >-
-          python -c "from pathlib import Path; import subprocess, sys;
-          wheel = next(Path('dist').glob('*.whl'));
-          subprocess.check_call([sys.executable, '-m', 'pip', 'install',
-          '--force-reinstall', '--no-deps', str(wheel)]);
-          subprocess.check_call([sys.executable, '-c',
-          'import tunarag; assert tunarag.__version__ == \"0.1.0\"'])"
+      - name: Install built wheel
+        run: python -m pip install --force-reinstall --no-deps dist/tunarag_python-0.1.0-py3-none-any.whl
+      - name: Import built wheel
+        run: python -c "import tunarag; assert tunarag.__version__ == '0.1.0'"
