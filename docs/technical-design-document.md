@@ -13,12 +13,14 @@ search space, hashes canonical values, and reserves uniqueness in SQLite. The tr
 prepares the adapter, executes bounded samples, evaluates outputs, aggregates objective and
 usage, and cleans up under distinct timeout/cancellation boundaries.
 
-The implemented baseline uses capacity one. It iterates a repeatable async dataset, materializes
-adapter usage and evaluator outputs at each boundary, rejects duplicate metric names within a
-sample and the reserved `tunarag.objective` name, aggregates by metric name, and atomically
-commits terminal results. Duplicate suggestions are retried up to a configured bound before
-search exhaustion. A later scheduler will increase bounded capacity without changing these
-single-trial semantics.
+The implemented scheduler reserves up to `concurrency` trials, executes them concurrently, then
+sorts completed summaries by durable sequence before strategy observation. `MaxTrials` limits
+reservations exactly. Cost/time conditions inspect committed snapshots and may overshoot by one
+in-flight batch. Recovery finishes already reserved trials before new suggestions. Within each
+trial, the finite evaluation dataset is materialized and executed through a semaphore capped by
+`sample_concurrency`; outcomes are folded in dataset order. All observed usage is retained if
+any sample fails, while partial metrics are discarded. Duplicate metric names within a sample
+and the reserved `tunarag.objective` name remain invalid.
 
 Configured callbacks implement async `on_event(StudyEvent)`. Dispatch occurs after commit and
 follows durable event sequence. Retry-scheduled events are dispatched before sleeping. Callback

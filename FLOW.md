@@ -63,7 +63,8 @@ usage, replays successful strategy observations, continues pending/recoverable t
 persists the final stop reason. The sync wrappers reject an active event loop. Callback dispatch
 delivers newly committed events in sequence order, including retry scheduling before backoff;
 callback failures append redacted diagnostics without failing optimization. Bounded concurrency
-is not implemented yet.
+now schedules deterministic trial batches and independently bounded sample workers. Results and
+strategy observations are applied by durable trial sequence after each batch.
 
 ## Update rule
 

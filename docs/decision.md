@@ -116,3 +116,12 @@ replay historical callback notifications on resume; callers can query the event 
 want history. Isolate callback exceptions from authoritative optimization state and append a
 redacted `callback.failed` diagnostic containing no exception message. Never dispatch callback
 failure events back through callbacks, preventing recursive failure storms.
+
+## 2026-10-04 Deterministic bounded concurrency
+
+Run trials in batches capped by `concurrency` and samples through a separate semaphore capped by
+`sample_concurrency`. Reserve candidates serially, execute concurrently, then apply results and
+strategy observations in durable trial-sequence order so completion timing does not alter search
+state. Keep `MaxTrials` as a hard cap; allow snapshot cost/time budgets to overshoot only by the
+active batch and document that bound. Serialize callback draining per study. Materialize each
+finite evaluation split before sample work in V0.1; streaming windows remain a later extension.

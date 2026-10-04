@@ -180,7 +180,8 @@ def test_duplicate_suggestions_stop_as_search_exhausted(tmp_path) -> None:
     assert result.stop_reason == "search_exhausted"
     assert len(result.trials) == 1
     event_types = [event.type for event in store.list_events(result.study_id)]
-    assert event_types[-3:] == ["study.search_exhausted", "study.stopping", "study.completed"]
+    assert "study.search_exhausted" in event_types
+    assert event_types[-2:] == ["study.stopping", "study.completed"]
     store.close()
 
 
