@@ -25,6 +25,28 @@ leases make interrupted running trials discoverable without reusing attempt numb
 cache payload is quarantined and never returned. No current entry point executes an adapter or
 evaluator. Package boundaries translate contextual failures into structured errors.
 
+## Implemented optimizer flow
+
+```text
+Optimizer.aoptimize
+  -> fingerprint components and create running study
+  -> strategy.suggest -> reserve unique candidate and sequence
+  -> start leased attempt
+  -> for each dataset sample: adapter.run -> evaluators.evaluate
+  -> aggregate metric means, coverage, and confidence
+  -> Objective.evaluate
+  -> commit metrics, usage, attempt, trial, and event atomically
+  -> strategy.observe committed success
+  -> evaluate stop conditions or continue
+  -> complete study -> build OptimizationResult and UsageSummary
+```
+
+Adapter, evaluator, and objective exceptions become redacted failed-trial summaries and do not
+stop the study. Cancellation commits the active trial as cancelled, cancels the study, and is
+re-raised. Strategy failures are study-level failures because candidate generation or state
+observation cannot safely continue. Execution is currently sequential and does not read cache
+or resume an existing study.
+
 ## Target optimization flow
 
 ```text

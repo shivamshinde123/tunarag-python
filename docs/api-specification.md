@@ -40,22 +40,32 @@ and sync-in-async failures. Low-level domain values still raise `ValueError` or 
 unknown trial IDs raise `KeyError`; database constraints raise `sqlite3.IntegrityError` until
 their package-boundary translations are implemented.
 
-## Planned V0.1 entry point
+## Optimizer entry point
 
 ```python
 optimizer = Optimizer(
     adapter=adapter,
-    search_space=search_space,
+    strategy=RandomSearch(search_space, seed=42),
     evaluators=evaluators,
     objective=objective,
-    strategy=RandomSearch(search_space, seed=42),
+    store=store,
+    settings=settings,
 )
 result = await optimizer.aoptimize(dataset, study_name="support-rag")
 ```
 
-`aoptimize` is authoritative. `optimize` will be a synchronous wrapper and will reject use
-inside an active event loop. `OptimizationResult` will expose the stop reason, ranked trials,
-best candidate, metrics, usage, failures, cache/retry diagnostics, and reproducibility data.
+`aoptimize` is authoritative. The implemented slice runs sequential trials, aggregates each
+metric by arithmetic mean across samples, preserves coverage and confidence, computes a
+benefit-oriented objective, isolates adapter/evaluator/objective failures, persists partial
+usage on failure, and observes committed successful trials. Duplicate candidates are rejected;
+a bounded run of duplicates stops as search exhaustion. `optimize` owns an event loop only when
+none is active and otherwise raises `SyncInAsyncContextError`.
+
+`OptimizationResult` exposes study and stop status, all terminal trial summaries, best trial
+and candidate, successful/failed subsets, aggregate usage with exact-versus-estimated cost,
+and a valid no-success outcome. `InMemoryDataset` provides a repeatable versioned dataset.
+Retries, execution timeouts, cache integration, resume, callbacks, concurrency, and richer
+provenance remain planned V0.1 work.
 
 ## Versioning
 

@@ -8,11 +8,11 @@
 | Objectives and stopping | Weighted score and initial budgets | Partially implemented |
 | SQLite experiment store | Lifecycle, attempts, observations, events, migration/recovery | Implemented |
 | Cache | Versioned reusable results, expiry, privacy, checksums, quarantine | Implemented |
-| Optimizer and trial runner | Validate, schedule, execute, and isolate trials | Planned |
+| Optimizer and trial runner | Sequential execution, aggregation, isolation, results | Partial |
 | LLMSearch | Provider-guided validated suggestions | Planned |
 | Evaluators | Custom metrics and optional RAGAS | Planned |
 | Events and callbacks | Durable ordered events implemented; dispatch/callbacks planned | Partial |
-| Results and reporting | Ranking, usage, failures, and exports | Planned |
+| Results and reporting | Best/trial/usage summaries implemented; exports planned | Partial |
 | MLflow mirror | Optional post-commit tracking | Later V0.1 |
 
 Dependencies flow inward from entry points and integrations toward protocols and immutable

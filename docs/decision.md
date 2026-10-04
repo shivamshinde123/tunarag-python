@@ -63,3 +63,16 @@ attempt state, observations, trial state, and event atomically.
 Keep a retryable trial running after a failed or abandoned attempt; each retry receives a new
 monotonic attempt number. Resume first abandons expired leases, then queries running trials with
 no active attempt. This separates execution attempts from the semantic candidate trial.
+
+## 2026-10-03 Sequential optimizer baseline
+
+Make `Optimizer.aoptimize` the authoritative entry point and provide `optimize` only when no
+event loop is active. Deliver a sequential end-to-end path before adding concurrency so adapter,
+evaluation, objective, persistence, isolation, and stopping semantics are testable without
+scheduler races.
+
+Aggregate repeated sample metrics by name using arithmetic mean, explicit coverage, and the
+least-confident observed status. Persist partial usage when a trial fails, but do not expose raw
+third-party exception messages. Observe only committed successful trials under the current
+strategy contract. Add retries, cache use, replay/resume, callbacks, and concurrency in focused
+follow-up branches.
