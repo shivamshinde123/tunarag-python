@@ -5,6 +5,7 @@
 - Support CPython 3.10 through 3.13.
 - Use Ruff formatting and linting with a 100-character line length.
 - Use strict mypy for package code and precise public annotations.
+- Run the full quality matrix on Linux and Windows with Python 3.10 and 3.13.
 - Keep imports side-effect free and optional dependencies outside core import paths.
 - Prefer frozen, slotted dataclasses for values and protocols at replaceable boundaries.
 - Use descriptive names; avoid generic utilities and broad manager classes.

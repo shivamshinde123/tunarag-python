@@ -27,3 +27,9 @@ Random search owns an isolated seeded random stream. Objective and usage results
 
 Use standard-library `sqlite3` and explicit transactions as V0.1 authority. MLflow is an
 optional mirror. Defer an ORM until a second relational backend justifies it.
+
+## 2026-10-03 Cross-platform quality gate
+
+Run formatting, linting, strict typing, tests, and package builds on Linux and Windows with the
+oldest and newest supported Python versions. Force LF for source and documentation so local
+Git settings do not create formatter-only differences.
