@@ -1,12 +1,14 @@
 # TunaRAG Environment Configuration Reference
 
-## Status and hierarchy
+## Hierarchy
 
-No environment configuration is currently read. Planned precedence is explicit call arguments,
-constructor settings, an explicitly selected TOML file, `TUNARAG_` variables, then defaults.
-TunaRAG never implicitly loads `.env` or changes semantics through a hidden environment mode.
+`Settings.resolve` uses the following ascending precedence: package defaults, an explicitly
+selected TOML file, known `TUNARAG_` variables, then explicit overrides. TOML values live under
+`[tunarag]`. Unknown TOML or override keys and invalid values raise `ConfigurationError`.
+TunaRAG never implicitly loads `.env`, scans arbitrary environment values, creates directories,
+or changes semantics through a hidden environment mode.
 
-| Planned variable | Proposed default | Purpose |
+| Variable | Default | Purpose |
 |---|---|---|
 | `TUNARAG_HOME` | Platform data directory | Base local state |
 | `TUNARAG_DB_PATH` | `<home>/experiments.db` | SQLite database |
@@ -19,6 +21,11 @@ TunaRAG never implicitly loads `.env` or changes semantics through a hidden envi
 | `TUNARAG_MAX_RETRIES` | `2` | Retry limit |
 | `TUNARAG_CACHE_POLICY` | `read_write` | Cache behavior |
 
-Names and defaults remain `TBD` until implemented. Prefer injected provider clients. Optional
-integrations may read provider-standard keys only when no client is injected. Secrets are
-never snapshotted or included in hashes, persistence, events, logs, errors, or exports.
+`TUNARAG_CACHE_POLICY` accepts `off`, `read_only`, `write_only`, or `read_write`. Trial and
+concurrency values must be positive; retries are nonnegative; integer strings must be canonical
+base-10 values. `TUNARAG_HOME` uses the platform data directory when omitted. Dependent paths
+derive from the resolved home unless set independently.
+
+Prefer injected provider clients. Optional integrations may read provider-standard keys only
+when no client is injected. Core settings never retain them. Secrets are never snapshotted or
+included in hashes, persistence, events, logs, errors, or exports.

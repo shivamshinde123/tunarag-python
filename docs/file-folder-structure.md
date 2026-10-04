@@ -7,8 +7,10 @@ tunarag-python/
 |-- src/tunarag/             # Installable package
 |   |-- __init__.py          # Curated public exports and version
 |   |-- cache.py             # Versioned SQLite cache and key model
+|   |-- config.py            # Typed configuration resolution
 |   |-- contracts.py         # User and extension protocols
 |   |-- domain.py            # Immutable values
+|   |-- errors.py            # Stable structured public errors
 |   |-- objective.py         # Objective aggregation
 |   |-- search.py            # Search spaces and RandomSearch
 |   |-- serialization.py     # Canonical JSON and hashes

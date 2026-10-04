@@ -8,8 +8,8 @@ flow document in the same feature branch.
 
 Phase 2 is in progress. Package metadata, immutable domain values, extension protocols,
 canonical serialization, typed search spaces, seeded random search, objective aggregation,
-stop conditions, SQLite study/trial persistence, versioned SQLite caching, and contract tests
-are implemented.
+stop conditions, typed configuration, structured errors, SQLite study/trial persistence,
+versioned SQLite caching, and contract tests are implemented.
 
 ## Intended entry points
 

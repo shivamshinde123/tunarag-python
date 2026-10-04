@@ -3,6 +3,7 @@
 | Component | Responsibility | Status |
 |---|---|---|
 | Domain and serialization | Immutable values, redaction, canonical identity | Implemented |
+| Configuration and errors | Typed precedence, validation, stable redacted failures | Implemented |
 | Search space and RandomSearch | Typed sampling and seeded suggestions | Implemented |
 | Objectives and stopping | Weighted score and initial budgets | Partially implemented |
 | SQLite experiment store | Study and trial lifecycle state | Foundation implemented |

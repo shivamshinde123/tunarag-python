@@ -42,3 +42,13 @@ expiry/quarantine states. Return explicit lookup outcomes and never return unver
 
 This keeps V0.1 atomic and zero-infrastructure. External payload files remain a later option if
 measured payload sizes justify the additional atomic-write and cleanup complexity.
+
+## 2026-10-03 Explicit configuration and structured errors
+
+Resolve only defaults, explicitly selected TOML, known `TUNARAG_` variables, and explicit
+overrides, in that precedence order. Do not auto-load `.env`, provider credentials, or a hidden
+environment mode. Keep settings immutable and provider-secret free.
+
+Represent package-boundary failures with stable codes, stage, retryability, and recursively
+redacted details. Keep low-level validation exceptions until the boundary that can add useful
+context, rather than obscuring their causes prematurely.
