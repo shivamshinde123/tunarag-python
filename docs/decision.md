@@ -155,3 +155,12 @@ missing IDs from normalized content, and reject duplicate identities. Version or
 content with domain-separated hashing and exclude paths/timestamps. Use stable hash-based
 80/10/10 splits with optional metadata grouping so assignment is independent of input order.
 Keep synthetic generation and rich source-span provenance as a separate feature.
+
+## 2026-10-04 Deterministic result reporting and exports
+
+Derive rankings from immutable terminal summaries instead of persisting duplicate report state.
+Rank the configured objective descending with durable sequence ties, and expose independent
+direction-aware metric leaders. Define JSON report schema version 1 as the lossless portable
+format and CSV as a flattened one-row-per-trial analysis format. Apply central recursive
+redaction to candidate parameters in every export and retain usage confidence provenance.
+Defer formal Pareto/frontier semantics until the post-V0.1 multiobjective design.

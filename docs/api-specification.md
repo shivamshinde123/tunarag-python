@@ -179,9 +179,23 @@ observations. `RandomSearch` uses replay to verify candidates and advance its se
 
 `OptimizationResult` exposes study and stop status, all terminal trial summaries, best trial
 and candidate, successful/failed subsets, aggregate usage with exact-versus-estimated cost,
-and a valid no-success outcome. Each `TrialSummary` reports attempt count and whether metrics
-came from cache. `InMemoryDataset` provides a repeatable versioned dataset. Study forking,
-streaming sample windows, and mandatory custom-component fingerprints remain planned V0.1 work.
+and a valid no-success outcome. `ranked_trials` orders successful available objectives from best
+to worst with trial sequence as the stable tie-breaker. `metric_names` returns a lexical union;
+`metric_leaders(name, direction=...)` independently ranks available values for one metric.
+`TrialSummary.metric(name)` returns one observation or `None`.
+
+`as_dict()` returns report schema version 1 with summary counts, aggregate usage, redacted
+candidates, per-trial metrics, raw usage records, objective, attempts, cache state, and bounded
+error text. `to_json()` is deterministic UTF-8-capable JSON; `write_json(path)` adds a final
+newline. `write_csv(path)` emits one trial per row, a redacted canonical candidate JSON cell,
+trial/objective/attempt/cache fields, per-trial usage totals, and three columns per metric for
+value, status, and coverage. Writers replace existing files but do not create parent directories.
+`Secret` values and sensitive mapping keys are recursively redacted in both formats.
+
+Each `TrialSummary` reports attempt count and whether metrics came from cache. `InMemoryDataset`
+provides a repeatable versioned dataset. Formal Pareto/frontier reporting remains post-V0.1;
+V0.1 ranks the configured scalar objective and individual metrics. Study forking, streaming
+sample windows, and mandatory custom-component fingerprints remain planned V0.1 work.
 
 ## Versioning
 

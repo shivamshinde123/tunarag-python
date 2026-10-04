@@ -14,7 +14,7 @@
 | Evaluators | Custom metric helper and optional lazy RAGAS integration | Implemented |
 | Evaluation datasets | Canonical examples, JSON/JSONL/CSV ingestion, hashes, splits | Implemented |
 | Events and callbacks | Durable ordered events and isolated post-commit async dispatch | Implemented |
-| Results and reporting | Best/trial/usage summaries implemented; exports planned | Partial |
+| Results and reporting | Ranking, metric leaders, usage summaries, JSON/CSV exports | Implemented |
 | MLflow mirror | Optional post-commit tracking | Later V0.1 |
 
 Dependencies flow inward from entry points and integrations toward protocols and immutable

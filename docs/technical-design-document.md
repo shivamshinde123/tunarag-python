@@ -129,3 +129,18 @@ improvement, search exhaustion, failure threshold, and cancellation.
 
 Python 3.10 structured concurrency, sortable public IDs, sample checkpoint stability, and a
 future size threshold for external cache payload files remain `TBD`.
+
+## Result reporting and export
+
+`OptimizationResult` remains an immutable in-memory report and adds derived views rather than
+persisting duplicate rankings. Objective ranking filters to successful trials with available
+scores, sorts descending, and uses durable trial sequence for deterministic ties. Metric leaders
+apply caller-selected direction to available values only. Formal Pareto dominance is deferred
+because V0.1 has one configured scalar objective and does not define missing-value dominance.
+
+JSON report schema version 1 preserves nested trial metrics and usage. CSV is intentionally
+lossier and rectangular: one row per trial, JSON candidate cell, flattened usage totals, and
+lexically ordered dynamic metric columns. Both formats recurse through the central redactor, so
+`Secret` values and sensitive keys never leave the result boundary. Exports do not include cache
+payloads, provider prompts, raw dataset examples, or exception messages beyond already bounded
+trial error summaries.

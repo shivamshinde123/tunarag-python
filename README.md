@@ -36,3 +36,4 @@ recorded. Trial batches and per-trial sample execution are independently bounded
 `concurrency` and `sample_concurrency`, with deterministic result/observation ordering.
 `RandomSearch` and provider-neutral `LLMSearch` share the strategy contract; LLM suggestions are
 strictly validated and fall back deterministically after bounded invalid attempts.
+`OptimizationResult` ranks successful trials and writes redacted JSON or flattened CSV reports.
