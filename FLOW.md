@@ -10,7 +10,9 @@ Phase 2 is in progress. Package metadata, immutable domain values, extension pro
 canonical serialization, typed search spaces, seeded random search, objective aggregation,
 stop conditions, typed configuration, structured errors, SQLite study/trial persistence,
 attempt leases and recovery, atomic observations/events, versioned SQLite caching, and contract
-tests are implemented.
+tests are implemented. The first sequential async optimizer path now executes adapters and
+evaluators, aggregates metrics and usage, isolates trial failures, commits outcomes, observes
+successful trials, applies stop conditions, and returns ranked results.
 
 ## Intended entry points
 
@@ -47,7 +49,11 @@ Load study and terminal observations, mark expired running attempts abandoned, a
 
 ## Current implemented flow
 
-The current executable paths cover guarded study/trial state, atomic candidate reservation,
+The current optimization path resolves a new study, reserves candidates, starts one attempt,
+iterates the repeatable dataset, calls the adapter and evaluators, aggregates metrics, computes
+the objective, atomically commits the terminal outcome, observes successful trials, and checks
+stopping rules. Failures are isolated to their trial. The sync wrapper rejects an active event
+loop. Supporting persistence paths cover guarded study/trial state, atomic candidate reservation,
 attempt leases, expired-attempt recovery, terminal metric/usage/event commits, replay queries,
 and independently versioned cache writes and reads. Cache lookups verify checksums, enforce
 TTLs, persist quarantine after corruption, and expose explicit outcomes. Tests verify these

@@ -22,4 +22,7 @@ versioned SQLite cache with expiry and corruption quarantine. Typed settings res
 overrides, selected TOML, and known environment variables; structured package errors expose
 redacted diagnostics. The experiment store includes guarded study/trial state, atomic trial
 reservation and terminal commits, attempt leases and recovery, metrics, usage, and ordered
-events. The optimizer entry point is not implemented yet.
+events. `Optimizer.aoptimize` now runs sequential async studies with per-sample adapter and
+evaluator calls, objective scoring, durable terminal commits, failure isolation, stopping, and
+an inspectable result; `optimize` provides the safe synchronous wrapper. Retries, cache use,
+resume, callbacks, and bounded concurrency are subsequent features.

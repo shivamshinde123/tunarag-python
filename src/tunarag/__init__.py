@@ -9,7 +9,9 @@ from .cache import (
     SQLiteCache,
 )
 from .config import CachePolicy, Settings
+from .dataset import InMemoryDataset
 from .domain import Candidate, MetricValue, Secret, UsageRecord, ValueStatus
+from .engine import Optimizer
 from .errors import (
     AdapterError,
     BudgetError,
@@ -24,6 +26,7 @@ from .errors import (
     TunaRAGError,
 )
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
+from .result import OptimizationResult, TrialSummary, UsageSummary
 from .stopping import CostBudget, MaxTrials, StopContext
 from .store import (
     AttemptRecord,
@@ -53,6 +56,7 @@ __all__ = [
     "CostBudget",
     "ErrorCode",
     "EvaluationError",
+    "InMemoryDataset",
     "MaxTrials",
     "MetricValue",
     "MissingOptionalDependencyError",
@@ -60,6 +64,8 @@ __all__ = [
     "ObjectiveDirection",
     "ObjectiveResult",
     "ObjectiveTerm",
+    "OptimizationResult",
+    "Optimizer",
     "PersistedUsageRecord",
     "ResumeError",
     "Secret",
@@ -74,9 +80,11 @@ __all__ = [
     "StudyRecord",
     "StudyStatus",
     "TrialRecord",
+    "TrialSummary",
     "TrialStatus",
     "TunaRAGError",
     "UsageRecord",
+    "UsageSummary",
     "ValueStatus",
     "__version__",
 ]

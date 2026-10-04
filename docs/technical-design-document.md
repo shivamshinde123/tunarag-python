@@ -13,6 +13,13 @@ search space, hashes canonical values, and reserves uniqueness in SQLite. The tr
 prepares the adapter, executes bounded samples, evaluates outputs, aggregates objective and
 usage, and cleans up under distinct timeout/cancellation boundaries.
 
+The implemented baseline uses capacity one. It iterates a repeatable async dataset, materializes
+adapter usage and evaluator outputs at each boundary, rejects duplicate metric names within a
+sample and the reserved `tunarag.objective` name, aggregates by metric name, and atomically
+commits terminal results. Duplicate suggestions are retried up to a configured bound before
+search exhaustion. A later scheduler will increase bounded capacity without changing these
+single-trial semantics.
+
 ## Retries and resume
 
 Retry decisions use stage, error code, idempotency, attempt count, and provider hints.
