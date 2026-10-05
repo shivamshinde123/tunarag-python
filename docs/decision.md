@@ -1,5 +1,14 @@
 # TunaRAG Decision Log
 
+## 2026-10-05 Add sparse hand-drawn README illustrations
+
+Use six consistent Xiaohei-style article illustrations as cognitive anchors in the comprehensive
+README rather than decorating every section. Place them at the optimization loop, adapter boundary,
+dataset preparation, search strategy, persistence/resume, and result-reporting concepts. Keep the
+PNG sources in a versioned root asset directory and reference their raw GitHub URLs so they render
+consistently on GitHub, PyPI, and the generated MkDocs usage page. Every image has descriptive alt
+text; prose and code remain sufficient when images are unavailable.
+
 ## 2026-10-05 Publish documentation with MkDocs Material and GitHub Pages
 
 Build the public documentation from the repository's Markdown with MkDocs Material and deploy the
