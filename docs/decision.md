@@ -1,5 +1,14 @@
 # TunaRAG Decision Log
 
+## 2026-10-05 Store README illustrations inside the MkDocs source tree
+
+Keep canonical README illustrations under `docs/assets/tunarag-python-readme-illustrations/` and
+reference them with repository-relative paths from `README.md`. This supersedes the earlier raw-URL
+decision because unauthenticated `raw.githubusercontent.com` URLs do not render assets from a
+private repository. Repository-relative paths render on private GitHub pages, and keeping the files
+below `docs/` lets MkDocs publish the same assets without duplication. PyPI rendering should be
+checked separately if the repository remains private at the next release.
+
 ## 2026-10-05 Add sparse hand-drawn README illustrations
 
 Use six consistent Xiaohei-style article illustrations as cognitive anchors in the comprehensive
