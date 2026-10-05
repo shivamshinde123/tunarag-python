@@ -1,0 +1,122 @@
+site_name: TunaRAG Python
+site_description: Typed, durable optimization workflows for existing RAG systems
+site_url: https://shivamshinde123.github.io/tunarag-python/
+repo_url: https://github.com/shivamshinde123/tunarag-python
+repo_name: shivamshinde123/tunarag-python
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  language: en
+  features:
+    - content.code.copy
+    - content.tabs.link
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - include-markdown:
+      rewrite_relative_urls: true
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: google
+            filters: ["!^_"]
+            heading_level: 2
+            inherited_members: false
+            members_order: source
+            merge_init_into_class: true
+            separate_signature: true
+            show_if_no_docstring: true
+            show_root_heading: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Usage Guide: usage.md
+  - Guides:
+      - API Specification: api-specification.md
+      - Data and Extraction: data-extraction-specification.md
+      - Environment Configuration: environment-config-reference.md
+      - Code Flow: flow.md
+  - Architecture:
+      - System Architecture: system-architecture-document.md
+      - Technical Design: technical-design-document.md
+      - Component Map: component-map.md
+      - Database Schema: database-schema.md
+      - Repository Structure: file-folder-structure.md
+      - Technology Stack: tech-stack.md
+  - API Reference:
+      - Overview: reference/index.md
+      - Optimization Engine: reference/engine.md
+      - Contracts and Adapters: reference/contracts.md
+      - Framework Integrations: reference/integrations.md
+      - Datasets: reference/dataset.md
+      - Search: reference/search.md
+      - Evaluation and Objectives: reference/evaluation.md
+      - Persistence and Caching: reference/persistence.md
+      - Results and Domain Models: reference/models.md
+      - Runtime Policies and Errors: reference/runtime.md
+      - Synthetic Data: reference/synthetic.md
+  - Project:
+      - Product Requirements: product-requirements-document.md
+      - Coding Conventions: coding-conventions.md
+      - Decision Log: decision.md
+      - UI and UX: ui-ux-wireframes.md
+
+exclude_docs: |
+  *.docx
+
+strict: true
+copyright: Copyright &copy; 2026 Shivam Shinde

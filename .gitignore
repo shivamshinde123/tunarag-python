@@ -8,6 +8,7 @@ __pycache__/
 .tmp/
 .coverage
 htmlcov/
+site/
 
 # Local environments
 .venv/

@@ -1,5 +1,15 @@
 # TunaRAG Decision Log
 
+## 2026-10-05 Publish documentation with MkDocs Material and GitHub Pages
+
+Build the public documentation from the repository's Markdown with MkDocs Material and deploy the
+static site to GitHub Pages through GitHub Actions. Keep `README.md` as the canonical comprehensive
+usage guide and include it during the documentation build to prevent a divergent copy. Generate the
+Python API reference from source signatures and docstrings with `mkdocstrings`, while retaining the
+hand-written architecture and design documents for concepts and rationale. Validate every pull
+request with a strict documentation build and deploy only from `main`. This provides a free,
+searchable, mobile-friendly site without introducing a hosted documentation service or credentials.
+
 Decisions are chronological. Superseding entries preserve the original reasoning.
 
 ## 2026-10-04 Publish `0.2.1` through GitHub OIDC
