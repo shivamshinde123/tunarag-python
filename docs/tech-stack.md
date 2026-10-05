@@ -12,6 +12,8 @@
 | Tests | pytest, pytest-asyncio, Hypothesis | Sync, async, and property tests |
 | Quality | Ruff and strict mypy | Fast consistent checks |
 | CI | GitHub Actions | Native pull-request verification |
+| Documentation | MkDocs Material and mkdocstrings | Searchable Markdown site with generated Python API reference |
+| Documentation hosting | GitHub Pages | Free deployment from the repository through GitHub Actions |
 | Framework adapters | Structural `ainvoke` protocol | Supports LangChain/LangGraph without core imports |
 
 RAGAS `>=0.4,<0.5` is an optional evaluator extra loaded only when `RagasEvaluator` executes.
@@ -23,3 +25,8 @@ until a second relational backend warrants an ORM. AnyIO is deferred until backe
 removes real complexity. Pydantic may validate external boundaries but will not constrain user
 models without measured benefit. Optuna may support later search behind TunaRAG protocols.
 JSONL is not authoritative lifecycle state because it lacks transactions and uniqueness.
+
+The documentation build treats the root `README.md` as the canonical usage guide and includes it in
+the site rather than maintaining a second copy. `mkdocstrings` reads public Python signatures and
+docstrings from `src/tunarag`; hand-written guides continue to explain behavior, rationale, and
+workflows that cannot be inferred from code.

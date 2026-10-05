@@ -28,6 +28,8 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 > Install the distribution as `tunarag-python` and import it as `tunarag`. Python 3.10-3.13 is
 > supported.
 
+**Documentation:** [shivamshinde123.github.io/tunarag-python](https://shivamshinde123.github.io/tunarag-python/)
+
 ## Comprehensive Usage Guide
 
 The sections below explain every public TunaRAG Python V0.2 feature with executable examples.

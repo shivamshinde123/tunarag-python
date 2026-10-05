@@ -1,6 +1,7 @@
 # TunaRAG File and Folder Structure
 
-The root [`README.md`](../README.md) is the canonical user-facing guide for installing the package,
+The site's [Usage Guide](usage.md) is generated from the root `README.md`, which remains the
+canonical user-facing guide for installing the package,
 connecting custom or framework RAG pipelines, running every public feature, and operating studies.
 Its Python fences are executed by `tests/test_usage_documentation.py` so examples cannot silently
 drift from the package API.
