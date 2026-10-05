@@ -6,6 +6,9 @@ connecting custom or framework RAG pipelines, running every public feature, and 
 Its Python fences are executed by `tests/test_usage_documentation.py` so examples cannot silently
 drift from the package API.
 
+README illustration source files live under `assets/tunarag-python-readme-illustrations/`. The
+README uses absolute raw GitHub URLs so the same images render on GitHub, PyPI, and the MkDocs site.
+
 ```text
 tunarag-python/
 |-- .github/workflows/ci.yml # Linux/Windows quality and build matrix

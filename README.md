@@ -84,6 +84,8 @@ A **study** contains ordered **trials**. Each trial evaluates one complete candi
 against every dataset example. Same-named sample metrics are aggregated into trial metrics, then the
 objective converts those metrics into one larger-is-better score.
 
+![A hand-drawn Xiaohei operating TunaRAG's iterative optimization loop](https://raw.githubusercontent.com/shivamshinde123/tunarag-python/main/assets/tunarag-python-readme-illustrations/01-optimization-loop.png)
+
 TunaRAG does not create or host a RAG application, provision indexes, manage provider credentials,
 or expose a hosted API. Your application keeps ownership of those concerns.
 
@@ -190,6 +192,8 @@ async def run(candidate, example) -> tuple[object, Sequence[UsageRecord]]: ...
 `candidate.parameters` contains the proposed configuration. The output can be any object understood
 by your evaluators. Usage may be empty. Adapter exceptions enter TunaRAG's retry and trial-failure
 boundary.
+
+![A hand-drawn Xiaohei connecting a user-owned RAG pipeline through the TunaRAG adapter boundary](https://raw.githubusercontent.com/shivamshinde123/tunarag-python/main/assets/tunarag-python-readme-illustrations/02-rag-adapter-boundary.png)
 
 ```python
 from tunarag import UsageRecord, ValueStatus
@@ -354,6 +358,8 @@ retry and failure handling.
 
 ## Evaluation datasets
 
+![A hand-drawn Xiaohei normalizing, validating, hashing, and splitting evaluation records](https://raw.githubusercontent.com/shivamshinde123/tunarag-python/main/assets/tunarag-python-readme-illustrations/03-dataset-preparation.png)
+
 ### Canonical model
 
 ```python
@@ -487,6 +493,8 @@ source IDs, and usage. Generated examples carry provenance and `synthetic=True`.
 using them as gold data. Generation usage is separate from optimization usage.
 
 ## Search spaces and strategies
+
+![A hand-drawn Xiaohei validating candidates from RandomSearch and LLMSearch](https://raw.githubusercontent.com/shivamshinde123/tunarag-python/main/assets/tunarag-python-readme-illustrations/04-search-strategies.png)
 
 ### Typed space
 
@@ -863,6 +871,8 @@ labels are metadata, not encryption.
 
 ## SQLite persistence and resume
 
+![A hand-drawn Xiaohei recovering and resuming a committed SQLite study after interruption](https://raw.githubusercontent.com/shivamshinde123/tunarag-python/main/assets/tunarag-python-readme-illustrations/05-persistence-and-resume.png)
+
 ```python
 from pathlib import Path
 
@@ -959,6 +969,8 @@ position are mirrored. An MLflow outage does not invalidate local results. Autom
 reconciliation is not included in V0.2.
 
 ## Results and reports
+
+![A hand-drawn Xiaohei balancing quality, cost, and latency before exporting the winning result](https://raw.githubusercontent.com/shivamshinde123/tunarag-python/main/assets/tunarag-python-readme-illustrations/06-results-and-reports.png)
 
 `OptimizationResult` exposes:
 
