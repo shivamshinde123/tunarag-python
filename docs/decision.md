@@ -2,6 +2,13 @@
 
 Decisions are chronological. Superseding entries preserve the original reasoning.
 
+## 2026-10-04 Lead the README with the product, not the manual
+
+The README begins with a concise product definition, the problem TunaRAG solves, representative use
+cases, target users, and the boundary between TunaRAG and the user's RAG application. The detailed
+usage guide follows this overview. Use ASCII punctuation in compatibility-critical introductory text
+to avoid mojibake in package-index and repository renderers.
+
 ## 2026-10-04 Promote the comprehensive guide to `README.md`
 
 Supersede the separate-root-guide portion of the decisions below. `README.md` is now the single

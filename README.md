@@ -1,9 +1,36 @@
 # TunaRAG Python
 
+**Find the best configuration for your existing RAG application.**
+
+TunaRAG is an open-source, Python-first optimization toolkit for retrieval-augmented generation
+(RAG) systems. It connects to a RAG pipeline you already own, evaluates different configurations on
+your data, and identifies the best tradeoff between **answer quality, cost, and latency**.
+
+Instead of manually changing retrieval settings, prompts, or models and comparing a few examples by
+eye, TunaRAG runs structured, repeatable optimization studies. It records every trial in SQLite,
+isolates failures, supports resumable execution, and produces results you can inspect and export.
+
+### What can you use it for?
+
+- Find the best `top_k`, chunking, prompt, model, reranking, or generation settings for your RAG.
+- Compare configurations with custom metrics or optional RAGAS evaluators.
+- Optimize a weighted objective across quality, provider cost, and response latency.
+- Search with deterministic random search or provider-neutral LLM-guided search.
+- Tune existing custom, LangChain, or LangGraph RAG pipelines without rebuilding them.
+- Preserve reproducible experiments with caching, retries, callbacks, reports, and SQLite resume.
+
+### Who is it for?
+
+TunaRAG is designed for developers and AI teams that already have a working RAG pipeline and want a
+reliable way to evaluate and improve it. Your application continues to own retrieval, generation,
+indexes, provider clients, and credentials; TunaRAG owns the optimization workflow around it.
+
+> Install the distribution as `tunarag-python` and import it as `tunarag`. Python 3.10-3.13 is
+> supported.
+
 ## Comprehensive Usage Guide
 
-This is the comprehensive user guide for TunaRAG Python V0.2. Install the distribution as
-`tunarag-python` and import it as `tunarag`. Python 3.10â€“3.13 is supported.
+The sections below explain every public TunaRAG Python V0.2 feature with executable examples.
 
 ## Contents
 
