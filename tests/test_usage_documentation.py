@@ -56,6 +56,18 @@ def _usage_blocks() -> list[str]:
 BLOCKS = _usage_blocks()
 
 
+def test_readme_illustrations_are_local_and_present() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    illustration_directory = ROOT / "docs/assets/tunarag-python-readme-illustrations"
+    illustrations = sorted(illustration_directory.glob("*.png"))
+
+    assert "raw.githubusercontent.com" not in readme
+    assert len(illustrations) == 6
+    for illustration in illustrations:
+        relative_path = illustration.relative_to(ROOT).as_posix()
+        assert f"]({relative_path})" in readme
+
+
 def _run(index: int, namespace: dict[str, Any] | None = None) -> dict[str, Any]:
     scope = {} if namespace is None else namespace
     code = compile(
