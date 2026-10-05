@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tunarag-python"
-version = "0.2.0"
+version = "0.2.1"
 description = "Typed, durable optimization workflows for existing RAG systems"
 readme = "README.md"
 requires-python = ">=3.10"

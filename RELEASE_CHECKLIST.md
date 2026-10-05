@@ -1,8 +1,8 @@
-# V0.2 Release Checklist
+# V0.2.1 Release Checklist
 
 ## Required gates
 
-- [x] Public version is `0.2.0` in package code and distribution metadata.
+- [x] Public version is `0.2.1` in package code and distribution metadata.
 - [x] Python 3.10 and 3.13 pass on Linux and Windows; intermediate versions are classified.
 - [x] Ruff formatting/linting, strict mypy, tests, sdist, and wheel builds pass.
 - [x] CI force-installs and imports the built wheel.
@@ -14,10 +14,13 @@
 
 ## Publish-time gates
 
-- [ ] Confirm the `tunarag-python` name and owner account on the target package index.
-- [x] Create an annotated `v0.2.0` tag from the final green `main` commit.
+- [x] Confirm `tunarag-python` is currently available on PyPI and TestPyPI.
+- [ ] Configure pending trusted publishers for `.github/workflows/publish.yml` using environments
+  `testpypi` and `pypi` on their respective indexes.
+- [ ] Create an annotated `v0.2.1` tag from the final green `main` commit.
 - [ ] Build from a clean checkout and inspect wheel/sdist contents.
 - [ ] Publish to TestPyPI and run the quickstart in a fresh environment.
 - [ ] Publish to PyPI, verify metadata links, then create the GitHub release from `CHANGELOG.md`.
 
-Publishing credentials and package-index publication are intentionally manual external actions.
+Publishing uses GitHub Actions OIDC trusted publishing. No long-lived package-index token belongs in
+the repository or GitHub secrets.

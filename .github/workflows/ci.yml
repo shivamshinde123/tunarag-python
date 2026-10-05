@@ -37,9 +37,9 @@ jobs:
       - name: Build distributions
         run: python -m build
       - name: Install built wheel
-        run: python -m pip install --force-reinstall --no-deps dist/tunarag_python-0.2.0-py3-none-any.whl
+        run: python -m pip install --force-reinstall --no-deps dist/tunarag_python-0.2.1-py3-none-any.whl
       - name: Import built wheel
-        run: python -c "import tunarag; assert tunarag.__version__ == '0.2.0'"
+        run: python -c "import tunarag; assert tunarag.__version__ == '0.2.1'"
 
   framework-compatibility:
     runs-on: ubuntu-latest

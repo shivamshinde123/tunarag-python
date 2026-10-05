@@ -1,0 +1,74 @@
+name: Publish Python package
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Package index to publish to
+        required: true
+        type: choice
+        options:
+          - testpypi
+          - pypi
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install build tools
+        run: python -m pip install --upgrade pip build twine
+      - name: Build distributions
+        run: python -m build
+      - name: Validate distributions
+        run: python -m twine check dist/*
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-testpypi:
+    if: inputs.target == 'testpypi'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/tunarag-python
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+  publish-pypi:
+    if: inputs.target == 'pypi'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/tunarag-python
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
