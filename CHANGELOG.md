@@ -2,6 +2,20 @@
 
 All notable changes to TunaRAG follow semantic versioning.
 
+## 0.2.1 - 2026-10-04
+
+### Added
+
+- Comprehensive product-first README with executable examples for every public workflow.
+- CI coverage that extracts and runs all 36 Python examples from the README.
+- Manual trusted-publishing workflow for separate TestPyPI and PyPI environments.
+
+### Fixed
+
+- Corrected dataset, LangGraph state, cache, resumability, optimizer-construction, and report-path
+  examples found through runtime documentation testing.
+- Replaced corrupted version-range punctuation in package metadata.
+
 ## 0.2.0 - 2026-10-04
 
 ### Added

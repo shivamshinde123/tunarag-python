@@ -2,6 +2,13 @@
 
 Decisions are chronological. Superseding entries preserve the original reasoning.
 
+## 2026-10-04 Publish `0.2.1` through GitHub OIDC
+
+Publish the first package-index release as `0.2.1` because the existing `v0.2.0` tag predates the
+final public README and executable documentation fixes. Use a manually dispatched GitHub Actions
+workflow with separate `testpypi` and `pypi` protected environments and PyPA's trusted-publishing
+action. Do not store a long-lived PyPI API token in the repository or GitHub secrets.
+
 ## 2026-10-04 Lead the README with the product, not the manual
 
 The README begins with a concise product definition, the problem TunaRAG solves, representative use
