@@ -306,7 +306,8 @@ and message objects. The adapter always adds `langchain.runnable` latency. Set
 precedence.
 
 For a complete provider-backed pipeline—from documents and embeddings through optimization and
-reports—run [`examples/langchain_full_rag.py`](examples/langchain_full_rag.py).
+reports—run
+[`examples/langchain_full_rag.py`](https://github.com/shivamshinde123/tunarag-python/blob/main/examples/langchain_full_rag.py).
 
 ## LangGraph integration
 
