@@ -1,5 +1,13 @@
 # TunaRAG Decision Log
 
+## 2026-10-06 Provide a complete single-file LangChain tuning example
+
+Provide one executable example that uses standard LangChain components for document splitting,
+OpenAI embeddings, an in-memory vector store, retrieval, prompting, and generation, then connects
+the runnable through `LangChainAdapter`. Keep provider packages explicit rather than adding OpenAI
+to TunaRAG's provider-neutral `langchain` extra. Tune runtime RAG parameters without rebuilding a
+custom adapter or making the reference RAG part of the package.
+
 ## 2026-10-05 Store README illustrations inside the MkDocs source tree
 
 Keep canonical README illustrations under `docs/assets/tunarag-python-readme-illustrations/` and
