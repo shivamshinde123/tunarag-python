@@ -43,17 +43,28 @@ graph_adapter = LangGraphAdapter(
 ## Complete LangChain RAG and tuning workflow
 
 `langchain_full_rag.py` is a single-file, provider-backed example that builds a complete LangChain
-pipeline with documents, recursive splitting, OpenAI embeddings, an in-memory vector store,
+pipeline with documents, recursive splitting, OpenRouter embeddings, an in-memory vector store,
 retrieval, prompting, and generation. It then wraps the standard retrieval chain with
 `LangChainAdapter` and tunes retrieval count, retrieval strategy, temperature, and prompt style.
 
-Install the example dependencies, set `OPENAI_API_KEY`, and run it from the repository root:
+Install the example dependencies from the repository root:
 
 ```powershell
-python -m pip install tunarag-python langchain langchain-classic langchain-openai langchain-text-splitters
-$env:OPENAI_API_KEY = "your-key"
+python -m pip install tunarag-python langchain langchain-classic langchain-openai langchain-text-splitters python-dotenv
+```
+
+Copy the safe template to a local `.env` file, then replace the placeholder with your OpenRouter
+API key. The `.env` file is ignored by Git and must never be committed.
+
+```powershell
+Copy-Item .env.example .env
+# Edit .env and set OPENROUTER_API_KEY=your-real-key
 python examples/langchain_full_rag.py
 ```
+
+The same OpenRouter key is used for the LangChain chat model and embedding model. Change
+`TUNARAG_CHAT_MODEL` or `TUNARAG_EMBEDDING_MODEL` in `.env` to select different OpenRouter model
+slugs. Optional attribution values are documented in `.env.example`.
 
 The example writes its SQLite study, evaluation cache, JSON result, and CSV trial report under
 `tunarag-langchain-output/`.

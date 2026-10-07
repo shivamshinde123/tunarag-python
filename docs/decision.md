@@ -289,3 +289,12 @@ custom mappers and per-candidate factories for pipeline-specific state and const
 Capture latency and standard message token usage without introspecting framework internals or
 credentials. This reduces integration boilerplate without changing the provider-neutral
 optimizer contract.
+
+## 2026-10-06 Use OpenRouter and explicit `.env` loading in the complete LangChain example
+
+Configure the complete LangChain RAG example through a repository-root `.env` file and one
+`OPENROUTER_API_KEY`. Route both `ChatOpenAI` and `OpenAIEmbeddings` through OpenRouter's
+OpenAI-compatible base URL, while keeping model slugs configurable. Load `.env` only inside the
+example application; TunaRAG core continues to avoid implicit dotenv loading and never owns,
+persists, or reports provider credentials. Version a placeholder-only `.env.example` and keep the
+real `.env` ignored.

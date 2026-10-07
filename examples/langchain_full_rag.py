@@ -2,18 +2,21 @@
 
 Install:
     python -m pip install tunarag-python langchain langchain-classic \
-        langchain-openai langchain-text-splitters
+        langchain-openai langchain-text-splitters python-dotenv
 
 Configure:
-    PowerShell: $env:OPENAI_API_KEY = "your-key"
-    bash/zsh:   export OPENAI_API_KEY="your-key"
+    1. Copy .env.example to .env in the repository root.
+    2. Set OPENROUTER_API_KEY in .env.
 
 Run:
     python examples/langchain_full_rag.py
 
 Optional environment variables:
-    TUNARAG_CHAT_MODEL       Default: gpt-4.1-mini
-    TUNARAG_EMBEDDING_MODEL  Default: text-embedding-3-small
+    TUNARAG_CHAT_MODEL       Default: openai/gpt-4.1-mini
+    TUNARAG_EMBEDDING_MODEL  Default: openai/text-embedding-3-small
+    OPENROUTER_BASE_URL      Default: https://openrouter.ai/api/v1
+    OPENROUTER_SITE_URL      Optional application URL for OpenRouter attribution
+    OPENROUTER_APP_NAME      Default: TunaRAG LangChain Example
 """
 
 from __future__ import annotations
@@ -25,6 +28,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from langchain_classic.chains import create_retrieval_chain
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.documents import Document
@@ -52,9 +56,16 @@ from tunarag import (
     SQLiteStore,
 )
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv(PROJECT_ROOT / ".env")
+
 OUTPUT_DIRECTORY = Path("tunarag-langchain-output")
-CHAT_MODEL = os.getenv("TUNARAG_CHAT_MODEL", "gpt-4.1-mini")
-EMBEDDING_MODEL = os.getenv("TUNARAG_EMBEDDING_MODEL", "text-embedding-3-small")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+OPENROUTER_SITE_URL = os.getenv("OPENROUTER_SITE_URL")
+OPENROUTER_APP_NAME = os.getenv("OPENROUTER_APP_NAME", "TunaRAG LangChain Example")
+CHAT_MODEL = os.getenv("TUNARAG_CHAT_MODEL", "openai/gpt-4.1-mini")
+EMBEDDING_MODEL = os.getenv("TUNARAG_EMBEDDING_MODEL", "openai/text-embedding-3-small")
 
 SOURCE_DOCUMENTS = (
     Document(
@@ -133,11 +144,20 @@ EVALUATION_RECORDS = (
 )
 
 
-def _require_openai_key() -> None:
-    if not os.getenv("OPENAI_API_KEY"):
+def _require_openrouter_key() -> str:
+    if not OPENROUTER_API_KEY:
         raise SystemExit(
-            "Set OPENAI_API_KEY before running this example. See the commands in the file header."
+            "Set OPENROUTER_API_KEY in the repository-root .env file. "
+            "Copy .env.example to .env if needed."
         )
+    return OPENROUTER_API_KEY
+
+
+def _openrouter_headers() -> dict[str, str]:
+    headers = {"X-OpenRouter-Title": OPENROUTER_APP_NAME}
+    if OPENROUTER_SITE_URL:
+        headers["HTTP-Referer"] = OPENROUTER_SITE_URL
+    return headers
 
 
 def _normalized_words(value: str) -> set[str]:
@@ -191,7 +211,12 @@ def _build_vector_store() -> InMemoryVectorStore:
         add_start_index=True,
     )
     chunks = splitter.split_documents(SOURCE_DOCUMENTS)
-    embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
+    embeddings = OpenAIEmbeddings(
+        model=EMBEDDING_MODEL,
+        api_key=_require_openrouter_key(),
+        base_url=OPENROUTER_BASE_URL,
+        default_headers=_openrouter_headers(),
+    )
     return InMemoryVectorStore.from_documents(chunks, embeddings)
 
 
@@ -210,7 +235,13 @@ def _chain_factory(vector_store: InMemoryVectorStore):
             search_type=search_type,
             search_kwargs=search_kwargs,
         )
-        model = ChatOpenAI(model=CHAT_MODEL, temperature=temperature)
+        model = ChatOpenAI(
+            model=CHAT_MODEL,
+            temperature=temperature,
+            api_key=_require_openrouter_key(),
+            base_url=OPENROUTER_BASE_URL,
+            default_headers=_openrouter_headers(),
+        )
         answer_chain = create_stuff_documents_chain(model, _prompt_for(prompt_style))
         return create_retrieval_chain(retriever, answer_chain)
 
@@ -227,7 +258,7 @@ def _chain_factory(vector_store: InMemoryVectorStore):
 
 
 async def main() -> None:
-    _require_openai_key()
+    _require_openrouter_key()
     OUTPUT_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
     print("1. Splitting documents, creating embeddings, and building the vector store...")
