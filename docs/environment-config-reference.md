@@ -39,3 +39,21 @@ client applies its standard configuration, including `MLFLOW_TRACKING_URI` and b
 authentication variables. TunaRAG does not read, persist, hash, or emit those credentials.
 `experiment_id`, not experiment-name lookup, is required to keep callback network behavior
 explicit.
+
+## OpenRouter LangChain example
+
+The standalone `examples/langchain_full_rag.py` application explicitly loads the repository-root
+`.env` file with `python-dotenv`. This is application behavior, not implicit TunaRAG core
+configuration. Copy `.env.example` to `.env`; Git ignores the resulting secret-bearing file.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `OPENROUTER_API_KEY` | Required | Authenticates chat and embedding requests |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible API endpoint |
+| `OPENROUTER_SITE_URL` | Empty | Optional application attribution URL |
+| `OPENROUTER_APP_NAME` | `TunaRAG LangChain Example` | Application attribution title |
+| `TUNARAG_CHAT_MODEL` | `openai/gpt-4.1-mini` | OpenRouter chat model slug |
+| `TUNARAG_EMBEDDING_MODEL` | `openai/text-embedding-3-small` | OpenRouter embedding model slug |
+
+Never commit `.env`, print the API key, include it in TunaRAG candidate parameters, or place it in
+reports. `.env.example` contains placeholders only and is safe to version.

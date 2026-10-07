@@ -308,6 +308,8 @@ precedence.
 For a complete provider-backed pipeline—from documents and embeddings through optimization and
 reports—run
 [`examples/langchain_full_rag.py`](https://github.com/shivamshinde123/tunarag-python/blob/main/examples/langchain_full_rag.py).
+The example loads `OPENROUTER_API_KEY` from a repository-root `.env` file and uses OpenRouter for
+both chat generation and embeddings; copy `.env.example` to `.env` to get started.
 
 ## LangGraph integration
 
