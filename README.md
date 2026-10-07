@@ -305,6 +305,10 @@ and message objects. The adapter always adds `langchain.runnable` latency. Set
 `capture_message_usage=False` to disable automatic token extraction. A custom `usage_mapper` takes
 precedence.
 
+For a complete provider-backed pipeline—from documents and embeddings through optimization and
+reports—run
+[`examples/langchain_full_rag.py`](https://github.com/shivamshinde123/tunarag-python/blob/main/examples/langchain_full_rag.py).
+
 ## LangGraph integration
 
 `LangGraphAdapter` has the same factory and mapping options.

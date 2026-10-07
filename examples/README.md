@@ -39,3 +39,21 @@ graph_adapter = LangGraphAdapter(
     output_mapper=lambda state: state["answer"],
 )
 ```
+
+## Complete LangChain RAG and tuning workflow
+
+`langchain_full_rag.py` is a single-file, provider-backed example that builds a complete LangChain
+pipeline with documents, recursive splitting, OpenAI embeddings, an in-memory vector store,
+retrieval, prompting, and generation. It then wraps the standard retrieval chain with
+`LangChainAdapter` and tunes retrieval count, retrieval strategy, temperature, and prompt style.
+
+Install the example dependencies, set `OPENAI_API_KEY`, and run it from the repository root:
+
+```powershell
+python -m pip install tunarag-python langchain langchain-classic langchain-openai langchain-text-splitters
+$env:OPENAI_API_KEY = "your-key"
+python examples/langchain_full_rag.py
+```
+
+The example writes its SQLite study, evaluation cache, JSON result, and CSV trial report under
+`tunarag-langchain-output/`.
