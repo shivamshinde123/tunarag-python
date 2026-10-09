@@ -1,5 +1,9 @@
 # TunaRAG File and Folder Structure
 
+`LICENSE` holds the complete MIT permission, warranty disclaimer and liability terms;
+it ships with runtime distributions. `docs/illustration-audit.md` records the value review
+and QA of the five README illustration assets (documentation-only, excluded from PyPI).
+
 `scripts/check_distribution.py` is a repository-only release guard, exercised by
 `tests/test_distribution.py` and CI/publishing. `docs/package-distribution.md` defines
 the archive boundary: only runtime source and essential build/metadata files reach PyPI.

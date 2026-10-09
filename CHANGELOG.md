@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add the complete MIT license with warranty and liability disclaimers to the repository,
+  wheel and source archive. Require the license file in distribution-content checks.
+- Audit all six README illustrations: remove the redundant loop, replace misleading
+  adapter/dataset visuals with two-way framework control and untouched holdout illustrations,
+  and move the quality/cost/latency illustration to the objective explanation.
+
 All notable changes to TunaRAG follow semantic versioning.
 
 ## 0.3.0 - 2026-10-09

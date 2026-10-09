@@ -69,7 +69,14 @@ def test_readme_illustrations_are_local_and_present() -> None:
     illustrations = sorted(illustration_directory.glob("*.png"))
 
     assert "raw.githubusercontent.com" not in readme
-    assert len(illustrations) == 6
+    expected = {
+        "04-search-strategies.png",
+        "05-persistence-and-resume.png",
+        "06-results-and-reports.png",
+        "07-framework-adapter-control.png",
+        "08-held-out-evaluation.png",
+    }
+    assert {illustration.name for illustration in illustrations} == expected
     for illustration in illustrations:
         relative_path = illustration.relative_to(ROOT).as_posix()
         assert f"]({relative_path})" in readme

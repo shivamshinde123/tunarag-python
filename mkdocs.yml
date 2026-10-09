@@ -121,6 +121,7 @@ nav:
       - Product Requirements: product-requirements-document.md
       - Coding Conventions: coding-conventions.md
       - Decision Log: decision.md
+      - Illustration Audit: illustration-audit.md
       - UI and UX: ui-ux-wireframes.md
 
 exclude_docs: |
