@@ -12,8 +12,11 @@ from live.test_provider import test_live_rag_optimization_and_completed_resume a
 
 def test_live_request_budget_rejects_extra_requests_and_other_hosts():
     budget = RequestBudget(1)
-    request = SimpleNamespace(url=SimpleNamespace(scheme="https", host="openrouter.ai"))
+    request = SimpleNamespace(
+        url=SimpleNamespace(scheme="https", host="openrouter.ai"), extensions={}
+    )
     budget.before_request(request)
+    assert request.extensions["timeout"]["read"] == 45
     with pytest.raises(RuntimeError, match="exhausted"):
         budget.before_request(request)
     assert budget.used == 1

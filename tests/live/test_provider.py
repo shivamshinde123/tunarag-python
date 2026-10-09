@@ -36,11 +36,8 @@ def sample_mapper(output, example):
 def faithfulness(provider):
     from ragas.llms import LangchainLLMWrapper
     from ragas.metrics import Faithfulness
-    from ragas.run_config import RunConfig
 
-    judge = LangchainLLMWrapper(
-        provider["judge"], run_config=RunConfig(timeout=60, max_retries=1, max_workers=1)
-    )
+    judge = LangchainLLMWrapper(provider["judge"])
     return RagasEvaluator([Faithfulness(llm=judge)], sample_mapper, raise_exceptions=True)
 
 
@@ -176,6 +173,6 @@ def test_live_ragas_supported_and_contradictory_answers(provider):
         )
         return supported[0].value, unsupported[0].value
 
-    supported, unsupported = asyncio.run(evaluate())
+    supported, unsupported = asyncio.run(asyncio.wait_for(evaluate(), timeout=180))
     assert supported is not None and unsupported is not None
     assert 0 <= unsupported < supported <= 1

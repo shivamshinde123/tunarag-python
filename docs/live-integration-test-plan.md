@@ -132,14 +132,18 @@ results first. The smoke-test source data shipped in the repository needs no upl
 - A session-shared HTTP hook caps OpenRouter requests at 40 by default (allowed 1–100),
   including embeddings and judge calls. It counts attempts before sending them. A
   failed or blocked attempt may consume a slot. No request body or key is logged by
-  the hook. SDK retries are zero; TunaRAG retries are zero; RAGAS retry attempts are
-  limited. Any hidden framework retry still passes through the HTTP request cap.
+  the hook. SDK retries are zero; TunaRAG retries are zero. RAGAS `aevaluate` initializes
+  its own run configuration (up to 10 attempts in checked 0.4.3), overriding wrapper
+  retry settings. Those internal attempts still pass through the shared request cap
+  and outer sample deadline; a wrapper-only retry setting is not a safety guarantee.
 - This is a **request cap, not a guaranteed dollar cap**. Input context, judge prompts,
   model pricing, and provider-side billing determine charges. Set a provider-side
   key credit limit. Chat/judge output is limited to 512 tokens per call, and tests use
   two trials, at most three questions, and sequential samples.
-- HTTP timeout is 45 seconds, RAGAS run timeout is 60 seconds, sample timeout is 180
-  seconds, and trial timeout is 600 seconds. These reduce runaway execution but do
+- The HTTP request hook enforces 45-second transport timeouts even if a wrapper
+  changes SDK timeout settings. RAGAS's checked default run timeout is 180 seconds;
+  sample and whole-calibration timeouts are 180 seconds, and trial timeout is 600
+  seconds. These reduce runaway execution but do
   not reverse billing for a request already accepted by a provider.
 - RAGAS analytics and LangSmith tracing are disabled for live tests. Data still goes
   to OpenRouter and the selected underlying model providers. Source text, questions,

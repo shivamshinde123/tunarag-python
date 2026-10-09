@@ -20,6 +20,7 @@ class RequestBudget:
             if self.used >= self.limit:
                 raise RuntimeError("live provider request budget exhausted")
             self.used += 1
+        request.extensions["timeout"] = {"connect": 45, "read": 45, "write": 45, "pool": 45}
 
     async def before_async_request(self, request):
         self.before_request(request)
