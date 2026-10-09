@@ -131,3 +131,23 @@ Local evidence: `live-test-output/comprehensive/quality-results.md`,
 `quality-summary.json`, and `quality-evidence.zip`. Raw judge verdicts, calibration
 attempts, usage, frozen facts, and passing JUnit reports are included in the
 credential-scanned archive; keys and original PDF data are not.
+
+## Follow-up execution — 2026-10-09
+
+Stages 3–6 have now passed within the bounded scope documented in
+[reliability validation](reliability-validation.md). Three two-trial quality-aware
+studies selected candidates before four new held-out questions were evaluated.
+Estimated held-out means were baseline 0.750, seed 1 0.750, seed 4 0.750 and seed 7
+0.875; improvement was not universal and the inference-length answer remained partial.
+These small-sample scores do not establish generalization.
+
+ADK LLMSearch produced two valid suggestions, with four model-directed framework
+retrieval calls and four isolated concurrent sessions. Reload was provider-free.
+Real-provider lost-response recovery preserved the committed trial, waited for actual
+lease expiry and recovered the unfinished attempt. Load checks measured peaks 1/2/4.
+
+Explicit user approval permitted reconciliation of 1,162 settled receipts and release
+of unused reservations while retaining full history, the $4.75 active ceiling and
+the original cumulative $5 cap. Final 1,263 receipts reconcile to $0.32051424 provider
+usage; this follow-up cost $0.02196994 including setup retries and the lost paid reply.
+It does not test a real upstream outage or production-scale/distributed capacity.

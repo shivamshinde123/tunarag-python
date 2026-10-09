@@ -370,3 +370,14 @@ rescoring saved held-out answers. Preserve separate retrieval/faithfulness metri
 Do not regenerate answers, alter references, or select new winners using test labels.
 Schedule repeated tuning, ADK tools/concurrency, billing reconciliation and live
 interruption recovery after the initial quality gate; label unexecuted stages pending.
+
+## 2026-10-09 Extend bounded live validation without changing the runtime
+
+Freeze new held-out questions and the version 3 judge before repeated quality tuning.
+Use the official ADK/LangChain retrieval-tool bridge and force a two-model-turn bound.
+With explicit user approval, reconcile fully settled provider receipts against key
+usage and release unused reservations without resetting the original $5 authorization
+or losing history. Keep external account costs separate from committed trial usage.
+Use a credential-free child and guarded parent gateway for lost-response recovery;
+wait for real lease expiry. These are test-harness additions, not distributed execution
+or native Google-provider support. See `reliability-validation.md` for evidence limits.
