@@ -67,6 +67,6 @@ jobs:
           python-version: "3.13"
           cache: pip
       - name: Install real evaluation and tracking dependencies
-        run: python -m pip install -e ".[live-test]"
+        run: python -m pip install -e ".[live-test,live-adk-test]"
       - name: Test real RAGAS and local MLflow without paid providers
         run: python -m pytest tests/live --live -m "not paid"

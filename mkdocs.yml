@@ -93,6 +93,7 @@ nav:
       - README Example Verification: readme-example-verification.md
       - Live Integration Testing: live-integration-test-plan.md
       - Comprehensive Testing: comprehensive-testing.md
+      - Live Google ADK Testing: live-google-adk-testing.md
   - Architecture:
       - System Architecture: system-architecture-document.md
       - Technical Design: technical-design-document.md

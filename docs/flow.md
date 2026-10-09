@@ -175,3 +175,12 @@ four concurrent trials and mirrors durable events to local MLflow. After compati
 zero-call resume and incompatible-identity rejection, exported winning parameters
 rebuild an independent pipeline for held-out evaluation. RAGAS is applied only to the
 prespecified held-out subset. See `comprehensive-testing.md` for coverage and limits.
+
+`tests/live/test_google_adk.py` loads/splits the same PDF through LangChain, builds
+a cached embedding/vector index, and uses an ADK before-model callback to retrieve
+the candidate-controlled number of chunks from session state. ADK LiteLlm executes
+generation through the existing budget-guarded OpenRouter client. After-model
+metadata carries retrieved contexts into the adapter output mapper and RAGAS.
+Two trials persist through SQLite and local MLflow, followed by zero-call completed
+resume, incompatible-revision rejection, exported winner reuse, held-out scoring,
+and session cleanup. See `live-google-adk-testing.md` for exact scope.

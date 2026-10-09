@@ -62,3 +62,8 @@ and loopback MLflow tracking tests, their explicit configuration template, and a
 public synthetic JSON corpus. `tests/test_live_harness.py` verifies safeguards and
 the tuning harness without credentials. Private dotenv files and generated output
 stay ignored; `docs/live-integration-test-plan.md` defines execution and acceptance.
+
+`tests/live/test_google_adk.py` adds real ADK/OpenRouter RAG tuning and held-out
+evaluation. `tests/live/test_adk_transport.py` checks the same SDK transport path
+without network calls or credentials. `docs/live-google-adk-testing.md` documents
+the smaller ADK campaign and its provider boundaries.
