@@ -1,5 +1,16 @@
 # Package distribution
 
+## Published 0.3.0 artifacts (2026-10-09)
+
+The PyPI wheel is **67,908 bytes** and the source archive is **71,827 bytes**. The
+previous pre-release source build was 6,784,100 bytes, mostly repository assets.
+Release PR #48 passed all 11 CI checks; OIDC publication run `37981326626` succeeded
+from tag `v0.3.0`. Both published archives passed the allowlist and index SHA-256
+verification. A fresh PyPI install with the LangChain extra ran the offline quickstart
+and produced SQLite, JSON and CSV results without provider calls. See
+[`RELEASE_CHECKLIST.md`](https://github.com/shivamshinde123/tunarag-python/blob/main/RELEASE_CHECKLIST.md)
+for the release gates and evidence.
+
 Version 0.3.0 is the framework-only release: use the official LangChain, LangGraph, or
 Google ADK adapters. See the changelog for migration from 0.2.1.
 
