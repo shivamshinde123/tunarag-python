@@ -45,6 +45,19 @@ def test_random_search_replay_rejects_incompatible_state() -> None:
         asyncio.run(strategy.replay(Candidate({"value": 999}), (), ()))
 
 
+def test_random_search_replay_skips_unreserved_duplicate_suggestions() -> None:
+    space = SearchSpace({"value": IntegerRange(1, 2)})
+    original = RandomSearch(space, seed=0)
+    first = asyncio.run(original.suggest())
+    duplicate = asyncio.run(original.suggest())
+    second = asyncio.run(original.suggest())
+    assert first == duplicate and first != second
+    resumed = RandomSearch(space, seed=0)
+    asyncio.run(resumed.replay(first, (), ()))
+    asyncio.run(resumed.replay(second, (), ()))
+    assert asyncio.run(resumed.suggest()) == asyncio.run(original.suggest())
+
+
 def test_search_space_rejects_invalid_ranges() -> None:
     with pytest.raises(ValueError, match="minimum"):
         IntegerRange(2, 1)

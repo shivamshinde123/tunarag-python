@@ -30,6 +30,9 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 
 **Documentation:** [shivamshinde123.github.io/tunarag-python](https://shivamshinde123.github.io/tunarag-python/)
 
+**Live integration checks:** [OpenRouter, RAGAS, and MLflow test plan](docs/live-integration-test-plan.md).
+These opt-in tests include spending safeguards; normal tests never make paid calls.
+
 ## Comprehensive Usage Guide
 
 The sections below explain every public TunaRAG Python V0.3 feature with executable examples.

@@ -321,3 +321,20 @@ candidate parameters change framework behavior, scores, and winner selection. Re
 the quickstart's constant metric with retrieval recall and test the factory with real
 LangChain retrieval helpers. Document fixture and live-provider limitations in
 `readme-example-verification.md`; offline correctness is not production quality evidence.
+
+## 2026-10-09 Separate paid smoke tests from normal CI
+
+Add an explicit `--live` gate for real optional dependencies and a separate
+`--live-paid` gate for OpenRouter calls. Use a dedicated environment, sanitized
+small sources, explicit dotenv loading, a shared outbound request budget, and a
+loopback-only MLflow server. Report provider-side spending limits and partial usage
+tracking honestly; a request count is not a dollar guarantee. Preserve the existing
+RAGAS 0.4 legacy integration for compatibility testing, rather than silently replacing
+it with a different metric API. Fix RandomSearch replay to skip already-reserved
+duplicate draws (bounded to 10,000 draws per replay) while rejecting unseen mismatches.
+
+Real dependency checks exposed two additional integration issues: pin the RAGAS
+legacy community dependency below 0.4 to retain its required imports, and advance
+callback cursors only through events actually visited. Reading the latest durable
+sequence after an awaited callback could skip a concurrently committed trial event,
+silently losing its MLflow projection despite successful authoritative persistence.

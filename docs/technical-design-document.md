@@ -42,6 +42,11 @@ because the current strategy contract returns only a candidate.
 
 ## Retries and resume
 
+Event dispatch acknowledges only the snapshot entries it actually visits. Events
+committed while a callback awaits remain after the cursor and are delivered by the
+next dispatch. Advancing directly to the latest durable event would lose concurrent
+trial completions and their optional tracking projections.
+
 Retry decisions use stage, error code, idempotency, attempt count, and provider hints.
 Authentication, invalid configuration/output, and missing ground truth are nonretryable;
 rate limits, transient networks, and provider 5xx responses are generally retryable. Exhausted
@@ -65,7 +70,10 @@ usage, attempts, trial errors, and cache-hit events. Pending and recoverable tri
 before new suggestions. The durable `study.stopping` event preserves the result stop reason.
 Ordinary strategies receive successful observations in sequence order. Replay-aware strategies
 receive every reserved candidate, including failed and unfinished trials, through the optional
-`replay` method. `RandomSearch` verifies and advances seeded generator state.
+`replay` method. `RandomSearch` verifies and advances seeded generator state, skipping
+draws equal to previously replayed candidates because duplicate suggestions never
+reserve a second trial. An unseen mismatch still fails replay; scanning is bounded
+to 10,000 draws per reserved candidate to prevent unbounded recovery work.
 
 The implemented store provides attempt leases, persisted abandonment, and a recoverable-trial
 query. A terminal commit transaction writes metrics, append-only usage, terminal attempt state,

@@ -17,6 +17,15 @@ All notable changes to TunaRAG follow semantic versioning.
 - `GoogleADKAdapter` for Google ADK 2.x runners, with fresh evaluation sessions, session-state
   candidate mapping, final-answer extraction, reported token usage, and guaranteed cleanup.
 - Optional `google-adk` extra (Python 3.10+), ADK runner example, and real-framework tests.
+- Opt-in OpenRouter, real RAGAS, and local MLflow tests, with a separate `live-test`
+  extra, explicit paid-execution gates, request caps, and a documented test plan.
+
+### Fixed
+
+- Seeded RandomSearch resume now skips duplicate draws omitted from persisted trials.
+- Callback dispatch no longer skips events committed while another callback awaits.
+- Constrain the legacy LangChain community dependency used by RAGAS 0.4 to retain
+  the imports required by its evaluator wrappers.
 
 ### Migration
 

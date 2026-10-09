@@ -306,7 +306,6 @@ class Optimizer:
                                 "cause": type(error).__name__,
                             },
                         )
-            self._event_cursors[study_id] = self._latest_event_sequence(study_id)
 
     def _batch_capacity(self, summaries: Sequence[TrialSummary]) -> int:
         capacity = self._settings.concurrency

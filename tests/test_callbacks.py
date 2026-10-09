@@ -173,3 +173,26 @@ def test_retry_event_is_dispatched_before_backoff(tmp_path) -> None:
     assert result.trials[0].attempts == 2
     assert "trial.retry_scheduled" in [event.type for event in callback.events]
     store.close()
+
+
+def test_events_committed_during_callback_are_not_skipped(tmp_path) -> None:
+    store = SQLiteStore(tmp_path / "during-callback.sqlite")
+
+    class AppendingCallback(RecordingCallback):
+        async def on_event(self, event: StudyEvent) -> None:
+            await super().on_event(event)
+            if event.type == "study.running":
+                store.append_event(event.study_id, "test.concurrent_commit", {})
+                await asyncio.sleep(0)
+
+    callback = AppendingCallback()
+    runner = optimizer(store, tmp_path, [callback])
+    try:
+        result = asyncio.run(
+            runner.aoptimize(InMemoryDataset((1,), version="v1"), study_name="during-callback")
+        )
+        assert callback.events == store.list_events(result.study_id)
+        assert "test.concurrent_commit" in [event.type for event in callback.events]
+    finally:
+        runner.close()
+        store.close()

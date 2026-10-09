@@ -1,0 +1,4 @@
+[
+  {"id": "storage", "query": "Which database stores TunaRAG experiment records?", "reference_answer": "SQLite", "relevant_document_ids": ["storage"]},
+  {"id": "frameworks", "query": "Name the three supported pipeline frameworks.", "reference_answer": "LangChain, LangGraph, and Google ADK", "relevant_document_ids": ["frameworks"]}
+]
