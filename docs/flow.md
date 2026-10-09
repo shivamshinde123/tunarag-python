@@ -165,3 +165,13 @@ GoogleADKAdapter.run(candidate, example)
 
 Runner factories and input/state/output mappers configure framework components rather than
 implementing a new RAG runtime. The application manages runner lifetime and provider credentials.
+
+## Extended verification flow
+
+`tests/live/test_campaign.py` loads a PDF using LangChain, separates development and
+held-out records, and builds official retrieval/document chains through a candidate
+factory. LangGraph wraps that chain in a compiled graph. Optimizer execution persists
+four concurrent trials and mirrors durable events to local MLflow. After compatible
+zero-call resume and incompatible-identity rejection, exported winning parameters
+rebuild an independent pipeline for held-out evaluation. RAGAS is applied only to the
+prespecified held-out subset. See `comprehensive-testing.md` for coverage and limits.

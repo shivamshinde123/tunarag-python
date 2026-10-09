@@ -31,6 +31,10 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 **Documentation:** [shivamshinde123.github.io/tunarag-python](https://shivamshinde123.github.io/tunarag-python/)
 
 **Live integration checks:** [OpenRouter, RAGAS, and MLflow test plan](docs/live-integration-test-plan.md).
+
+**End-to-end verification:** [Full-PDF campaigns, held-out quality checks, crash recovery,
+and clean-wheel testing](docs/comprehensive-testing.md). Paid tests are explicit opt-ins;
+ordinary CI never makes paid provider calls.
 These opt-in tests include spending safeguards; normal tests never make paid calls.
 
 ## Comprehensive Usage Guide

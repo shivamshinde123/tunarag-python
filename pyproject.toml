@@ -75,6 +75,8 @@ docs = [
     "mkdocstrings[python]>=0.27,<1",
 ]
 live-test = [
+    "langgraph>=1,<2",
+    "pypdf>=5,<7",
     "ragas>=0.4,<0.5",
     "langchain-community>=0.3.31,<0.4",
     "mlflow>=3,<4",
@@ -95,6 +97,7 @@ markers = [
     "frameworks: compatibility tests requiring optional framework packages",
     "live: opt-in real optional integration tests",
     "paid: opt-in OpenRouter requests requiring a restricted provider key",
+    "campaign: extended opt-in PDF end-to-end campaigns",
 ]
 
 [tool.ruff]

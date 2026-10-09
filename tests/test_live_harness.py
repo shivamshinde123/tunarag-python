@@ -26,6 +26,9 @@ def test_live_request_budget_rejects_extra_requests_and_other_hosts():
         )
     with pytest.raises(ValueError):
         RequestBudget(0)
+    with pytest.raises(ValueError):
+        RequestBudget(501)
+    assert RequestBudget(500).limit == 500
 
 
 def test_live_corpus_rejects_unknown_document_reference(tmp_path):

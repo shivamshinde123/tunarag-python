@@ -338,3 +338,14 @@ legacy community dependency below 0.4 to retain its required imports, and advanc
 callback cursors only through events actually visited. Reading the latest durable
 sequence after an awaited callback could skip a concurrently committed trial event,
 silently losing its MLflow projection despite successful authoritative persistence.
+
+## 2026-10-09 Expand end-to-end verification without paid CI
+
+Add a separately gated full-PDF campaign across LangChain/LangGraph and both search
+strategies. Freeze 10 development and 20 held-out questions before tuning; export the
+winner and reconstruct it outside the optimizer. Separate lexical diagnostics from
+real RAGAS scoring and correctness from generalization. Use real MLflow concurrently
+with provider execution. Keep private results and budget ledgers ignored. Raise only
+the explicit request-limit upper bound to 500; retain the default of 40 and warn that
+request limits do not guarantee dollar limits. Add subprocess death/recovery tests
+with simulated expired leases and verify clean built-wheel execution separately.
