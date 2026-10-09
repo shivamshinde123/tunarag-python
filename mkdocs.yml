@@ -89,6 +89,7 @@ nav:
       - API Specification: api-specification.md
       - Data and Extraction: data-extraction-specification.md
       - Environment Configuration: environment-config-reference.md
+      - Package Distribution: package-distribution.md
       - Code Flow: flow.md
       - README Example Verification: readme-example-verification.md
       - Live Integration Testing: live-integration-test-plan.md

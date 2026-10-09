@@ -2,7 +2,7 @@
 
 All notable changes to TunaRAG follow semantic versioning.
 
-## 0.3.0 - Unreleased
+## 0.3.0 - 2026-10-09
 
 ### Changed
 
@@ -13,6 +13,9 @@ All notable changes to TunaRAG follow semantic versioning.
 - Replace the handwritten reference RAG with an offline LangChain retrieval-chain quickstart.
 
 ### Added
+
+- Lean source distributions containing runtime source, build configuration, README, changelog,
+  and generated metadata only. CI and publishing reject repository-only assets in archives.
 
 - `GoogleADKAdapter` for Google ADK 2.x runners, with fresh evaluation sessions, session-state
   candidate mapping, final-answer extraction, reported token usage, and guaranteed cleanup.
