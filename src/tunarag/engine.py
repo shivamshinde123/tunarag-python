@@ -18,12 +18,13 @@ from .contracts import (
     Evaluator,
     EventCallback,
     Fingerprintable,
-    RAGAdapter,
     ReplayableSearchStrategy,
     SearchStrategy,
 )
 from .domain import Candidate, MetricValue, UsageRecord, ValueStatus
 from .errors import ResumeError, SearchSpaceError, SyncInAsyncContextError
+from .integrations.google_adk import GoogleADKAdapter
+from .integrations.runnables import LangChainAdapter, LangGraphAdapter
 from .objective import Objective, ObjectiveResult
 from .result import OptimizationResult, TrialSummary, UsageSummary
 from .retry import RetryPolicy
@@ -51,12 +52,12 @@ class _SampleResult:
 
 
 class Optimizer:
-    """Coordinate V0.1 optimization trials through public contracts."""
+    """Tune pipelines through official LangChain, LangGraph, or Google ADK adapters."""
 
     def __init__(
         self,
         *,
-        adapter: RAGAdapter,
+        adapter: LangChainAdapter | LangGraphAdapter | GoogleADKAdapter,
         strategy: SearchStrategy,
         evaluators: Sequence[Evaluator],
         objective: Objective,
@@ -70,6 +71,11 @@ class Optimizer:
         clock: Callable[[], float] = time.monotonic,
         duplicate_suggestion_limit: int = 100,
     ) -> None:
+        if not isinstance(adapter, (LangChainAdapter, LangGraphAdapter, GoogleADKAdapter)):
+            raise TypeError(
+                "optimizer requires LangChainAdapter, LangGraphAdapter, or GoogleADKAdapter; "
+                "custom RAG adapters are unsupported"
+            )
         if not evaluators:
             raise ValueError("optimizer requires at least one evaluator")
         if duplicate_suggestion_limit < 1:

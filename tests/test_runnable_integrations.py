@@ -3,8 +3,9 @@ from dataclasses import dataclass
 from typing import Any
 
 import pytest
+from langchain_core.runnables import RunnableLambda
 
-from tunarag import Candidate, EvaluationExample, LangChainAdapter, LangGraphAdapter, UsageRecord
+from tunarag import Candidate, EvaluationExample, LangChainAdapter, UsageRecord
 
 
 @dataclass
@@ -13,8 +14,9 @@ class Message:
     usage_metadata: dict[str, int]
 
 
-class FakeRunnable:
+class FakeRunnable(RunnableLambda):
     def __init__(self, output: Any) -> None:
+        super().__init__(lambda value: output)
         self.output = output
         self.calls: list[tuple[Any, Any]] = []
 
@@ -58,7 +60,7 @@ def test_langchain_adapter_has_minimal_runnable_defaults() -> None:
 
 def test_langgraph_adapter_supports_state_and_output_mapping() -> None:
     graph = FakeRunnable({"question": "q", "answer": "optimized"})
-    adapter = LangGraphAdapter(
+    adapter = LangChainAdapter(
         graph,
         input_mapper=lambda sample, candidate: {
             "question": sample.query,
@@ -84,7 +86,7 @@ def test_langgraph_adapter_supports_state_and_output_mapping() -> None:
             },
         )
     ]
-    assert [item.component for item in usage] == ["langgraph.runnable"]
+    assert [item.component for item in usage] == ["langchain.runnable"]
 
 
 def test_runnable_factory_builds_per_candidate_and_customizes_usage() -> None:
@@ -111,7 +113,7 @@ def test_runnable_factory_builds_per_candidate_and_customizes_usage() -> None:
 
 def test_noncanonical_examples_pass_through_by_default() -> None:
     runnable = FakeRunnable("ok")
-    adapter = LangGraphAdapter(runnable)
+    adapter = LangChainAdapter(runnable)
     custom_example = {"messages": ["hello"]}
 
     asyncio.run(adapter.run(Candidate({"temperature": 0.1}), custom_example))
@@ -119,7 +121,7 @@ def test_noncanonical_examples_pass_through_by_default() -> None:
     assert runnable.calls[0][0] is custom_example
 
 
-@pytest.mark.parametrize("adapter_type", [LangChainAdapter, LangGraphAdapter])
+@pytest.mark.parametrize("adapter_type", [LangChainAdapter])
 def test_runnable_adapter_rejects_invalid_construction(adapter_type: Any) -> None:
     with pytest.raises(ValueError, match="exactly one"):
         adapter_type()

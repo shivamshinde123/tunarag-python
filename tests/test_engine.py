@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pipeline_fixtures import framework_fixture
 
 from tunarag import (
     Candidate,
@@ -99,7 +100,7 @@ def test_async_optimizer_executes_trials_and_returns_best_candidate(tmp_path) ->
     store = SQLiteStore(tmp_path / "study.sqlite")
     strategy = SequenceStrategy([Candidate({"multiplier": 1}), Candidate({"multiplier": 2})])
     optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=strategy,
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -138,7 +139,7 @@ def test_trial_failure_is_isolated_and_partial_usage_is_persisted(tmp_path) -> N
         ]
     )
     optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=strategy,
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -165,7 +166,7 @@ def test_target_score_stops_after_committed_trial(tmp_path) -> None:
     store = SQLiteStore(tmp_path / "target.sqlite")
     strategy = SequenceStrategy([Candidate({"multiplier": 2}), Candidate({"multiplier": 3})])
     optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=strategy,
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -189,7 +190,7 @@ def test_duplicate_suggestions_stop_as_search_exhausted(tmp_path) -> None:
     store = SQLiteStore(tmp_path / "study.sqlite")
     candidate = Candidate({"multiplier": 1})
     optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=RepeatingStrategy(candidate),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -213,7 +214,7 @@ def test_duplicate_suggestions_stop_as_search_exhausted(tmp_path) -> None:
 def test_empty_dataset_finishes_without_a_successful_candidate(tmp_path) -> None:
     store = SQLiteStore(tmp_path / "study.sqlite")
     optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=SequenceStrategy([Candidate({"multiplier": 1})]),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -232,7 +233,7 @@ def test_empty_dataset_finishes_without_a_successful_candidate(tmp_path) -> None
 def test_sync_wrapper_runs_outside_loop_and_rejects_active_loop(tmp_path) -> None:
     first_store = SQLiteStore(tmp_path / "sync.sqlite")
     sync_optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=SequenceStrategy([Candidate({"multiplier": 1})]),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -245,7 +246,7 @@ def test_sync_wrapper_runs_outside_loop_and_rejects_active_loop(tmp_path) -> Non
 
     second_store = SQLiteStore(tmp_path / "async.sqlite")
     async_optimizer = Optimizer(
-        adapter=MultiplyingAdapter(),
+        adapter=framework_fixture(MultiplyingAdapter()),
         strategy=SequenceStrategy([Candidate({"multiplier": 1})]),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -276,7 +277,7 @@ def test_cancellation_persists_terminal_states_and_propagates(tmp_path) -> None:
 
         store = CapturingStore(tmp_path / "cancel.sqlite")
         optimizer = Optimizer(
-            adapter=BlockingAdapter(),
+            adapter=framework_fixture(BlockingAdapter()),
             strategy=SequenceStrategy([Candidate({"multiplier": 1})]),
             evaluators=[QualityEvaluator()],
             objective=Objective((ObjectiveTerm("quality"),)),

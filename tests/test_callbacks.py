@@ -3,6 +3,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from pipeline_fixtures import framework_fixture
+
 from tunarag import (
     CachePolicy,
     Candidate,
@@ -76,7 +78,7 @@ def optimizer(
     callbacks: Sequence[Any],
 ) -> Optimizer:
     return Optimizer(
-        adapter=Adapter(),
+        adapter=framework_fixture(Adapter()),
         strategy=OneCandidateStrategy(),
         evaluators=[Evaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -155,7 +157,7 @@ def test_retry_event_is_dispatched_before_backoff(tmp_path) -> None:
         assert callback.events[-1].type == "trial.retry_scheduled"
 
     runner = Optimizer(
-        adapter=FlakyAdapter(),
+        adapter=framework_fixture(FlakyAdapter()),
         strategy=OneCandidateStrategy(),
         evaluators=[Evaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),

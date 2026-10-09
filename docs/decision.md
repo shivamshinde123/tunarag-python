@@ -298,3 +298,18 @@ OpenAI-compatible base URL, while keeping model slugs configurable. Load `.env` 
 example application; TunaRAG core continues to avoid implicit dotenv loading and never owns,
 persists, or reports provider credentials. Version a placeholder-only `.env.example` and keep the
 real `.env` ignored.
+
+## 2026-10-09 Restrict V0.3 to official framework pipelines
+
+Supersede the earlier generic RAG adapter decision: users tune pipelines built with LangChain,
+LangGraph, or Google ADK 2.x and do not implement handwritten RAG adapters. Reject unsupported
+adapters in `Optimizer` before opening a store, remove the public RAG adapter protocol, and
+validate actual framework objects rather than accepting lookalike `ainvoke` methods. Keep the
+shared optimizer, search, evaluation, storage, retries, and resume machinery intact.
+
+Use per-candidate factories for framework construction settings and mappers for framework state
+and output shapes. Google ADK uses fresh temporary sessions per sample and retry, removes them
+on terminal execution, and captures reported token counts and elapsed time. Replace the
+handwritten reference RAG with an offline LangChain quickstart. Declare the breaking boundary
+change as V0.3.0 and require real-framework compatibility tests. Additional frameworks need a
+first-party integration; custom evaluators, objectives, strategies, and callbacks remain supported.

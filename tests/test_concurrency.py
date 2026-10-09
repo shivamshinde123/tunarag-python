@@ -3,6 +3,8 @@ from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
+from pipeline_fixtures import framework_fixture
+
 from tunarag import (
     CachePolicy,
     Candidate,
@@ -74,7 +76,7 @@ def test_trial_concurrency_is_bounded_and_observation_order_is_deterministic(tmp
     candidates = tuple(Candidate({"value": value}) for value in range(1, 6))
     strategy = SequenceStrategy(candidates)
     runner = Optimizer(
-        adapter=adapter,
+        adapter=framework_fixture(adapter),
         strategy=strategy,
         evaluators=[Evaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -96,7 +98,7 @@ def test_sample_concurrency_is_bounded(tmp_path) -> None:
     store = SQLiteStore(tmp_path / "samples.sqlite")
     adapter = TrackingAdapter()
     runner = Optimizer(
-        adapter=adapter,
+        adapter=framework_fixture(adapter),
         strategy=SequenceStrategy((Candidate({"value": 1}),)),
         evaluators=[Evaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),

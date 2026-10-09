@@ -2,6 +2,30 @@
 
 All notable changes to TunaRAG follow semantic versioning.
 
+## 0.3.0 - Unreleased
+
+### Changed
+
+- Tune framework pipelines exclusively through official adapters. `Optimizer` rejects custom
+  `run` objects; the public `RAGAdapter` and `AsyncRunnable` extension contracts are removed.
+- Validate genuine LangChain `Runnable` and LangGraph `CompiledStateGraph` objects, including
+  per-candidate factory results. Handwritten `ainvoke` objects are no longer accepted.
+- Replace the handwritten reference RAG with an offline LangChain retrieval-chain quickstart.
+
+### Added
+
+- `GoogleADKAdapter` for Google ADK 2.x runners, with fresh evaluation sessions, session-state
+  candidate mapping, final-answer extraction, reported token usage, and guaranteed cleanup.
+- Optional `google-adk` extra (Python 3.10+), ADK runner example, and real-framework tests.
+
+### Migration
+
+- Install the appropriate framework extra and wrap an existing framework pipeline with
+  `LangChainAdapter`, `LangGraphAdapter`, or `GoogleADKAdapter`.
+- Custom evaluators, search strategies, objectives, callbacks, and synthetic providers remain
+  supported. Existing SQLite studies remain readable; changed pipeline identities require new
+  studies rather than silently resuming under different semantics.
+
 ## 0.2.1 - 2026-10-04
 
 ### Added

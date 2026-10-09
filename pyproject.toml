@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tunarag-python"
-version = "0.2.1"
-description = "Typed, durable optimization workflows for existing RAG systems"
+version = "0.3.0"
+description = "Tune LangChain, LangGraph, and Google ADK RAG pipelines"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
@@ -41,15 +41,24 @@ mlflow = [
 ]
 langchain = [
     "langchain>=1,<2",
+    "numpy>=1.26,<3",
 ]
 langgraph = [
     "langgraph>=1,<2",
 ]
+google-adk = [
+    "google-adk>=2,<3",
+]
 frameworks = [
     "langchain>=1,<2",
+    "numpy>=1.26,<3",
     "langgraph>=1,<2",
+    "google-adk>=2,<3",
 ]
 dev = [
+    "langchain-core>=1,<2",
+    "langgraph>=1,<2",
+    "numpy>=1.26,<3",
     "build>=1.2",
     "hypothesis>=6.100",
     "mypy>=1.11",
@@ -70,9 +79,9 @@ packages = ["src/tunarag"]
 [tool.pytest.ini_options]
 addopts = "--strict-markers"
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 markers = [
-    "frameworks: compatibility tests requiring optional LangChain and LangGraph packages",
+    "frameworks: compatibility tests requiring optional framework packages",
 ]
 
 [tool.ruff]

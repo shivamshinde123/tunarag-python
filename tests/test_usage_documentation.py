@@ -11,6 +11,8 @@ from types import ModuleType, SimpleNamespace
 from typing import Any
 
 import pytest
+from langchain_core.runnables import RunnableLambda
+from pipeline_fixtures import framework_fixture
 
 from tunarag import (
     Candidate,
@@ -126,7 +128,7 @@ def _strategy(seed: int = 1) -> RandomSearch:
 
 def _optimizer(**overrides: Any) -> Optimizer:
     arguments: dict[str, Any] = {
-        "adapter": _Adapter(),
+        "adapter": framework_fixture(_Adapter()),
         "strategy": _strategy(),
         "evaluators": _evaluators(),
         "objective": _objective(),
@@ -139,90 +141,21 @@ def _optimizer(**overrides: Any) -> Optimizer:
     return Optimizer(**arguments)
 
 
-class _Runnable:
-    def __init__(self, function: Any) -> None:
-        self.function = function
-
-    async def ainvoke(self, input: Any, config: Any = None, **kwargs: Any) -> Any:
-        del kwargs
-        result = self.function(input, config)
-        return await result if inspect.isawaitable(result) else result
-
-
-def _install_framework_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
-    try:
-        import langchain_core.runnables  # noqa: F401
-    except ImportError:
-        core = ModuleType("langchain_core")
-        runnables = ModuleType("langchain_core.runnables")
-        runnables.RunnableLambda = _Runnable  # type: ignore[attr-defined]
-        core.runnables = runnables  # type: ignore[attr-defined]
-        monkeypatch.setitem(sys.modules, "langchain_core", core)
-        monkeypatch.setitem(sys.modules, "langchain_core.runnables", runnables)
-
-    try:
-        import langgraph.graph  # noqa: F401
-    except ImportError:
-        graph_package = ModuleType("langgraph")
-        graph_module = ModuleType("langgraph.graph")
-
-        class StateGraph:
-            def __init__(self, state: Any) -> None:
-                del state
-                self.node: Any = None
-
-            def add_node(self, name: str, node: Any) -> None:
-                del name
-                self.node = node
-
-            def add_edge(self, start: str, end: str) -> None:
-                del start, end
-
-            def compile(self) -> _Runnable:
-                return _Runnable(self.node)
-
-        graph_module.START = "__start__"  # type: ignore[attr-defined]
-        graph_module.END = "__end__"  # type: ignore[attr-defined]
-        graph_module.StateGraph = StateGraph  # type: ignore[attr-defined]
-        graph_package.graph = graph_module  # type: ignore[attr-defined]
-        monkeypatch.setitem(sys.modules, "langgraph", graph_package)
-        monkeypatch.setitem(sys.modules, "langgraph.graph", graph_module)
-
-
-def test_examples_1_to_3_quickstart_and_custom_adapter(
+def test_examples_1_to_3_framework_quickstart(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(tmp_path)
     quickstart = _run(1)
     assert quickstart["result"].best_candidate is not None
-    contract = _run(2)
-    assert callable(contract["run"])
-    adapter_scope = _run(3)
-
-    class Service:
-        async def answer(self, **kwargs: Any) -> Any:
-            assert kwargs == {"query": "question", "top_k": 2, "model": "small"}
-            return SimpleNamespace(
-                input_tokens=10,
-                output_tokens=4,
-                cost=0.01,
-                latency_seconds=0.2,
-            )
-
-    adapter = adapter_scope["ExistingRAGAdapter"](Service())
-    output, usage = asyncio.run(
-        adapter.run(
-            Candidate({"top_k": 2, "model": "small"}),
-            EvaluationExample("q", "question"),
+    for index in (2, 3):
+        scope = _run(index)
+        output, _ = asyncio.run(
+            scope["adapter"].run(Candidate({"top_k": 2}), EvaluationExample("q", "question"))
         )
-    )
-    assert output.output_tokens == 4
-    assert usage[0].pricing_version == "provider-2026-10"
-    assert adapter.fingerprint()["adapter_version"] == 2
+        assert output == {"answer": "question"}
 
 
 def test_examples_4_to_8_framework_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
-    _install_framework_stubs(monkeypatch)
     example = EvaluationExample("q", "question")
     candidate = Candidate({"top_k": 2, "model": "small"})
 
@@ -235,9 +168,9 @@ def test_examples_4_to_8_framework_adapters(monkeypatch: pytest.MonkeyPatch) -> 
         def as_retriever(self, *, search_kwargs: Mapping[str, Any]) -> Any:
             return SimpleNamespace(top_k=search_kwargs["k"])
 
-    def create_retrieval_chain(retriever: Any, qa_chain: Any) -> _Runnable:
-        return _Runnable(
-            lambda inputs, _config: {"answer": f"{inputs['question']}:{retriever.top_k}:{qa_chain}"}
+    def create_retrieval_chain(retriever: Any, qa_chain: Any) -> RunnableLambda:
+        return RunnableLambda(
+            lambda inputs, config: {"answer": f"{inputs['question']}:{retriever.top_k}:{qa_chain}"}
         )
 
     factory_scope = _run(
@@ -261,7 +194,9 @@ def test_examples_4_to_8_framework_adapters(monkeypatch: pytest.MonkeyPatch) -> 
         6,
         {
             "LangChainAdapter": chain_scope["LangChainAdapter"],
-            "chain": _Runnable(custom_chain),
+            "chain": __import__(
+                "langchain_core.runnables", fromlist=["RunnableLambda"]
+            ).RunnableLambda(custom_chain),
             "UsageRecord": UsageRecord,
         },
     )
@@ -412,7 +347,7 @@ def test_examples_21_to_24_optimizer_execution(
     durable_scope = _run(
         23,
         {
-            "adapter": _Adapter(),
+            "adapter": framework_fixture(_Adapter()),
             "strategy": _strategy(),
             "quality_evaluator": QualityEvaluator(),
             "retrieval_evaluator": MetricEvaluator("extra", lambda _o, _e: 1.0),
@@ -433,7 +368,7 @@ def test_examples_25_to_30_cache_resume_callbacks_and_mlflow(
         25,
         {
             "Optimizer": Optimizer,
-            "adapter": _Adapter(),
+            "adapter": framework_fixture(_Adapter()),
             "strategy": _strategy(),
             "evaluators": _evaluators(),
             "objective": _objective(),
@@ -468,7 +403,7 @@ def test_examples_25_to_30_cache_resume_callbacks_and_mlflow(
         29,
         {
             "Optimizer": Optimizer,
-            "adapter": _Adapter(),
+            "adapter": framework_fixture(_Adapter()),
             "strategy": _strategy(),
             "evaluators": _evaluators(),
             "objective": _objective(),
@@ -483,7 +418,7 @@ def test_examples_25_to_30_cache_resume_callbacks_and_mlflow(
         30,
         {
             "Optimizer": Optimizer,
-            "adapter": _Adapter(),
+            "adapter": framework_fixture(_Adapter()),
             "strategy": _strategy(),
             "evaluators": _evaluators(),
             "objective": _objective(),
@@ -508,7 +443,7 @@ def test_examples_31_to_36_results_errors_secrets_and_extension(
             )
 
     optimizer = Optimizer(
-        adapter=_Adapter(),
+        adapter=framework_fixture(_Adapter()),
         strategy=_strategy(),
         evaluators=(CompleteEvaluator(),),
         objective=Objective((ObjectiveTerm("answer_quality"),)),

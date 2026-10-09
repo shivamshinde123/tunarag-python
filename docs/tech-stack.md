@@ -1,5 +1,7 @@
 # TunaRAG Technology Stack
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 | Area | Selection | Rationale |
 |---|---|---|
 | Language | Python 3.10-3.13 | RAG ecosystem compatibility |
@@ -14,12 +16,13 @@
 | CI | GitHub Actions | Native pull-request verification |
 | Documentation | MkDocs Material and mkdocstrings | Searchable Markdown site with generated Python API reference |
 | Documentation hosting | GitHub Pages | Free deployment from the repository through GitHub Actions |
-| Framework adapters | Structural `ainvoke` protocol | Supports LangChain/LangGraph without core imports |
+| Framework adapters | Validated framework objects | LangChain Runnable, compiled LangGraph, and Google ADK Runner with lazy imports |
 
 RAGAS `>=0.4,<0.5` is an optional evaluator extra loaded only when `RagasEvaluator` executes.
 MLflow `>=3,<4` is an optional tracking extra loaded only when `MLflowCallback` first handles an
 event without an injected client. LangChain `>=1,<2` and LangGraph `>=1,<2` are optional extras;
-real compatibility tests run separately from the dependency-free core matrix. Provider SDKs and
+Google ADK `>=2,<3` is another optional extra. Engine tests use LangChain fault-injection
+fixtures; dedicated compatibility CI also exercises real ADK runners and compiled LangGraph graphs. Provider SDKs and
 LlamaIndex remain optional. SQLAlchemy is deferred
 until a second relational backend warrants an ORM. AnyIO is deferred until backend neutrality
 removes real complexity. Pydantic may validate external boundaries but will not constrain user

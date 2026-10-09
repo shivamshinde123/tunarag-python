@@ -1,5 +1,7 @@
 # TunaRAG Code Flow
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 ## Current flow
 
 ```text
@@ -118,16 +120,16 @@ orchestration, then outward to optional integrations and examples.
 examples/quickstart.py
   -> create a canonical EvaluationDataset from records
   -> configure an IntegerRange search space for top_k
-  -> pass ReferenceRAGAdapter and ReferenceQualityEvaluator to Optimizer
+  -> pass LangChainAdapter and MetricEvaluator to Optimizer
   -> run the safe synchronous entry point
   -> persist the study in SQLite
   -> write redacted JSON and CSV result reports
 ```
 
-`examples/reference_rag.py` is intentionally user-space code. It ranks a fixed corpus by token
-overlap, returns explicit usage, and scores reference-answer token recall. No example type is
-imported by `src/tunarag`, so replacing the example with a production RAG does not require a
-framework fork.
+`examples/quickstart.py` composes a LangChain in-memory vector store, retriever, prompt, and
+fake LLM. Fake embeddings and generation make it an offline wiring test, not a quality benchmark.
+`examples/langchain_full_rag.py` provides a real OpenRouter-backed framework RAG. Neither example
+is imported by the installable package.
 
 ## Framework runnable flow
 
@@ -140,9 +142,26 @@ LangChainAdapter.run or LangGraphAdapter.run
   -> optionally map raw output
   -> collect standard message usage or custom usage
   -> append exact runnable latency
-  -> return through the standard RAGAdapter contract
+  -> return through the standard framework adapter contract
 ```
 
 Framework execution therefore uses the existing optimizer path unchanged. Cache identity includes
 the adapter fingerprint and candidate; framework exceptions remain subject to the engine retry,
 timeout, redaction, and failure-isolation policy.
+
+## Google ADK flow
+
+```text
+GoogleADKAdapter.run(candidate, example)
+  -> resolve and validate real ADK Runner or candidate factory result
+  -> map candidate to initial session state
+  -> create isolated session
+  -> consume Runner.run_async events
+  -> capture reported tokens and final response
+  -> map final event to evaluation output
+  -> close event stream and delete temporary session in finally
+  -> return output and usage to the shared optimizer
+```
+
+Runner factories and input/state/output mappers configure framework components rather than
+implementing a new RAG runtime. The application manages runner lifetime and provider credentials.

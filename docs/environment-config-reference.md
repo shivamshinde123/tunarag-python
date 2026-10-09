@@ -1,5 +1,9 @@
 # TunaRAG Environment Configuration Reference
 
+Google ADK runners own their provider credentials and SDK configuration. `GoogleADKAdapter` does
+not load keys, snapshot runner internals, or provision provider clients. Supply a stable, secret-free
+pipeline revision through `identity`. Do not use production conversation sessions for evaluation.
+
 ## Hierarchy
 
 `Settings.resolve` uses the following ascending precedence: package defaults, an explicitly

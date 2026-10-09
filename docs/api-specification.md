@@ -1,8 +1,10 @@
 # TunaRAG API Specification
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 ## Status
 
-This is the living V0.2 Python API contract. The companion
+This is the living V0.3 Python API contract. The companion
 `01_API_Specification.docx` contains the full design narrative. Implemented and planned APIs
 are separated below so design commitments are not mistaken for runtime behavior.
 
@@ -18,10 +20,11 @@ The evaluator surface includes `MetricEvaluator`, `MetricScorer`, `RagasEvaluato
 
 ## LangChain and LangGraph adapters
 
-V0.2 exports `LangChainAdapter` and `LangGraphAdapter` from both `tunarag` and
-`tunarag.integrations`. They accept any object with an asynchronous
-`ainvoke(input, config=...)` method, including LangChain runnables and compiled LangGraph graphs.
-The integration module does not import either framework, so core imports remain dependency-free.
+V0.3 exports `LangChainAdapter`, `LangGraphAdapter`, and `GoogleADKAdapter` from `tunarag` and
+`tunarag.integrations`. LangChain requires a real `Runnable`; LangGraph requires a real
+`CompiledStateGraph`; Google ADK requires a real 2.x `Runner`. Factories are validated on every
+sample. `Optimizer` rejects custom run adapters before creating a store. Framework imports are
+lazy and missing extras raise `MissingOptionalDependencyError`.
 
 ```python
 LangChainAdapter(
@@ -297,6 +300,20 @@ V0.1 ranks the configured scalar objective and individual metrics. Study forking
 sample windows, and mandatory custom-component fingerprints are post-V0.1 work.
 
 ## Versioning
+
+V0.3 removes the generic public RAG adapter protocol and restricts `Optimizer(adapter=...)` to
+`LangChainAdapter | LangGraphAdapter | GoogleADKAdapter`. A wrong adapter type raises `TypeError`
+before allocating a store. A wrong factory result fails its trial through normal retry policy.
+
+`GoogleADKAdapter(runner=None, *, factory=None, state_mapper=None, output_mapper=None, identity=None)`
+requires exactly one fixed runner or synchronous candidate factory. `state_mapper(candidate)`
+returns initial session state; without it, the candidate parameters are used. `output_mapper(event)`
+receives the final ADK event; by default, the output is an answer mapping containing text parts
+without reasoning parts. A new session is created for every sample/retry and deleted after
+execution, including failure or cancellation. The application retains runner ownership.
+Missing final responses or error events raise `AdapterError`; missing SDKs raise
+`MissingOptionalDependencyError`. Reported input/output tokens and runner latency are returned as
+`UsageRecord` values; provider cost is unavailable by default.
 
 The distribution is `tunarag-python`; the import package is `tunarag`. Public APIs follow
 semantic versioning. SQLite schemas and cache formats have independent versions and explicit

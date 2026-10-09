@@ -16,7 +16,7 @@ isolates failures, supports resumable execution, and produces results you can in
 - Compare configurations with custom metrics or optional RAGAS evaluators.
 - Optimize a weighted objective across quality, provider cost, and response latency.
 - Search with deterministic random search or provider-neutral LLM-guided search.
-- Tune existing custom, LangChain, or LangGraph RAG pipelines without rebuilding them.
+- Tune LangChain, LangGraph, or Google ADK RAG pipelines without rebuilding them.
 - Preserve reproducible experiments with caching, retries, callbacks, reports, and SQLite resume.
 
 ### Who is it for?
@@ -32,7 +32,7 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 
 ## Comprehensive Usage Guide
 
-The sections below explain every public TunaRAG Python V0.2 feature with executable examples.
+The sections below explain every public TunaRAG Python V0.3 feature with executable examples.
 
 ## Contents
 
@@ -99,76 +99,73 @@ python -m pip install tunarag-python
 |---|---|
 | LangChain | `python -m pip install "tunarag-python[langchain]"` |
 | LangGraph | `python -m pip install "tunarag-python[langgraph]"` |
-| Both frameworks | `python -m pip install "tunarag-python[frameworks]"` |
+| LangChain and LangGraph; ADK on Python 3.10+ | `python -m pip install "tunarag-python[frameworks]"` |
+| Google ADK 2.x (Python 3.10+) | `python -m pip install "tunarag-python[google-adk]"` |
 | RAGAS | `python -m pip install "tunarag-python[ragas]"` |
 | MLflow | `python -m pip install "tunarag-python[mlflow]"` |
 
-Optional dependencies load lazily; the core package does not require them.
+Framework dependencies load lazily. Install the extra for your pipeline before constructing its adapter. Google ADK requires Python 3.10 or newer; LangChain and LangGraph retain Python 3.10 support.
 
 ## End-to-end quickstart
 
-This deterministic example shows the complete public workflow without external providers.
+Use an installed framework integration. The offline quickstart uses LangChain's vector store,
+retriever, prompt, and fake model; the provider-backed example uses OpenRouter. Fake embeddings and
+the fake model test wiring only; their scores do not demonstrate retrieval or answer quality.
 
 ```python
+from pathlib import Path
+
+from langchain_core.documents import Document
+from langchain_core.embeddings import DeterministicFakeEmbedding
+from langchain_core.language_models.fake import FakeListLLM
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.vectorstores import InMemoryVectorStore
 from tunarag import (
     EvaluationDataset,
     IntegerRange,
+    LangChainAdapter,
     MetricEvaluator,
     Objective,
     ObjectiveTerm,
     Optimizer,
     RandomSearch,
     SearchSpace,
-    UsageRecord,
 )
 
-DOCUMENTS = {
-    "python": "Python is a high-level programming language.",
-    "sqlite": "SQLite is a local embedded relational database.",
-    "rag": "RAG combines retrieval with generation.",
-}
+vector_store = InMemoryVectorStore.from_documents(
+    [Document(page_content="SQLite stores local experiments.")],
+    DeterministicFakeEmbedding(size=32),
+)
+prompt = ChatPromptTemplate.from_template("Context: {context}\nQuestion: {question}")
 
 
-class SmallRAG:
-    async def run(self, candidate, example):
-        query_words = set(example.query.lower().split())
-        ranked = sorted(
-            DOCUMENTS.values(),
-            key=lambda text: len(query_words & set(text.lower().split())),
-            reverse=True,
-        )
-        contexts = ranked[: candidate.parameters["top_k"]]
-        return {"answer": " ".join(contexts)}, (UsageRecord("small-rag", latency_seconds=0.001),)
-
-
-def answer_recall(output, example):
-    expected = set(example.reference_answer.lower().split())
-    actual = set(output["answer"].lower().split())
-    return len(expected & actual) / len(expected)
+def build_chain(candidate):
+    retriever = vector_store.as_retriever(search_kwargs={"k": candidate.parameters["top_k"]})
+    return (
+        {"context": retriever, "question": RunnablePassthrough()}
+        | prompt
+        | FakeListLLM(responses=["SQLite stores local experiments."])
+    )
 
 
 dataset = EvaluationDataset.from_records(
-    [
-        {
-            "id": "q1",
-            "query": "What is SQLite?",
-            "reference_answer": "a local embedded relational database",
-        },
-        {
-            "id": "q2",
-            "query": "What does RAG combine?",
-            "reference_answer": "retrieval with generation",
-        },
-    ]
+    [{"id": "q1", "query": "What stores experiments?", "reference_answer": "SQLite"}]
 )
 optimizer = Optimizer(
-    adapter=SmallRAG(),
-    strategy=RandomSearch(SearchSpace({"top_k": IntegerRange(1, 3)}), seed=7),
-    evaluators=(MetricEvaluator("answer_recall", answer_recall),),
-    objective=Objective((ObjectiveTerm("answer_recall"),)),
+    adapter=LangChainAdapter(
+        factory=build_chain, input_mapper=lambda example, candidate: example.query
+    ),
+    strategy=RandomSearch(SearchSpace({"top_k": IntegerRange(1, 2)}), seed=7),
+    evaluators=(
+        MetricEvaluator(
+            "answer_quality", lambda output, example: float(example.reference_answer in output)
+        ),
+    ),
+    objective=Objective((ObjectiveTerm("answer_quality"),)),
 )
 try:
-    result = optimizer.optimize(dataset, study_name="small-rag")
+    result = optimizer.optimize(dataset, study_name="langchain-rag")
     print(result.best_candidate.parameters if result.best_candidate else "no winner")
 finally:
     optimizer.close()
@@ -178,64 +175,43 @@ The default store is in memory. Use `SQLiteStore(path)` for a durable study.
 
 ## RAG adapters
 
-A custom adapter implements:
+Choose an official adapter: `LangChainAdapter`, `LangGraphAdapter`, or `GoogleADKAdapter`.
+The optimizer rejects handwritten `run` adapters. LangChain accepts genuine framework `Runnable`
+objects; LangGraph accepts `CompiledStateGraph`; Google ADK accepts `Runner`. Factory results are
+validated on every sample, and failures enter the normal trial failure and retry boundary.
 
 ```python
-from collections.abc import Sequence
+from langchain_core.runnables import RunnableLambda
+from tunarag import LangChainAdapter
 
-from tunarag import UsageRecord
-
-
-async def run(candidate, example) -> tuple[object, Sequence[UsageRecord]]: ...
+chain = RunnableLambda(lambda inputs: {"answer": inputs["question"]})
+adapter = LangChainAdapter(chain)
 ```
 
-`candidate.parameters` contains the proposed configuration. The output can be any object understood
-by your evaluators. Usage may be empty. Adapter exceptions enter TunaRAG's retry and trial-failure
-boundary.
+![A hand-drawn Xiaohei connecting a framework RAG pipeline through TunaRAG](docs/assets/tunarag-python-readme-illustrations/02-rag-adapter-boundary.png)
 
-![A hand-drawn Xiaohei connecting a user-owned RAG pipeline through the TunaRAG adapter boundary](docs/assets/tunarag-python-readme-illustrations/02-rag-adapter-boundary.png)
+Candidate parameters go into framework configuration or initial ADK session state. A parameter
+only changes behavior if the framework consumes it. For model, prompt, retriever, or index choices
+that require rebuilding the pipeline, use a per-candidate framework factory. Mapping callbacks
+adapt framework inputs and outputs; they do not require implementing a RAG adapter.
 
 ```python
-from tunarag import UsageRecord, ValueStatus
+from langchain_core.runnables import RunnableLambda
+from tunarag import LangChainAdapter
 
-
-class ExistingRAGAdapter:
-    def __init__(self, service):
-        self.service = service
-
-    async def run(self, candidate, example):
-        response = await self.service.answer(
-            query=example.query,
-            top_k=candidate.parameters["top_k"],
-            model=candidate.parameters["model"],
-        )
-        return response, (
-            UsageRecord(
-                component="generator",
-                input_tokens=response.input_tokens,
-                output_tokens=response.output_tokens,
-                cost=response.cost,
-                latency_seconds=response.latency_seconds,
-                status=ValueStatus.EXACT,
-                pricing_version="provider-2026-10",
-            ),
-        )
-
-    def fingerprint(self):
-        return {
-            "adapter_version": 2,
-            "index_revision": "docs-2026-10-04",
-            "prompt_revision": "qa-v3",
-        }
+adapter = LangChainAdapter(
+    RunnableLambda(lambda inputs: {"answer": inputs["question"]}),
+    identity={"index_revision": "docs-v1", "prompt_revision": "qa-v1"},
+)
 ```
 
-Use `ValueStatus.ESTIMATED` for inferred usage and `UNAVAILABLE` when it cannot be determined.
-Implement `fingerprint()` when class identity alone does not represent semantics. Fingerprints affect
-cache and resume compatibility; include stable versions, never credentials.
+Include stable corpus, index, model, prompt, and mapper revisions in `identity` for cache and resume
+compatibility. Never include credentials. Framework factories and mapping callbacks remain normal
+Python configuration code; retrieval and generation execute through the framework.
 
 ## LangChain integration
 
-`LangChainAdapter` accepts any asynchronous runnable with `ainvoke(input, config=...)`.
+`LangChainAdapter` accepts a real LangChain `Runnable` with `ainvoke(input, config=...)`.
 
 ```python
 from langchain_core.runnables import RunnableLambda
@@ -361,6 +337,23 @@ adapter = LangGraphAdapter(
 
 The adapter always adds `langgraph.runnable` latency. Framework errors remain visible to the engine's
 retry and failure handling.
+
+## Google ADK integration
+
+Install `tunarag-python[google-adk]` on Python 3.10+. `GoogleADKAdapter(runner)` accepts a real ADK
+2.x `Runner` or `InMemoryRunner`. Candidate parameters become initial session state. Each sample
+and retry gets a fresh session, which is removed after success, failure, or cancellation. Providers,
+agent tools, corpus retrieval, and runner ownership remain with the application.
+
+Use `factory=lambda candidate: build_runner(candidate)` when tuning settings such as a model or
+retrieval tool that require constructing an agent. `state_mapper` can map candidates to agent state;
+`output_mapper` receives the final ADK event, allowing retrieval evidence to be exposed for RAGAS.
+By default the output is `{"answer": final_text}`. Usage captures reported model token counts and
+runner latency; dollar cost is unavailable unless your evaluator supplies a priced metric.
+Missing final responses and ADK error events fail the trial rather than becoming empty answers.
+
+See the executable [ADK example](https://github.com/shivamshinde123/tunarag-python/blob/main/examples/google_adk_tuning.py)
+and [integration reference](https://github.com/shivamshinde123/tunarag-python/blob/main/docs/reference/integrations.md).
 
 ## Evaluation datasets
 
@@ -1060,7 +1053,7 @@ Protocols are structural; inheritance is not required.
 
 | Contract | Required behavior |
 |---|---|
-| `RAGAdapter` | `async run(candidate, example) -> (output, usage)` |
+| Official framework adapters | `LangChainAdapter`, `LangGraphAdapter`, `GoogleADKAdapter` |
 | `Dataset` | `.version` and async iteration |
 | `Evaluator` | `async evaluate(output, example) -> metrics` |
 | `SearchStrategy` | `async suggest()` and `async observe(...)` |
@@ -1104,7 +1097,7 @@ Provider descriptions and component fingerprints must not expose secrets.
 
 - Use a file-backed `SQLiteStore` and back it up.
 - Keep a human-reviewed test split outside optimization.
-- Fingerprint custom adapters and evaluators.
+- Supply framework pipeline revisions through adapter `identity` and fingerprint custom evaluators.
 - Include a hard stopping bound and conservative concurrency.
 - Track exact usage when available and label estimates.
 - Configure sample and trial timeouts.
@@ -1120,7 +1113,7 @@ Provider descriptions and component fingerprints must not expose secrets.
 V0.2 does not provide a hosted service/dashboard, automatic RAG construction, vector-database
 provisioning, distributed workers, Pareto optimization, Bayesian/evolutionary search, encrypted
 payloads, MLflow reconciliation, provider pricing management, or a TypeScript implementation.
-LangChain and LangGraph are official integrations; other frameworks use `RAGAdapter`.
+LangChain, LangGraph, and Google ADK 2.x are official integrations. Additional frameworks require a future first-party integration; custom RAG adapters are unsupported.
 
 | Term | Meaning |
 |---|---|

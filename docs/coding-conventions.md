@@ -1,5 +1,10 @@
 # TunaRAG Coding Conventions
 
+V0.3 pipeline execution goes through official framework integrations only. Validate actual
+framework types at fixed-object construction and for every factory result. Keep framework SDK
+imports lazy. Engine fault-injection fixtures may simulate provider behavior; compatibility tests
+must execute real framework objects. Do not add a generic custom RAG adapter escape hatch.
+
 ## Language and style
 
 - Support CPython 3.10 through 3.13.

@@ -1,4 +1,4 @@
-"""Protocols implemented by user-owned RAG systems and package extensions."""
+"""Internal pipeline boundary and public optimization extension protocols."""
 
 from __future__ import annotations
 
@@ -10,14 +10,6 @@ from .domain import Candidate, MetricValue, UsageRecord
 
 if TYPE_CHECKING:
     from .store import StudyEvent
-
-
-class RAGAdapter(Protocol):
-    """Execute a user's RAG system for one candidate and example."""
-
-    async def run(
-        self, candidate: Candidate, example: Any
-    ) -> tuple[Any, Sequence[UsageRecord]]: ...
 
 
 class Dataset(Protocol):

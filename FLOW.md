@@ -1,5 +1,7 @@
 # Code Flow
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 The canonical living code-flow document is [`docs/flow.md`](docs/flow.md). This root file is
 retained for compatibility with existing links. Update both the implementation and canonical
 flow document in the same feature branch.
@@ -25,7 +27,7 @@ MLflow integrations, deterministic reporting, and the reference example.
 3. Recover expired running attempts, apply retry policy, reconstruct budgets, and replay terminal observations when resuming.
 4. Ask the selected strategy for a typed candidate from the search space.
 5. Check the versioned cache using canonical candidate, dataset, evaluator, objective, and adapter identity parts.
-6. Execute the user-owned RAG adapter against the evaluation split with timeout and cancellation boundaries.
+6. Execute an official adapter for the user-owned framework pipeline against the evaluation split with timeout and cancellation boundaries.
 7. Collect append-only usage records and exact/estimated/unavailable accounting.
 8. Run evaluation plugins and resolve objective metrics, normalization, direction, weights, and coverage requirements.
 9. Persist trial, metrics, usage, events, and cache data transactionally; emit callbacks/events without exposing secrets.

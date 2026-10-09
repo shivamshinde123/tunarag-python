@@ -1,5 +1,7 @@
 # TunaRAG Component Map
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 | Component | Responsibility | Status |
 |---|---|---|
 | Domain and serialization | Immutable values, redaction, canonical identity | Implemented |
@@ -21,7 +23,7 @@
 | Reference RAG example | Deterministic local adapter, evaluator, dataset, optimization, exports | Implemented |
 
 Dependencies flow inward from entry points and integrations toward protocols and immutable
-domain values. The user owns retrieval and generation through `RAGAdapter`. RAGAS, MLflow,
+domain values. The user owns retrieval and generation through official framework adapters. RAGAS, MLflow,
 provider SDKs and LlamaIndex never become core dependencies. LangChain and LangGraph remain
 optional extras behind structural runnable adapters. The reference RAG in
 `examples/` demonstrates that boundary and is not shipped as package runtime code.

@@ -71,7 +71,7 @@ SOURCE_DOCUMENTS = (
     Document(
         page_content=(
             "TunaRAG improves an existing retrieval-augmented generation pipeline. "
-            "The application supplies its RAG pipeline through RAGAdapter or an official "
+            "The application supplies its RAG pipeline through an official framework adapter: "
             "LangChain or LangGraph adapter. TunaRAG then evaluates candidate configurations."
         ),
         metadata={"source_id": "overview"},
