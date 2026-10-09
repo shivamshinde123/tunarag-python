@@ -40,7 +40,8 @@ These opt-in tests include spending safeguards; normal tests never make paid cal
 **Google ADK validation:** [Real OpenRouter RAG tuning, RAGAS scoring, SQLite resume,
 and MLflow checks](docs/live-google-adk-testing.md).
 
-**Next test stages:** [Ordered answer-quality and reliability validation plan](docs/quality-validation-plan.md).
+**Quality and reliability:** [Ordered validation plan](docs/quality-validation-plan.md)
+and [bounded repeated tuning, ADK tools, billing and recovery checks](docs/reliability-validation.md).
 
 ## Comprehensive Usage Guide
 

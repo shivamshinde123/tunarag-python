@@ -192,4 +192,5 @@ never reruns retrieval/generation or changes the previously chosen winner. The
 test evaluator maps semantic atomic-fact verdicts to estimated completeness,
 contradiction and reference-quality metrics; rubric/model/prompt fingerprints
 identify the scoring configuration. See `quality-validation-plan.md` for ordered
-stages, evidence and unexecuted boundaries.
+stages, evidence and unexecuted boundaries. See `reliability-validation.md` for
+the bounded follow-up campaigns, tool bridge and guarded recovery gateway.
