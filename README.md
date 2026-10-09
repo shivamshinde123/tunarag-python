@@ -32,21 +32,21 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 
 **Lightweight distribution:** pip installs runtime code and metadata, not tests, datasets,
 or documentation images. Framework dependencies are optional extras. See
-[package contents and release checks](docs/package-distribution.md).
+[package contents and release checks](https://shivamshinde123.github.io/tunarag-python/package-distribution/).
 
-**Live integration checks:** [OpenRouter, RAGAS, and MLflow test plan](docs/live-integration-test-plan.md).
+**Live integration checks:** [OpenRouter, RAGAS, and MLflow test plan](https://shivamshinde123.github.io/tunarag-python/live-integration-test-plan/).
 
 **End-to-end verification:** [Full-PDF campaigns, held-out quality checks, crash recovery,
-and clean-wheel testing](docs/comprehensive-testing.md). Paid tests are explicit opt-ins;
+and clean-wheel testing](https://shivamshinde123.github.io/tunarag-python/comprehensive-testing/). Paid tests are explicit opt-ins;
 ordinary CI never makes paid provider calls.
 These opt-in tests include spending safeguards; normal tests never make paid calls.
 
 **Google ADK validation:** [Real OpenRouter RAG tuning, RAGAS scoring, SQLite resume,
-and MLflow checks](docs/live-google-adk-testing.md).
+and MLflow checks](https://shivamshinde123.github.io/tunarag-python/live-google-adk-testing/).
 
-**Quality and reliability:** [Ordered validation plan](docs/quality-validation-plan.md)
-and [bounded repeated tuning, ADK tools, billing and recovery checks](docs/reliability-validation.md).
-See [mixed-topic validation](docs/multicorpus-validation.md) for cross-model QA,
+**Quality and reliability:** [Ordered validation plan](https://shivamshinde123.github.io/tunarag-python/quality-validation-plan/)
+and [bounded repeated tuning, ADK tools, billing and recovery checks](https://shivamshinde123.github.io/tunarag-python/reliability-validation/).
+See [mixed-topic validation](https://shivamshinde123.github.io/tunarag-python/multicorpus-validation/) for cross-model QA,
 simulated faults/load, and the unresolved adversarial-prompt failure.
 
 ## Comprehensive Usage Guide
@@ -84,20 +84,7 @@ TunaRAG compares configurations of an **existing** RAG pipeline. You provide the
 evaluation dataset, a search space, evaluators, and an objective. TunaRAG schedules trials, isolates
 failures, persists state, and returns an inspectable result.
 
-```mermaid
-flowchart LR
-    D[Versioned dataset] --> O[Optimizer]
-    S[Search strategy] -->|Candidate| O
-    O -->|Candidate + example| A[RAG adapter]
-    A -->|Output + usage| E[Evaluators]
-    E -->|Metrics| J[Objective]
-    J -->|Benefit score| O
-    O -->|Observe| S
-    O --> DB[(SQLite store)]
-    O <--> C[(Evaluation cache)]
-    DB --> CB[Post-commit callbacks]
-    O --> R[OptimizationResult]
-```
+![Optimization loop: a strategy proposes candidates, the framework adapter runs each example, evaluators produce metrics, and the objective scores trials; SQLite persists results before callbacks](https://shivamshinde123.github.io/tunarag-python/assets/diagrams/optimization-loop.png)
 
 A **study** contains ordered **trials**. Each trial evaluates one complete candidate configuration
 against every dataset example. Same-named sample metrics are aggregated into trial metrics, then the
@@ -226,7 +213,7 @@ chain = RunnableLambda(lambda inputs: {"answer": inputs["question"]})
 adapter = LangChainAdapter(chain)
 ```
 
-![TunaRAG sends settings and a query through an official adapter to a separate framework RAG; answers and usage return in the opposite direction](docs/assets/tunarag-python-readme-illustrations/07-framework-adapter-control.png)
+![TunaRAG sends settings and a query through an official adapter to a separate framework RAG; answers and usage return in the opposite direction](https://shivamshinde123.github.io/tunarag-python/assets/tunarag-python-readme-illustrations/07-framework-adapter-control.png)
 
 The adapter connects two responsibilities; it does not move your RAG into TunaRAG.
 Your framework must consume the candidate settings for tuning to change its behavior.
@@ -471,7 +458,7 @@ optimization_data = split_dataset.select(DatasetSplit.OPTIMIZE)
 Splits are hash-based and stable across input order. Group splitting keeps related examples
 together. `select()` rejects an empty split.
 
-![Tune and choose a configuration using optimization data while keeping the test set untouched for a final check](docs/assets/tunarag-python-readme-illustrations/08-held-out-evaluation.png)
+![Tune and choose a configuration using optimization data while keeping the test set untouched for a final check](https://shivamshinde123.github.io/tunarag-python/assets/tunarag-python-readme-illustrations/08-held-out-evaluation.png)
 
 Pass only the selected optimization subset to the tuning study. Use validation data for
 development decisions, and evaluate the frozen winner on the untouched test subset.
@@ -544,7 +531,7 @@ using them as gold data. Generation usage is separate from optimization usage.
 
 ## Search spaces and strategies
 
-![A hand-drawn Xiaohei validating candidates from RandomSearch and LLMSearch](docs/assets/tunarag-python-readme-illustrations/04-search-strategies.png)
+![A hand-drawn Xiaohei validating candidates from RandomSearch and LLMSearch](https://shivamshinde123.github.io/tunarag-python/assets/tunarag-python-readme-illustrations/04-search-strategies.png)
 
 ### Typed space
 
@@ -684,7 +671,7 @@ configuration remain owned by your RAGAS components.
 
 ## Objectives
 
-![A hand-drawn Xiaohei adjusting quality, cost, and latency tradeoffs to choose a configuration](docs/assets/tunarag-python-readme-illustrations/06-results-and-reports.png)
+![A hand-drawn Xiaohei adjusting quality, cost, and latency tradeoffs to choose a configuration](https://shivamshinde123.github.io/tunarag-python/assets/tunarag-python-readme-illustrations/06-results-and-reports.png)
 
 Your objective weights define the tradeoff; the winning configuration is best among the
 evaluated trials under that objective, not a guarantee of the globally best RAG.
@@ -926,7 +913,7 @@ labels are metadata, not encryption.
 
 ## SQLite persistence and resume
 
-![A hand-drawn Xiaohei recovering and resuming a committed SQLite study after interruption](docs/assets/tunarag-python-readme-illustrations/05-persistence-and-resume.png)
+![A hand-drawn Xiaohei recovering and resuming a committed SQLite study after interruption](https://shivamshinde123.github.io/tunarag-python/assets/tunarag-python-readme-illustrations/05-persistence-and-resume.png)
 
 ```python
 from pathlib import Path
@@ -985,18 +972,7 @@ Events cover study, trial, and attempt lifecycles plus callback failures. Handle
 types defensively. Callback failures never roll back committed work; TunaRAG records them as durable
 events. Make callbacks idempotent.
 
-```mermaid
-sequenceDiagram
-    participant O as Optimizer
-    participant S as SQLite
-    participant C as Callback
-    O->>S: Commit terminal trial and event
-    S-->>O: Committed
-    O->>C: on_event(event)
-    alt callback fails
-        O->>S: Append callback.failed
-    end
-```
+![SQLite commits the terminal trial and event before the callback runs; a failing callback appends a callback.failed event without rolling back the trial](https://shivamshinde123.github.io/tunarag-python/assets/diagrams/post-commit-callbacks.png)
 
 MLflow is an optional post-commit projection; SQLite remains authoritative:
 
@@ -1184,9 +1160,9 @@ LangChain, LangGraph, and Google ADK 2.x are official integrations. Additional f
 | Trial | One candidate evaluated over the whole dataset |
 | Usage | Tokens, cost, latency, confidence, and pricing provenance |
 
-For deeper contracts and architecture, see [`docs/api-specification.md`](docs/api-specification.md),
-[`docs/system-architecture-document.md`](docs/system-architecture-document.md), and
-[`docs/technical-design-document.md`](docs/technical-design-document.md).
+For deeper contracts and architecture, see the [API specification](https://shivamshinde123.github.io/tunarag-python/api-specification/),
+[system architecture](https://shivamshinde123.github.io/tunarag-python/system-architecture-document/), and
+[technical design](https://shivamshinde123.github.io/tunarag-python/technical-design-document/).
 
 ## License and responsibility
 

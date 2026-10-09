@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tunarag-python"
-version = "0.3.0"
+version = "0.3.1"
 description = "Tune LangChain, LangGraph, and Google ADK RAG pipelines"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -29,6 +29,7 @@ dependencies = [
 ]
 
 [project.urls]
+Documentation = "https://shivamshinde123.github.io/tunarag-python/"
 Repository = "https://github.com/shivamshinde123/tunarag-python"
 Issues = "https://github.com/shivamshinde123/tunarag-python/issues"
 Changelog = "https://github.com/shivamshinde123/tunarag-python/blob/main/CHANGELOG.md"

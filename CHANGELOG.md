@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 - 2026-10-09
+
+- Replace both raw Mermaid README blocks with pre-rendered PNG diagrams compatible with PyPI.
+  Use public absolute documentation/image URLs and add the documentation metadata link.
 
 - Add the complete MIT license with warranty and liability disclaimers to the repository,
   wheel and source archive. Require the license file in distribution-content checks.

@@ -4,6 +4,7 @@ import csv
 import inspect
 import json
 import random
+import re
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -78,8 +79,24 @@ def test_readme_illustrations_are_local_and_present() -> None:
     }
     assert {illustration.name for illustration in illustrations} == expected
     for illustration in illustrations:
-        relative_path = illustration.relative_to(ROOT).as_posix()
-        assert f"]({relative_path})" in readme
+        public_path = illustration.relative_to(ROOT / "docs").as_posix()
+        assert f"](https://shivamshinde123.github.io/tunarag-python/{public_path})" in readme
+
+
+def test_readme_is_pypi_portable() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    assert "```mermaid" not in readme
+    assert "flowchart LR" not in readme
+    assert "sequenceDiagram" not in readme
+    targets = re.findall(r"\]\(([^)]+)\)", readme)
+    assert all(target.startswith(("https://", "#")) for target in targets)
+    images = re.findall(r"!\[[^\]]*\]\(([^)]+)\)", readme)
+    assert len(images) == 7
+    prefix = "https://shivamshinde123.github.io/tunarag-python/"
+    for image_url in images:
+        assert image_url.startswith(prefix)
+        asset = ROOT / "docs" / image_url.removeprefix(prefix)
+        assert asset.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
 
 
 def _run(index: int, namespace: dict[str, Any] | None = None) -> dict[str, Any]:

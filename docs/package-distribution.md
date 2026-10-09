@@ -14,10 +14,14 @@ for the release gates and evidence.
 Version 0.3.0 is the framework-only release: use the official LangChain, LangGraph, or
 Google ADK adapters. See the changelog for migration from 0.2.1.
 
-Development builds after 0.3.0 also include the full MIT `LICENSE` text: at the source
+Version 0.3.1 builds also include the full MIT `LICENSE` text: at the source
 archive root and in the wheel's `.dist-info/licenses/LICENSE`. Both are required by
 the archive guard. Published 0.3.0 has the MIT metadata declaration but cannot be
-retroactively changed; the new full-text license asset will ship in the next release.
+retroactively changed; the full-text license asset ships in 0.3.1.
+
+The 0.3.1 README uses pre-rendered PNGs with public absolute URLs, not Mermaid source
+blocks or repository-relative image links. Editable Mermaid source and rendered images
+live in `docs/assets/diagrams/`; none are bundled into the runtime archives.
 
 ## What pip downloads
 
@@ -35,7 +39,7 @@ allowlists required files. Get the GitHub checkout to run tests or build the doc
 Dependencies are not copied into either archive. Frameworks, RAGAS, MLflow, documentation,
 and development dependencies are optional extras, installed only when requested. Their
 separate dependencies can be much larger than TunaRAG itself. Install only the extras
-needed for your pipeline, for example `pip install "tunarag-python[langchain]==0.3.0"`.
+needed for your pipeline, for example `pip install "tunarag-python[langchain]==0.3.1"`.
 
 ## Release checks
 

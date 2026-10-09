@@ -122,6 +122,7 @@ nav:
       - Coding Conventions: coding-conventions.md
       - Decision Log: decision.md
       - Illustration Audit: illustration-audit.md
+      - Diagram Sources: assets/diagrams/README.md
       - UI and UX: ui-ux-wireframes.md
 
 exclude_docs: |

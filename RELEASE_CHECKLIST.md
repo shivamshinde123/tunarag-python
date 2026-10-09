@@ -1,4 +1,12 @@
-# V0.3.0 Release Checklist
+# Release Checklist
+
+## 0.3.1 follow-up
+
+This patch ships PyPI-compatible README diagram images, public documentation/asset URLs,
+and the full MIT license from the preceding documentation PR. No optimizer behavior changes.
+Use `v0.3.1` for trusted publication after CI passes and the documentation deployment succeeds.
+Verify all seven public PNG URLs, renderer output, wheel license text and a fresh index install.
+The completed 0.3.0 publication record below remains historical evidence, not a 0.3.1 receipt.
 
 ## Required gates
 

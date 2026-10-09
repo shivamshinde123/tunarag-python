@@ -1,5 +1,14 @@
 # TunaRAG Decision Log
 
+## 2026-10-09 Publish PyPI-portable README in 0.3.1
+
+PyPI does not execute Mermaid JavaScript. Pre-render both README diagrams as PNGs,
+retain editable `.mmd` sources under `assets/diagrams`, and use public GitHub Pages
+image/document URLs so descriptions work outside the repository (which is private).
+Keep these assets out of runtime distributions. Validate all seven images and reject
+Mermaid fences/relative README links in tests. Publish a new patch release because
+existing 0.3.0 metadata is immutable; 0.3.1 also carries the full license from the prior PR.
+
 ## 2026-10-09 Make illustration meaning and license distribution explicit
 
 Use illustrations only where they explain a boundary or decision not already conveyed
