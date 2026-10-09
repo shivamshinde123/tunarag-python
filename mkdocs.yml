@@ -92,6 +92,7 @@ nav:
       - Code Flow: flow.md
       - README Example Verification: readme-example-verification.md
       - Live Integration Testing: live-integration-test-plan.md
+      - Comprehensive Testing: comprehensive-testing.md
   - Architecture:
       - System Architecture: system-architecture-document.md
       - Technical Design: technical-design-document.md

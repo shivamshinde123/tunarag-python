@@ -6,6 +6,9 @@ from pathlib import Path
 import pytest
 
 from .support import RequestBudget, load_corpus
+from .test_tracking import tracking_server as _tracking_server
+
+tracking_server = _tracking_server
 
 
 def pytest_addoption(parser):
@@ -16,13 +19,18 @@ def pytest_addoption(parser):
     )
     group.addoption("--live-env", help="Explicit dotenv path; no automatic dotenv loading")
     group.addoption("--live-request-limit", type=int, default=40)
+    group.addoption("--live-campaign", action="store_true", help="Enable extended PDF campaigns")
+    group.addoption("--live-pdf", help="Local text-selectable PDF for the extended campaign")
+    group.addoption("--live-held-out-report", help="Existing campaign held-out answers to score")
     group.addoption("--live-documents", default=str(Path(__file__).with_name("documents.json")))
     group.addoption("--live-dataset", default=str(Path(__file__).with_name("dataset.json")))
 
 
 def pytest_collection_modifyitems(config, items):
     for item in items:
-        if "live" in item.keywords and not config.getoption("--live"):
+        if "campaign" in item.keywords and not config.getoption("--live-campaign"):
+            item.add_marker(pytest.mark.skip(reason="requires --live-campaign"))
+        elif "live" in item.keywords and not config.getoption("--live"):
             item.add_marker(pytest.mark.skip(reason="requires --live"))
         elif "paid" in item.keywords and not config.getoption("--live-paid"):
             item.add_marker(pytest.mark.skip(reason="requires --live-paid"))

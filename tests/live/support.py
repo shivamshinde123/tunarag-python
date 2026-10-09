@@ -7,8 +7,8 @@ from pathlib import Path
 
 class RequestBudget:
     def __init__(self, limit: int):
-        if not 1 <= limit <= 100:
-            raise ValueError("request limit must be between 1 and 100")
+        if not 1 <= limit <= 500:
+            raise ValueError("request limit must be between 1 and 500")
         self.limit = limit
         self.used = 0
         self._lock = threading.Lock()

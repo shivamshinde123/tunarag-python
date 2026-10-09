@@ -16,8 +16,11 @@ Before paid execution, local validation has exercised real non-LLM RAGAS scoring
 real MLflow HTTP tracking, and construction of the real provider/judge clients with
 zero provider requests. Checked versions: RAGAS 0.4.3, langchain-community 0.3.31,
 MLflow 3.17.0, and langchain-openai 1.7.0 on Windows/Python 3.12.14. OpenRouter-backed
-generation, embeddings, and judge scores remain **not run** until credentials and a
-spending budget are supplied. The normal unit suite also verifies the harness offline.
+generation, embeddings, judge calibration, and both optimization studies were
+subsequently executed successfully with the user's public paper and authorized budget.
+Private run artifacts remain outside Git. The normal unit suite also verifies the
+harness offline. See [comprehensive testing](comprehensive-testing.md) for the
+separately gated full-PDF follow-up and its remaining limitations.
 
 ## Test matrix and acceptance criteria
 
@@ -129,7 +132,7 @@ results first. The smoke-test source data shipped in the repository needs no upl
   checks; `--live-paid` additionally authorizes provider requests. The separate
   `live-dependencies` CI job sets only `--live` and excludes paid tests. Supplying a
   key alone never enables paid tests.
-- A session-shared HTTP hook caps OpenRouter requests at 40 by default (allowed 1–100),
+- A session-shared HTTP hook caps OpenRouter requests at 40 by default (allowed 1–500),
   including embeddings and judge calls. It counts attempts before sending them. A
   failed or blocked attempt may consume a slot. No request body or key is logged by
   the hook. SDK retries are zero; TunaRAG retries are zero. RAGAS `aevaluate` initializes
