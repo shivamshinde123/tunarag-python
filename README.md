@@ -30,6 +30,10 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 
 **Documentation:** [shivamshinde123.github.io/tunarag-python](https://shivamshinde123.github.io/tunarag-python/)
 
+**Lightweight distribution:** pip installs runtime code and metadata, not tests, datasets,
+or documentation images. Framework dependencies are optional extras. See
+[package contents and release checks](docs/package-distribution.md).
+
 **Live integration checks:** [OpenRouter, RAGAS, and MLflow test plan](docs/live-integration-test-plan.md).
 
 **End-to-end verification:** [Full-PDF campaigns, held-out quality checks, crash recovery,

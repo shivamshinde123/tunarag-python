@@ -1,5 +1,10 @@
 # TunaRAG Code Flow
 
+Release flow: green feature PR -> merged main -> immutable version tag -> isolated
+sdist/wheel build -> metadata and archive-content checks -> GitHub OIDC PyPI upload ->
+fresh index installation/import. See `package-distribution.md`. Repository test and
+documentation assets never enter the installed wheel.
+
 > V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
 
 ## Current flow

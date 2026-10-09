@@ -1,5 +1,9 @@
 # TunaRAG File and Folder Structure
 
+`scripts/check_distribution.py` is a repository-only release guard, exercised by
+`tests/test_distribution.py` and CI/publishing. `docs/package-distribution.md` defines
+the archive boundary: only runtime source and essential build/metadata files reach PyPI.
+
 > V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
 
 The site's [Usage Guide](usage.md) is generated from the root `README.md`, which remains the

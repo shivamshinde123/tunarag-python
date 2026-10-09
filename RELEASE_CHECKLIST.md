@@ -16,10 +16,11 @@
 ## Publish-time gates
 
 - [x] Confirm `tunarag-python` is currently available on PyPI and TestPyPI.
-- [ ] Configure pending trusted publishers for `.github/workflows/publish.yml` using environments
+- [ ] Verify existing trusted publishers for `.github/workflows/publish.yml` using environments
   `testpypi` and `pypi` on their respective indexes.
 - [ ] Create an annotated `v0.3.0` tag from the final green `main` commit.
 - [ ] Build from a clean checkout and inspect wheel/sdist contents.
+- [ ] Run the automated archive allowlist guard and rebuild a wheel from the lean sdist.
 - [ ] Publish to TestPyPI and run the quickstart in a fresh environment.
 - [ ] Publish to PyPI, verify metadata links, then create the GitHub release from `CHANGELOG.md`.
 

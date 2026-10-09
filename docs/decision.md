@@ -1,5 +1,14 @@
 # TunaRAG Decision Log
 
+## 2026-10-09 Publish lean 0.3.0 distributions
+
+PyPI remains at 0.2.1; publish the already-versioned 0.3.0 framework-only release rather
+than inventing a patch version. Retain the runtime-only wheel and explicitly allowlist
+source-archive files needed to rebuild it. Keep tests, examples, docs images, private
+inputs and live receipts on their existing repository/local paths, not PyPI. Validate
+archive contents in CI and before trusted publication. Optional extras stay optional.
+See `package-distribution.md` for the contents and reproducibility gates.
+
 ## 2026-10-06 Provide a complete single-file LangChain tuning example
 
 Provide one executable example that uses standard LangChain components for document splitting,
