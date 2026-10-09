@@ -90,6 +90,7 @@ nav:
       - Data and Extraction: data-extraction-specification.md
       - Environment Configuration: environment-config-reference.md
       - Code Flow: flow.md
+      - README Example Verification: readme-example-verification.md
   - Architecture:
       - System Architecture: system-architecture-document.md
       - Technical Design: technical-design-document.md

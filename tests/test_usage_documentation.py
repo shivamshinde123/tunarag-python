@@ -5,13 +5,18 @@ import inspect
 import json
 import random
 import sys
-from collections.abc import Mapping
 from pathlib import Path
-from types import ModuleType, SimpleNamespace
+from types import ModuleType
 from typing import Any
 
 import pytest
-from langchain_core.runnables import RunnableLambda
+from langchain_classic.chains import create_retrieval_chain
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.documents import Document
+from langchain_core.embeddings import DeterministicFakeEmbedding
+from langchain_core.language_models.fake import FakeListLLM
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.vectorstores import InMemoryVectorStore
 from pipeline_fixtures import framework_fixture
 
 from tunarag import (
@@ -147,6 +152,12 @@ def test_examples_1_to_3_framework_quickstart(
     monkeypatch.chdir(tmp_path)
     quickstart = _run(1)
     assert quickstart["result"].best_candidate is not None
+    assert quickstart["result"].best_candidate.parameters["top_k"] == 2
+    scores = {
+        trial.candidate.parameters["top_k"]: trial.objective.score
+        for trial in quickstart["result"].successful_trials
+    }
+    assert scores == {1: 0.5, 2: 1.0}
     for index in (2, 3):
         scope = _run(index)
         output, _ = asyncio.run(
@@ -164,26 +175,23 @@ def test_examples_4_to_8_framework_adapters(monkeypatch: pytest.MonkeyPatch) -> 
     assert output == "Used top_k=2 for question"
     assert usage[-1].component == "langchain.runnable"
 
-    class VectorStore:
-        def as_retriever(self, *, search_kwargs: Mapping[str, Any]) -> Any:
-            return SimpleNamespace(top_k=search_kwargs["k"])
-
-    def create_retrieval_chain(retriever: Any, qa_chain: Any) -> RunnableLambda:
-        return RunnableLambda(
-            lambda inputs, config: {"answer": f"{inputs['question']}:{retriever.top_k}:{qa_chain}"}
-        )
-
     factory_scope = _run(
         5,
         {
-            "vector_store": VectorStore(),
+            "vector_store": InMemoryVectorStore.from_documents(
+                [Document(page_content="Framework retrieval context")],
+                DeterministicFakeEmbedding(size=32),
+            ),
             "create_retrieval_chain": create_retrieval_chain,
-            "build_qa_chain": lambda model: model,
+            "build_qa_chain": lambda model: create_stuff_documents_chain(
+                FakeListLLM(responses=[f"answer using {model}"]),
+                ChatPromptTemplate.from_template("Context: {context}\nQuestion: {input}"),
+            ),
             "LangChainAdapter": chain_scope["LangChainAdapter"],
         },
     )
     output, _ = asyncio.run(factory_scope["adapter"].run(candidate, example))
-    assert output == "question:2:small"
+    assert output == "answer using small"
 
     async def custom_chain(inputs: Any, config: Any) -> dict[str, Any]:
         assert inputs == {"input": "question", "retrieval_limit": 2}

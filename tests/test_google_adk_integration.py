@@ -66,7 +66,11 @@ def test_adk_optimizer_executes_real_runner_and_cleans_sessions() -> None:
         optimizer = Optimizer(
             adapter=GoogleADKAdapter(pipeline, identity={"agent": "echo-v1"}),
             strategy=RandomSearch(SearchSpace({"top_k": IntegerRange(1, 2)}), seed=0),
-            evaluators=(MetricEvaluator("quality", lambda output, example: 1.0),),
+            evaluators=(
+                MetricEvaluator(
+                    "quality", lambda output, example: float(output["answer"].split("=")[1])
+                ),
+            ),
             objective=Objective((ObjectiveTerm("quality"),)),
             settings=Settings.resolve(overrides={"max_trials": 2}, environ={}),
         )
@@ -76,6 +80,8 @@ def test_adk_optimizer_executes_real_runner_and_cleans_sessions() -> None:
                 study_name="adk-compatibility",
             )
             assert len(result.ranked_trials) == 2
+            assert result.best_candidate.parameters["top_k"] == 2
+            assert {trial.objective.score for trial in result.successful_trials} == {1.0, 2.0}
             sessions = await pipeline.session_service.list_sessions(
                 app_name=pipeline.app_name, user_id="tunarag-evaluation"
             )

@@ -134,7 +134,10 @@ from tunarag import (
 )
 
 vector_store = InMemoryVectorStore.from_documents(
-    [Document(page_content="SQLite stores local experiments.")],
+    [
+        Document(page_content="SQLite stores local experiments."),
+        Document(page_content="TunaRAG compares RAG configurations."),
+    ],
     DeterministicFakeEmbedding(size=32),
 )
 prompt = ChatPromptTemplate.from_template("Context: {context}\nQuestion: {question}")
@@ -142,15 +145,23 @@ prompt = ChatPromptTemplate.from_template("Context: {context}\nQuestion: {questi
 
 def build_chain(candidate):
     retriever = vector_store.as_retriever(search_kwargs={"k": candidate.parameters["top_k"]})
-    return (
-        {"context": retriever, "question": RunnablePassthrough()}
-        | prompt
-        | FakeListLLM(responses=["SQLite stores local experiments."])
+    return {"context": retriever, "question": RunnablePassthrough()} | RunnablePassthrough.assign(
+        answer=prompt | FakeListLLM(responses=["SQLite stores local experiments."])
     )
 
 
 dataset = EvaluationDataset.from_records(
-    [{"id": "q1", "query": "What stores experiments?", "reference_answer": "SQLite"}]
+    [
+        {
+            "id": "q1",
+            "query": "What stores experiments and compares configurations?",
+            "reference_answer": "SQLite and TunaRAG",
+            "reference_contexts": [
+                "SQLite stores local experiments.",
+                "TunaRAG compares RAG configurations.",
+            ],
+        }
+    ]
 )
 optimizer = Optimizer(
     adapter=LangChainAdapter(
@@ -159,10 +170,17 @@ optimizer = Optimizer(
     strategy=RandomSearch(SearchSpace({"top_k": IntegerRange(1, 2)}), seed=7),
     evaluators=(
         MetricEvaluator(
-            "answer_quality", lambda output, example: float(example.reference_answer in output)
+            "retrieval_recall",
+            lambda output, example: (
+                len(
+                    {document.page_content for document in output["context"]}
+                    & set(example.reference_contexts)
+                )
+                / len(example.reference_contexts)
+            ),
         ),
     ),
-    objective=Objective((ObjectiveTerm("answer_quality"),)),
+    objective=Objective((ObjectiveTerm("retrieval_recall"),)),
 )
 try:
     result = optimizer.optimize(dataset, study_name="langchain-rag")
@@ -172,6 +190,9 @@ finally:
 ```
 
 The default store is in memory. Use `SQLiteStore(path)` for a durable study.
+Here `top_k=1` retrieves one of two required contexts (recall `0.5`); `top_k=2` retrieves both
+(recall `1.0`), so tuning selects `top_k=2`. This verifies parameter application and ranking with
+offline framework components; it does not benchmark a real embedding model or generated answer.
 
 ## RAG adapters
 
@@ -247,10 +268,15 @@ def build_chain(candidate):
 
 adapter = LangChainAdapter(
     factory=build_chain,
+    input_key="input",
     output_mapper=lambda output: output["answer"],
     identity={"factory_schema": 1},
 )
 ```
+
+This factory fragment assumes `vector_store` and `build_qa_chain(model)` already exist. The
+standard `create_retrieval_chain` requires the `input` key and comes from `langchain-classic`;
+install that package and import it before using this fragment.
 
 Customize all boundaries when required:
 

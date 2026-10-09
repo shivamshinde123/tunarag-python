@@ -313,3 +313,11 @@ on terminal execution, and captures reported token counts and elapsed time. Repl
 handwritten reference RAG with an offline LangChain quickstart. Declare the breaking boundary
 change as V0.3.0 and require real-framework compatibility tests. Additional frameworks need a
 first-party integration; custom evaluators, objectives, strategies, and callbacks remain supported.
+
+## 2026-10-09 Verify README tuning with real framework components
+
+Execute every README Python fragment with explicit fixtures and add assertions that
+candidate parameters change framework behavior, scores, and winner selection. Replace
+the quickstart's constant metric with retrieval recall and test the factory with real
+LangChain retrieval helpers. Document fixture and live-provider limitations in
+`readme-example-verification.md`; offline correctness is not production quality evidence.
