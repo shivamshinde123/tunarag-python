@@ -159,7 +159,7 @@ lost in a crash; local recovery cannot undo that charge.
 
 Do not label these unexecuted cases as passed:
 
-- Live Google ADK/provider calls, additional model providers, hosted/authenticated
+- Additional model providers, hosted/authenticated
   MLflow, framework-native durable checkpoints, distributed/multi-host workers.
 - Induced upstream 429/outage behavior; transient engine failures are injected offline.
 - PDF OCR, encrypted PDFs, huge corpora, malicious source-document instructions,
@@ -169,3 +169,7 @@ Do not label these unexecuted cases as passed:
 
 If a weakness appears, record it as a release limitation or bug with a reproducer.
 Do not alter assertions or reference labels merely to make a paid run pass.
+
+The separately gated ADK/OpenRouter add-on is described in
+[Live Google ADK validation](live-google-adk-testing.md). Its smaller question set
+and provider boundary are explicit; it is not native Gemini/Vertex validation.

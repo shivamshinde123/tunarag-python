@@ -74,6 +74,10 @@ docs = [
     "mkdocs-material>=9.5,<10",
     "mkdocstrings[python]>=0.27,<1",
 ]
+live-adk-test = [
+    "google-adk>=2.11,<3",
+    "litellm>=1.104,<2",
+]
 live-test = [
     "langgraph>=1,<2",
     "pypdf>=5,<7",

@@ -349,3 +349,14 @@ with provider execution. Keep private results and budget ledgers ignored. Raise 
 the explicit request-limit upper bound to 500; retain the default of 40 and warn that
 request limits do not guarantee dollar limits. Add subprocess death/recovery tests
 with simulated expired leases and verify clean built-wheel execution separately.
+
+## 2026-10-09 Add live Google ADK validation through OpenRouter
+
+Use official ADK Agent/Runner orchestration with a LangChain retriever invoked by
+ADK model callbacks. Preserve context metadata for real RAGAS scoring. Reuse the
+guarded OpenAI-compatible client inside ADK LiteLlm instead of letting a second
+transport bypass the request and cumulative dollar budget. Verify that transport
+contract without credentials, including provider failure and before-send rejection.
+Keep LiteLLM optional in a separate live-adk-test extra. Freeze three development
+and three held-out questions for a bounded add-on, not another full benchmark.
+Native Gemini/Vertex and model-directed tools remain unvalidated by this campaign.
