@@ -184,3 +184,12 @@ metadata carries retrieved contexts into the adapter output mapper and RAGAS.
 Two trials persist through SQLite and local MLflow, followed by zero-call completed
 resume, incompatible-revision rejection, exported winner reuse, held-out scoring,
 and session cleanup. See `live-google-adk-testing.md` for exact scope.
+
+`tests/live/test_quality.py` first calibrates a structured-output reference judge
+against contrasting complete, incomplete, incorrect and abstaining answers. Only
+after that gate passes does it score existing frozen held-out answer files. It
+never reruns retrieval/generation or changes the previously chosen winner. The
+test evaluator maps semantic atomic-fact verdicts to estimated completeness,
+contradiction and reference-quality metrics; rubric/model/prompt fingerprints
+identify the scoring configuration. See `quality-validation-plan.md` for ordered
+stages, evidence and unexecuted boundaries.

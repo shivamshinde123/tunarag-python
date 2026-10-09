@@ -360,3 +360,13 @@ contract without credentials, including provider failure and before-send rejecti
 Keep LiteLLM optional in a separate live-adk-test extra. Freeze three development
 and three held-out questions for a bounded add-on, not another full benchmark.
 Native Gemini/Vertex and model-directed tools remain unvalidated by this campaign.
+
+## 2026-10-09 Prioritize answer completeness before broader integration load
+
+Add a strictly parsed, versioned reference-quality test evaluator through the
+existing public contract, not a new mandatory package dependency. Calibrate semantic
+fact coverage and contradiction handling against frozen contrasting answers before
+rescoring saved held-out answers. Preserve separate retrieval/faithfulness metrics.
+Do not regenerate answers, alter references, or select new winners using test labels.
+Schedule repeated tuning, ADK tools/concurrency, billing reconciliation and live
+interruption recovery after the initial quality gate; label unexecuted stages pending.

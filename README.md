@@ -40,6 +40,8 @@ These opt-in tests include spending safeguards; normal tests never make paid cal
 **Google ADK validation:** [Real OpenRouter RAG tuning, RAGAS scoring, SQLite resume,
 and MLflow checks](docs/live-google-adk-testing.md).
 
+**Next test stages:** [Ordered answer-quality and reliability validation plan](docs/quality-validation-plan.md).
+
 ## Comprehensive Usage Guide
 
 The sections below explain every public TunaRAG Python V0.3 feature with executable examples.

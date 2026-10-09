@@ -22,6 +22,9 @@ def pytest_addoption(parser):
     group.addoption("--live-campaign", action="store_true", help="Enable extended PDF campaigns")
     group.addoption("--live-pdf", help="Local text-selectable PDF for the extended campaign")
     group.addoption("--live-held-out-report", help="Existing campaign held-out answers to score")
+    group.addoption(
+        "--live-quality-report", action="append", help="Frozen held-out answers for quality scoring"
+    )
     group.addoption("--live-documents", default=str(Path(__file__).with_name("documents.json")))
     group.addoption("--live-dataset", default=str(Path(__file__).with_name("dataset.json")))
 
