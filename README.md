@@ -42,6 +42,8 @@ and MLflow checks](docs/live-google-adk-testing.md).
 
 **Quality and reliability:** [Ordered validation plan](docs/quality-validation-plan.md)
 and [bounded repeated tuning, ADK tools, billing and recovery checks](docs/reliability-validation.md).
+See [mixed-topic validation](docs/multicorpus-validation.md) for cross-model QA,
+simulated faults/load, and the unresolved adversarial-prompt failure.
 
 ## Comprehensive Usage Guide
 

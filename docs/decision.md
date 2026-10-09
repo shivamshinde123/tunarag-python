@@ -381,3 +381,13 @@ or losing history. Keep external account costs separate from committed trial usa
 Use a credential-free child and guarded parent gateway for lost-response recovery;
 wait for real lease expiry. These are test-harness additions, not distributed execution
 or native Google-provider support. See `reliability-validation.md` for evidence limits.
+
+## 2026-10-09 Validate mixed topics and preserve negative security findings
+
+Use independent model families for QA generation and blind source-based validation,
+with indexed exact-source quotations instead of trusting generated citation text.
+Freeze accepted and rejected labels before tuning; reuse only with matching source
+hashes. Keep model validation distinct from human verification. Separate simulated
+SDK failures/local stress from paid quality calls. Preserve the adversarial failure
+even after prompt-boundary hardening; passing tuning and CI does not prove untrusted
+document safety. See `multicorpus-validation.md` for the measured scope and limits.

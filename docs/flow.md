@@ -194,3 +194,11 @@ contradiction and reference-quality metrics; rubric/model/prompt fingerprints
 identify the scoring configuration. See `quality-validation-plan.md` for ordered
 stages, evidence and unexecuted boundaries. See `reliability-validation.md` for
 the bounded follow-up campaigns, tool bridge and guarded recovery gateway.
+
+Mixed-topic testing loads four approved PDF sources, selects exact source quotes,
+generates QA with one model, independently answers with another, and rejects
+disagreements before freezing development/held-out records. LangChain then indexes
+the complete corpus for tuning and held-out model comparisons. Separate tests inject
+SDK transport faults and measure simulated local stress. Adversarial retrieved text
+is evaluated against original and hardened prompt boundaries; failures remain visible.
+See `multicorpus-validation.md` for evidence and the unresolved security boundary.
