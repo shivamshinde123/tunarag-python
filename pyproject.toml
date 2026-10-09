@@ -35,6 +35,7 @@ Changelog = "https://github.com/shivamshinde123/tunarag-python/blob/main/CHANGEL
 [project.optional-dependencies]
 ragas = [
     "ragas>=0.4,<0.5",
+    "langchain-community>=0.3.31,<0.4",
 ]
 mlflow = [
     "mlflow>=3,<4",
@@ -73,6 +74,15 @@ docs = [
     "mkdocs-material>=9.5,<10",
     "mkdocstrings[python]>=0.27,<1",
 ]
+live-test = [
+    "ragas>=0.4,<0.5",
+    "langchain-community>=0.3.31,<0.4",
+    "mlflow>=3,<4",
+    "langchain-classic>=1,<2",
+    "langchain-openai>=1,<2",
+    "python-dotenv>=1,<2",
+    "pytest>=8",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/tunarag"]
@@ -83,6 +93,8 @@ testpaths = ["tests"]
 pythonpath = ["src", "."]
 markers = [
     "frameworks: compatibility tests requiring optional framework packages",
+    "live: opt-in real optional integration tests",
+    "paid: opt-in OpenRouter requests requiring a restricted provider key",
 ]
 
 [tool.ruff]

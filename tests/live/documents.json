@@ -1,0 +1,4 @@
+[
+  {"id": "storage", "text": "TunaRAG stores authoritative experiment records in SQLite. It can resume compatible interrupted studies."},
+  {"id": "frameworks", "text": "TunaRAG tunes existing LangChain, LangGraph, and Google ADK pipelines. It does not create or host a RAG application."}
+]

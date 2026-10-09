@@ -56,3 +56,9 @@ in a package-owned location when a future schema version requires explicit migra
 Optional integrations depend inward on public protocols. Avoid generic `utils.py`, provider
 imports in core, generated databases in source control, and reference application code under
 `src/tunarag`.
+
+`tests/live/` contains opt-in real RAGAS scoring, OpenRouter-backed LangChain tuning,
+and loopback MLflow tracking tests, their explicit configuration template, and a
+public synthetic JSON corpus. `tests/test_live_harness.py` verifies safeguards and
+the tuning harness without credentials. Private dotenv files and generated output
+stay ignored; `docs/live-integration-test-plan.md` defines execution and acceptance.

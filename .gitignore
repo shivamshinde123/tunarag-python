@@ -24,5 +24,7 @@ dist/
 .env
 .env.*
 !.env.example
+!tests/live/.env.example
+live-test-output/
 .vscode/
 .idea/

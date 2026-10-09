@@ -147,6 +147,7 @@ class RandomSearch:
         self._space = space
         self._seed = seed
         self._generator = random.Random(seed)
+        self._replayed_candidates: list[Candidate] = []
 
     async def suggest(self) -> Candidate:
         return self._space.sample(self._generator)
@@ -158,9 +159,16 @@ class RandomSearch:
         """Advance and verify deterministic generator state during resume."""
 
         del metrics, usage
-        expected = self._space.sample(self._generator)
-        if expected != candidate:
+        if candidate in self._replayed_candidates:
             raise ValueError("persisted candidate does not match seeded random search state")
+        for _ in range(10_000):
+            expected = self._space.sample(self._generator)
+            if expected == candidate:
+                self._replayed_candidates.append(candidate)
+                return
+            if expected not in self._replayed_candidates:
+                break
+        raise ValueError("persisted candidate does not match seeded random search state")
 
     def fingerprint(self) -> Any:
         """Return stable search-space and seed semantics."""
