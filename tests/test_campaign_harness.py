@@ -40,6 +40,26 @@ def test_campaign_splits_and_metric_bounds():
     assert len(search_space().describe()) == 5
 
 
+def test_campaign_synthetic_export_handles_frozen_metadata(tmp_path):
+    import json
+
+    from live.test_campaign import test_live_synthetic_qa_provenance as run_synthetic
+
+    chat = FakeMessagesListChatModel(
+        responses=[
+            AIMessage(
+                content=json.dumps(
+                    {"items": [{"query": "Q1?", "answer": "A1"}, {"query": "Q2?", "answer": "A2"}]}
+                ),
+                usage_metadata={"input_tokens": 10, "output_tokens": 5, "total_tokens": 15},
+            )
+        ]
+    )
+    run_synthetic({"chat": chat}, tmp_path)
+    rows = json.loads((tmp_path / "synthetic.json").read_text())
+    assert len(rows) == 2 and all(row["synthetic"] for row in rows)
+
+
 @pytest.mark.parametrize("framework", ["langchain", "langgraph"])
 def test_campaign_uses_framework_pipeline_and_applies_parameters(framework, tmp_path):
     provider = {

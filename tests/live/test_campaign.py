@@ -261,6 +261,7 @@ def test_live_synthetic_qa_provenance(provider, tmp_path):
         SyntheticQA,
         UsageRecord,
     )
+    from tunarag.serialization import storage_json
 
     source_data = json.loads(Path(__file__).with_name("documents.json").read_text())
     document = SourceDocument("source-1", source_data[0]["text"])
@@ -308,9 +309,8 @@ def test_live_synthetic_qa_provenance(provider, tmp_path):
         assert example.relevant_document_ids == (document.id,)
         assert example.reference_contexts == (document.text,)
         assert example.metadata["review_status"] == "unreviewed"
-    (tmp_path / "synthetic.json").write_text(
-        json.dumps([example.semantic_data() for example in result.dataset.examples], indent=2),
-        encoding="utf-8",
+    (tmp_path / "synthetic.json").write_bytes(
+        storage_json([example.semantic_data() for example in result.dataset.examples])
     )
 
 
