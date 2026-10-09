@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pipeline_fixtures import framework_fixture
 
 from tunarag import (
     AttemptStatus,
@@ -95,7 +96,7 @@ def optimizer_for(
     adapter: MultiplyingAdapter | None = None,
 ) -> Optimizer:
     return Optimizer(
-        adapter=adapter or MultiplyingAdapter(),
+        adapter=framework_fixture(adapter or MultiplyingAdapter()),
         strategy=strategy,
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -236,7 +237,7 @@ def test_resume_rejects_changed_strategy_fingerprint(tmp_path) -> None:
 
     def build(seed: int) -> Optimizer:
         return Optimizer(
-            adapter=MultiplyingAdapter(),
+            adapter=framework_fixture(MultiplyingAdapter()),
             strategy=RandomSearch(space, seed=seed),
             evaluators=[QualityEvaluator()],
             objective=Objective((ObjectiveTerm("quality"),)),
@@ -260,7 +261,7 @@ def test_replay_aware_strategy_receives_failed_and_unfinished_reservations(tmp_p
 
     def build(strategy: ReplayTrackingStrategy) -> Optimizer:
         return Optimizer(
-            adapter=MultiplyingAdapter(),
+            adapter=framework_fixture(MultiplyingAdapter()),
             strategy=strategy,
             evaluators=[QualityEvaluator()],
             objective=Objective((ObjectiveTerm("quality"),)),

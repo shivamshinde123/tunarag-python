@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pipeline_fixtures import framework_fixture
 
 from tunarag import (
     CacheEntry,
@@ -132,7 +133,7 @@ def test_transient_failure_retries_and_preserves_all_attempt_usage(tmp_path) -> 
         delays.append(delay)
 
     optimizer = Optimizer(
-        adapter=PartialFlakyAdapter(),
+        adapter=framework_fixture(PartialFlakyAdapter()),
         strategy=strategy,
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -181,7 +182,7 @@ def test_sample_timeout_retries_then_fails_trial(tmp_path) -> None:
 
     store = SQLiteStore(tmp_path / "sample-timeout.sqlite")
     optimizer = Optimizer(
-        adapter=HangingAdapter(),
+        adapter=framework_fixture(HangingAdapter()),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -217,7 +218,7 @@ def test_trial_timeout_is_separate_from_sample_timeout(tmp_path) -> None:
 
     store = SQLiteStore(tmp_path / "trial-timeout.sqlite")
     optimizer = Optimizer(
-        adapter=SlowAdapter(),
+        adapter=framework_fixture(SlowAdapter()),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -241,7 +242,7 @@ def test_trial_timeout_is_separate_from_sample_timeout(tmp_path) -> None:
 def test_objective_failure_does_not_double_count_usage(tmp_path) -> None:
     store = SQLiteStore(tmp_path / "objective-failure.sqlite")
     optimizer = Optimizer(
-        adapter=CountingAdapter(),
+        adapter=framework_fixture(CountingAdapter()),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("missing"),)),
@@ -269,7 +270,7 @@ def test_successful_evaluation_is_reused_from_cache_without_usage(tmp_path) -> N
     dataset = InMemoryDataset((2,), version="dataset-v1")
 
     first = Optimizer(
-        adapter=adapter,
+        adapter=framework_fixture(adapter),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -281,7 +282,7 @@ def test_successful_evaluation_is_reused_from_cache_without_usage(tmp_path) -> N
     first_result = asyncio.run(first.aoptimize(dataset, study_name="cache-write"))
 
     second = Optimizer(
-        adapter=adapter,
+        adapter=framework_fixture(adapter),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -316,7 +317,7 @@ def test_cache_policy_controls_reads_and_writes(
     store = SQLiteStore(tmp_path / f"{policy.value}.sqlite")
     cache = PolicyProbeCache()
     optimizer = Optimizer(
-        adapter=CountingAdapter(),
+        adapter=framework_fixture(CountingAdapter()),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),
@@ -338,7 +339,7 @@ def test_semantically_invalid_cache_payload_falls_back_and_is_replaced(tmp_path)
     cache = SemanticCorruptCache()
     adapter = CountingAdapter()
     optimizer = Optimizer(
-        adapter=adapter,
+        adapter=framework_fixture(adapter),
         strategy=SingleCandidateStrategy(Candidate({"model": "small"})),
         evaluators=[QualityEvaluator()],
         objective=Objective((ObjectiveTerm("quality"),)),

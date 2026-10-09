@@ -1,8 +1,7 @@
-# Reference RAG Quickstart
+# Framework RAG Quickstarts
 
-This example keeps application code outside the TunaRAG package and demonstrates the intended
-integration boundary: a user-owned RAG implements the adapter contract, evaluators score its
-outputs, and TunaRAG owns search, orchestration, persistence, and reporting.
+These examples use framework pipelines and official TunaRAG adapters. Retrieval and generation
+use LangChain components; TunaRAG owns search, evaluation, persistence, and reporting.
 
 From the repository root, after installing the development environment, run:
 
@@ -11,8 +10,8 @@ python examples/quickstart.py
 ```
 
 The command creates `tunarag-example-output/experiments.db`, `result.json`, and `trials.csv`.
-The implementation is deterministic, local, uses no provider credentials, and is deliberately
-small enough to replace with an existing RAG pipeline.
+The offline quickstart uses LangChain's vector store, retriever, prompt, and fake model. It needs
+no provider credentials. Fake embeddings and responses verify wiring, not RAG quality.
 
 ## Existing LangChain or LangGraph pipeline
 
@@ -27,7 +26,7 @@ graph_adapter = LangGraphAdapter(compiled_graph)
 
 Both adapters map an evaluation query to the `question` input and candidate parameters to
 `config["configurable"]`. For different state shapes, pass a small mapping function instead of
-implementing `RAGAdapter`:
+implementing a custom adapter:
 
 ```python
 graph_adapter = LangGraphAdapter(
@@ -68,3 +67,12 @@ slugs. Optional attribution values are documented in `.env.example`.
 
 The example writes its SQLite study, evaluation cache, JSON result, and CSV trial report under
 `tunarag-langchain-output/`.
+
+## Google ADK 2.x
+
+Install `tunarag-python[google-adk]`. `google_adk_tuning.py` exposes `await tune(runner, dataset)`
+for an existing ADK `Runner`. Its `top_k` candidate becomes initial session state: your existing
+agent must use that value. Use `GoogleADKAdapter(factory=...)` for construction-time model or
+retriever settings. Each evaluation sample and retry gets an independent temporary session.
+
+Only real framework objects are supported. An arbitrary object with `run` or `ainvoke` is rejected.

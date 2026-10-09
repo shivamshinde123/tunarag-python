@@ -1,5 +1,7 @@
 # TunaRAG Technical Design
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 ## Lifecycle and scheduling
 
 Implemented studies move from created to running then completed, with failed and cancelled

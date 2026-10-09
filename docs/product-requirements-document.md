@@ -1,15 +1,17 @@
 # TunaRAG Product Requirements
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 ## Product and users
 
-TunaRAG optimizes an existing RAG pipeline without prescribing a RAG framework. RAG engineers
+TunaRAG optimizes existing RAG pipelines built with officially supported frameworks. RAG engineers
 compare configurations; evaluation engineers combine custom and optional RAGAS metrics;
 platform engineers enforce cost, latency, retry, caching, and provenance policies; researchers
 compare reproducible random and LLM-guided search.
 
-## V0.1 goals
+## Current goals (V0.3)
 
-1. Wrap a user-owned pipeline through an async `RAGAdapter`.
+1. Wrap a real LangChain, LangGraph, or Google ADK pipeline through an official adapter.
 2. Support arbitrary typed search spaces and canonical candidate identity.
 3. Ship interchangeable RandomSearch and LLMSearch.
 4. Support custom evaluators and optional RAGAS.
@@ -18,7 +20,7 @@ compare reproducible random and LLM-guided search.
 7. Persist and resume studies through SQLite.
 8. Isolate trials and support retries, caching, callbacks, and bounded concurrency.
 9. Return a rich result even when no trial succeeds.
-10. Keep the reference RAG under `examples/`, outside core dependencies.
+10. Demonstrate framework pipelines under `examples/`, outside the installable runtime.
 
 ## Non-goals
 
@@ -29,7 +31,9 @@ optimization are later candidates.
 
 ## Acceptance criteria
 
-An existing async pipeline can be wrapped without framework imports. Seeded random search is
+A supported framework pipeline can be wrapped without implementing a custom adapter.
+Custom run adapters and fake framework objects are rejected. ADK evaluations use fresh sessions
+and remove them on success, failure, and timeout. Seeded random search is
 reproducible. LLMSearch validates suggestions and has deterministic fallback. One trial failure
 does not stop a study by default. Compatible resume avoids committed work. Cache corruption is
 a quarantined miss. Usage retains confidence. Core imports without optional integrations, CI

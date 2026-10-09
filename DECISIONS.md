@@ -13,6 +13,9 @@ Reasoning: RAG calls, evaluators, and provider calls are commonly I/O-bound; asy
 
 ### Keep the RAG application outside the package
 
+Superseded in V0.3 by the framework-only decision in `docs/decision.md`: use official
+LangChain, LangGraph, and Google ADK adapters. The following records the historical baseline.
+
 Decision: require a user-supplied `RAGAdapter` contract rather than prescribing a framework or owning the application pipeline.
 
 Reasoning: the package optimizes existing systems and must work across frameworks. This keeps the core portable and prevents the reference Auto-RAG-Research implementation from becoming a hidden dependency.

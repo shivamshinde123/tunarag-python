@@ -1,8 +1,10 @@
 # TunaRAG System Architecture
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 ## Context
 
-TunaRAG runs in the user's Python process and controls optimization studies. The user adapter
+TunaRAG runs in the user's Python process and controls optimization studies. The application framework
 continues to own retrieval, generation, providers, corpus resources, and application semantics.
 
 ```text
@@ -10,9 +12,10 @@ Application or CLI
        |
    Optimizer ----> SearchStrategy
       |  |
-      |  +-------> TrialRunner -> RAGAdapter -> user pipeline
+      |  +-------> TrialRunner -> framework adapter -> user pipeline
       |                              |-------> LangChain runnable (optional)
-      |                              `-------> compiled LangGraph (optional)
+      |                              |-------> compiled LangGraph
+      |                              `-------> Google ADK Runner
       |                        -> Evaluators -> Objective
       +----------> ExperimentStore and Cache
       +----------> Events and callbacks -> optional MLflow
@@ -46,10 +49,11 @@ active. Optional CLI and integrations call the public API rather than bypassing 
 
 ## Framework adapter boundary
 
-`LangChainAdapter` and `LangGraphAdapter` implement the existing `RAGAdapter` port; the optimizer
-does not gain framework-specific branches. Both frameworks expose an async `ainvoke` boundary,
+`Optimizer` accepts only official framework adapter instances. `LangChainAdapter` and
+`LangGraphAdapter` validate framework types and expose an async `ainvoke` boundary,
 so TunaRAG maps one candidate and example into framework input/config, awaits execution, maps the
-output, and returns usage through the same trial runner used by custom adapters.
+output, and returns usage through the shared trial runner. `GoogleADKAdapter` consumes runner
+events in an isolated session and uses the same evaluation, retry, cache, and persistence path.
 
 Candidate values default to the framework `configurable` namespace rather than graph state. This
 keeps evaluation queries separate from tuning controls and works with reusable runnables. An

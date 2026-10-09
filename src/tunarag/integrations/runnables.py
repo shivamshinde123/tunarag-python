@@ -5,22 +5,12 @@ from __future__ import annotations
 import inspect
 import time
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, Protocol
+from importlib import import_module
+from typing import Any
 
 from ..dataset import EvaluationExample
 from ..domain import Candidate, UsageRecord
-
-
-class AsyncRunnable(Protocol):
-    """Shared asynchronous invocation surface implemented by both frameworks."""
-
-    async def ainvoke(
-        self,
-        input: Any,
-        config: Any = None,
-        **kwargs: Any,
-    ) -> Any: ...
-
+from ..errors import MissingOptionalDependencyError
 
 RunnableFactory = Callable[[Candidate], Any]
 RunnableInputMapper = Callable[[Any, Candidate], Any]
@@ -47,7 +37,7 @@ class _RunnableAdapter:
         if (runnable is None) == (factory is None):
             raise ValueError("provide exactly one of runnable or factory")
         if runnable is not None:
-            _require_runnable(runnable)
+            _require_runnable(runnable, framework)
         if factory is not None and not callable(factory):
             raise TypeError("runnable factory must be callable")
         if not input_key.strip():
@@ -116,7 +106,7 @@ class _RunnableAdapter:
         if self._factory is None:
             raise RuntimeError("runnable adapter is not configured")
         runnable = self._factory(candidate)
-        _require_runnable(runnable)
+        _require_runnable(runnable, self._framework)
         return runnable
 
     def _map_input(self, example: Any, candidate: Candidate) -> Any:
@@ -251,10 +241,20 @@ def _token_count(value: Any) -> int | None:
     return value
 
 
-def _require_runnable(value: Any) -> None:
-    method = getattr(value, "ainvoke", None)
-    if method is None or not callable(method):
-        raise TypeError("framework object must provide an async ainvoke method")
+def _require_runnable(value: Any, framework: str) -> None:
+    module, name = (
+        ("langchain_core.runnables", "Runnable")
+        if framework == "langchain"
+        else ("langgraph.graph.state", "CompiledStateGraph")
+    )
+    try:
+        framework_type = getattr(import_module(module), name)
+    except ImportError as error:
+        raise MissingOptionalDependencyError(framework, framework) from error
+    if not isinstance(value, framework_type):
+        raise TypeError(
+            f"{framework} integration requires a real {name}, not a custom ainvoke object"
+        )
 
 
 def _callable_identity(value: Callable[..., Any] | None) -> str | None:

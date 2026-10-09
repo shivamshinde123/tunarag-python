@@ -1,8 +1,8 @@
 """Optional integration adapters."""
 
+from .google_adk import GoogleADKAdapter
 from .mlflow import MLflowCallback
 from .runnables import (
-    AsyncRunnable,
     LangChainAdapter,
     LangGraphAdapter,
     RunnableConfigMapper,
@@ -13,7 +13,7 @@ from .runnables import (
 )
 
 __all__ = [
-    "AsyncRunnable",
+    "GoogleADKAdapter",
     "LangChainAdapter",
     "LangGraphAdapter",
     "MLflowCallback",

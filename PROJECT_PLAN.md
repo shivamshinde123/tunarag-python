@@ -1,5 +1,7 @@
 # tunarag-python Project Plan
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 ## Goal
 
 Build the `tunarag-python` V0.1 package described by the design documents in `docs/`. The package optimizes configurations of an existing RAG system without owning or rewriting that system.
@@ -8,7 +10,7 @@ Build the `tunarag-python` V0.1 package described by the design documents in `do
 
 V0.1 is a local, single-process Python library with async-first internals and a synchronous convenience API. It includes typed search spaces, random and LLM-guided strategies, pluggable evaluation, quality/cost/latency objectives, SQLite persistence, caching, retries, resumability, structured events, callbacks, and actionable results.
 
-The reference Auto-RAG-Research implementation remains an example adapter and is not a runtime dependency of the installable package.
+Examples demonstrate genuine framework pipelines. The former handwritten reference RAG is removed in V0.3.
 
 ## Delivery phases
 
@@ -97,7 +99,7 @@ repository readiness from manual package-index publication, signing, and release
 ## V0.2 framework integrations
 
 V0.2 adds first-party adapters for existing LangChain runnables and compiled LangGraph graphs.
-The adapters preserve the standard `RAGAdapter` boundary, use the frameworks' shared async
+The adapters preserve the standard official framework adapters boundary, use the frameworks' shared async
 invocation shape, provide default candidate configuration plus explicit mapping/factory hooks,
 and capture latency and standard message usage. Dedicated CI installs the optional 1.x framework
 extras and runs compatibility tests; the core matrix remains framework-independent.

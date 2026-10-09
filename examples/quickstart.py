@@ -1,13 +1,22 @@
-"""Optimize a deterministic reference RAG through TunaRAG's public API."""
+"""Tune an offline LangChain retrieval pipeline through public TunaRAG APIs."""
 
 from __future__ import annotations
 
 from pathlib import Path
 
-from examples.reference_rag import ReferenceQualityEvaluator, ReferenceRAGAdapter
+from langchain_core.documents import Document
+from langchain_core.embeddings import DeterministicFakeEmbedding
+from langchain_core.language_models.fake import FakeListLLM
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.vectorstores import InMemoryVectorStore
+
 from tunarag import (
+    Candidate,
     EvaluationDataset,
     IntegerRange,
+    LangChainAdapter,
+    MetricEvaluator,
     Objective,
     ObjectiveTerm,
     Optimizer,
@@ -19,58 +28,65 @@ from tunarag import (
 
 
 def run(output_dir: str | Path) -> Path:
-    """Run the quickstart study and return its JSON report path."""
-
+    """Write reports from a framework pipeline without provider credentials."""
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
-    documents = {
-        "architecture": "TunaRAG optimizes an existing RAG pipeline through a typed adapter.",
-        "storage": "SQLite is the authoritative local experiment store and supports resumability.",
-        "search": "RandomSearch and LLMSearch are interchangeable search strategies.",
-    }
+    documents = [
+        Document(page_content="TunaRAG tunes LangChain, LangGraph, and Google ADK pipelines."),
+        Document(page_content="SQLite stores experiments and supports resumability."),
+        Document(page_content="RandomSearch explores typed parameter spaces."),
+    ]
+    vector_store = InMemoryVectorStore.from_documents(
+        documents, DeterministicFakeEmbedding(size=32)
+    )
+    prompt = ChatPromptTemplate.from_template("Context: {context}\nQuestion: {question}")
+
+    def build_chain(candidate: Candidate):
+        retriever = vector_store.as_retriever(search_kwargs={"k": candidate.parameters["top_k"]})
+        return (
+            {"context": retriever, "question": RunnablePassthrough()}
+            | prompt
+            | FakeListLLM(
+                responses=["TunaRAG tunes framework pipelines. SQLite stores experiments."]
+            )
+        )
+
     dataset = EvaluationDataset.from_records(
         [
             {
-                "id": "adapter",
-                "query": "How does TunaRAG connect to a RAG pipeline?",
-                "reference_answer": "through a typed adapter",
-                "relevant_document_ids": ["architecture"],
+                "id": "frameworks",
+                "query": "What does TunaRAG tune?",
+                "reference_answer": "framework pipelines",
             },
             {
                 "id": "storage",
-                "query": "Which local store supports resumability?",
+                "query": "Where are experiments stored?",
                 "reference_answer": "SQLite",
-                "relevant_document_ids": ["storage"],
             },
         ]
     )
-    settings = Settings.resolve(
-        overrides={
-            "home": target,
-            "db_path": target / "experiments.db",
-            "cache_dir": target / "cache",
-            "artifact_dir": target / "artifacts",
-            "max_trials": 3,
-            "concurrency": 1,
-            "sample_concurrency": 2,
-        },
-        environ={},
+    evaluator = MetricEvaluator(
+        "answer_recall",
+        lambda output, example: float(example.reference_answer.lower() in output.lower()),
     )
-
-    store = SQLiteStore(settings.db_path)
+    settings = Settings.resolve(
+        overrides={"home": target, "max_trials": 3, "concurrency": 1}, environ={}
+    )
+    store = SQLiteStore(target / "experiments.db")
     optimizer = Optimizer(
-        adapter=ReferenceRAGAdapter(documents),
-        strategy=RandomSearch(
-            SearchSpace({"top_k": IntegerRange(1, 3)}),
-            seed=settings.seed,
+        adapter=LangChainAdapter(
+            factory=build_chain,
+            input_mapper=lambda example, candidate: example.query,
+            identity={"example": "offline-langchain", "version": 1},
         ),
-        evaluators=(ReferenceQualityEvaluator(),),
+        strategy=RandomSearch(SearchSpace({"top_k": IntegerRange(1, 3)}), seed=0),
+        evaluators=(evaluator,),
         objective=Objective((ObjectiveTerm("answer_recall"),)),
         store=store,
         settings=settings,
     )
     try:
-        result = optimizer.optimize(dataset, study_name="reference-rag-quickstart")
+        result = optimizer.optimize(dataset, study_name="langchain-quickstart")
         report_path = result.write_json(target / "result.json")
         result.write_csv(target / "trials.csv")
         return report_path
@@ -79,5 +95,4 @@ def run(output_dir: str | Path) -> Path:
 
 
 if __name__ == "__main__":
-    report = run(Path("tunarag-example-output"))
-    print(f"Wrote optimization report to {report}")
+    print(run(Path("tunarag-example-output")))

@@ -34,6 +34,7 @@ from .errors import (
     TunaRAGError,
 )
 from .evaluators import MetricEvaluator, MetricScorer, RagasEvaluator, RagasSampleMapper
+from .integrations.google_adk import GoogleADKAdapter
 from .integrations.runnables import LangChainAdapter, LangGraphAdapter
 from .objective import Objective, ObjectiveDirection, ObjectiveResult, ObjectiveTerm
 from .result import OptimizationResult, TrialSummary, UsageSummary
@@ -103,6 +104,7 @@ __all__ = [
     "EvaluationDataset",
     "EvaluationExample",
     "FloatRange",
+    "GoogleADKAdapter",
     "InMemoryDataset",
     "IntegerRange",
     "LangChainAdapter",
@@ -163,4 +165,4 @@ __all__ = [
     "__version__",
 ]
 
-__version__ = "0.2.1"
+__version__ = "0.3.0"

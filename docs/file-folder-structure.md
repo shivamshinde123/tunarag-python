@@ -1,8 +1,10 @@
 # TunaRAG File and Folder Structure
 
+> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
+
 The site's [Usage Guide](usage.md) is generated from the root `README.md`, which remains the
 canonical user-facing guide for installing the package,
-connecting custom or framework RAG pipelines, running every public feature, and operating studies.
+connecting supported framework RAG pipelines, running every public feature, and operating studies.
 Its Python fences are executed by `tests/test_usage_documentation.py` so examples cannot silently
 drift from the package API.
 
@@ -14,7 +16,7 @@ MkDocs copies the same canonical files into the published site.
 tunarag-python/
 |-- .github/workflows/ci.yml # Linux/Windows quality and build matrix
 |-- docs/                    # DOCX specifications and living Markdown
-|-- examples/                # User-owned reference RAG and executable quickstart
+|-- examples/                # Framework pipelines and executable quickstarts
 |-- src/tunarag/             # Installable package
 |   |-- __init__.py          # Curated public exports and version
 |   |-- py.typed             # PEP 561 marker for downstream type checkers
@@ -28,7 +30,8 @@ tunarag-python/
 |   |-- objective.py         # Objective aggregation
 |   |-- evaluators.py        # Custom metric helper and optional RAGAS adapter
 |   |-- integrations/        # Optional outward adapters such as MLflow callbacks
-|   |   `-- runnables.py     # LangChain and LangGraph async runnable adapters
+|   |   |-- runnables.py     # Validated LangChain and LangGraph adapters
+|   |   `-- google_adk.py    # ADK runner, session isolation, and event mapping
 |   |-- search.py            # Search spaces and RandomSearch
 |   |-- serialization.py     # Canonical JSON and hashes
 |   |-- stopping.py          # Stop conditions
@@ -47,8 +50,8 @@ tunarag-python/
 ```
 
 Create focused cache, orchestration, event, configuration, evaluator, integration, result, and
-dataset modules only as features land. `examples/reference_rag.py` owns the local demonstration
-adapter and evaluator; `examples/quickstart.py` composes only public TunaRAG APIs. Put migrations
+dataset modules only as features land. `examples/quickstart.py` composes LangChain components with public TunaRAG APIs;
+`examples/google_adk_tuning.py` tunes an existing ADK runner. Put migrations
 in a package-owned location when a future schema version requires explicit migration files.
 Optional integrations depend inward on public protocols. Avoid generic `utils.py`, provider
 imports in core, generated databases in source control, and reference application code under
