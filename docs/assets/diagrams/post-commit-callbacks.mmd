@@ -1,0 +1,10 @@
+sequenceDiagram
+    participant O as Optimizer
+    participant S as SQLite
+    participant C as Callback
+    O->>S: Commit terminal trial and event
+    S-->>O: Committed
+    O->>C: on_event(event)
+    alt callback fails
+        O->>S: Append callback.failed
+    end

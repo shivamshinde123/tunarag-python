@@ -1,0 +1,12 @@
+flowchart TB
+    D[Versioned dataset] --> O[Optimizer]
+    S[Search strategy] -->|Candidate| O
+    O -->|Candidate + example| A[RAG adapter]
+    A -->|Output + usage| E[Evaluators]
+    E -->|Metrics| J[Objective]
+    J -->|Benefit score| O
+    O -->|Observe| S
+    O --> DB[(SQLite store)]
+    O <--> C[(Evaluation cache)]
+    DB --> CB[Post-commit callbacks]
+    O --> R[OptimizationResult]
