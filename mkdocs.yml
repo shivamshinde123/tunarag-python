@@ -94,6 +94,7 @@ nav:
       - Live Integration Testing: live-integration-test-plan.md
       - Comprehensive Testing: comprehensive-testing.md
       - Live Google ADK Testing: live-google-adk-testing.md
+      - Quality Validation Plan: quality-validation-plan.md
   - Architecture:
       - System Architecture: system-architecture-document.md
       - Technical Design: technical-design-document.md

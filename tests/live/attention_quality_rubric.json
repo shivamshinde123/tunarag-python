@@ -1,0 +1,12 @@
+{
+  "h1": ["Masking prevents predictions from depending on future outputs."],
+  "h2": ["Sine functions are used.", "Cosine functions are used.", "Different frequencies are used."],
+  "h3": ["Sinusoidal encodings may extrapolate to sequences longer than those in training."],
+  "h4": ["Label smoothing is 0.1.", "It hurts perplexity.", "It improves accuracy or BLEU."],
+  "h5": ["After warmup, the learning rate decreases with the inverse square root of the step number."],
+  "h6": ["Eight GPUs were used.", "The GPUs were NVIDIA P100s."],
+  "e1": ["The paper does not report inference latency on an NVIDIA H100."],
+  "e4": ["The false premise is rejected: the base model uses eight heads, not sixteen."],
+  "e5": ["The feed-forward inner dimension is 2048.", "The input/output dimension is 512."],
+  "e6": ["Base training uses 100000 steps.", "Big training uses 300000 steps.", "The base model uses eight attention heads."]
+}
