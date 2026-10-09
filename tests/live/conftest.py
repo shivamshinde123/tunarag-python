@@ -21,6 +21,10 @@ def pytest_addoption(parser):
     group.addoption("--live-request-limit", type=int, default=40)
     group.addoption("--live-campaign", action="store_true", help="Enable extended PDF campaigns")
     group.addoption("--live-pdf", help="Local text-selectable PDF for the extended campaign")
+    group.addoption(
+        "--live-pdfs", action="append", help="PDF corpus; repeat for each approved file"
+    )
+    group.addoption("--live-qa-audit", help="Previously frozen, model-validated QA audit")
     group.addoption("--live-held-out-report", help="Existing campaign held-out answers to score")
     group.addoption(
         "--live-quality-report", action="append", help="Frozen held-out answers for quality scoring"
