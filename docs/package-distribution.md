@@ -14,6 +14,11 @@ for the release gates and evidence.
 Version 0.3.0 is the framework-only release: use the official LangChain, LangGraph, or
 Google ADK adapters. See the changelog for migration from 0.2.1.
 
+Development builds after 0.3.0 also include the full MIT `LICENSE` text: at the source
+archive root and in the wheel's `.dist-info/licenses/LICENSE`. Both are required by
+the archive guard. Published 0.3.0 has the MIT metadata declaration but cannot be
+retroactively changed; the new full-text license asset will ship in the next release.
+
 ## What pip downloads
 
 The wheel contains only `tunarag` runtime modules, the `py.typed` marker, and generated
@@ -21,7 +26,7 @@ distribution metadata (including the README and MIT license declaration). Normal
 installation uses this universal Python wheel. Tests, PDFs, illustration images,
 documentation-site sources, examples, CI workflows, and developer tools are not bundled.
 
-The source archive contains `src/tunarag`, `pyproject.toml`, `README.md`, `CHANGELOG.md`,
+Current source builds contain `src/tunarag`, `pyproject.toml`, `README.md`, `CHANGELOG.md`, `LICENSE`,
 generated `PKG-INFO`, and the small `.gitignore` automatically retained by Hatchling.
 It is sufficient to rebuild the wheel with the declared build
 backend. Earlier source distributions included repository assets; 0.3.0 explicitly

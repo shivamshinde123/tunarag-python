@@ -12,6 +12,8 @@ def check_distribution(archive: Path) -> None:
             names = [entry.filename for entry in wheel.infolist() if not entry.is_dir()]
         allowed_root = {"METADATA", "WHEEL", "RECORD"}
         required = {"tunarag/__init__.py", "tunarag/py.typed"}
+        metadata_directory = "-".join(archive.name.split("-")[:2]) + ".dist-info"
+        required.add(f"{metadata_directory}/licenses/LICENSE")
         prefix = ("tunarag",)
         metadata_suffix = ".dist-info"
     elif archive.name.endswith(".tar.gz"):
@@ -23,7 +25,7 @@ def check_distribution(archive: Path) -> None:
         if len(roots) != 1 or not next(iter(roots)).startswith("tunarag_python-"):
             raise ValueError(f"Unexpected source archive root: {roots}")
         names = [member.name for member in members]
-        allowed_root = {"pyproject.toml", "README.md", "CHANGELOG.md", "PKG-INFO"}
+        allowed_root = {"pyproject.toml", "README.md", "CHANGELOG.md", "PKG-INFO", "LICENSE"}
         required = allowed_root | {"src/tunarag/__init__.py", "src/tunarag/py.typed"}
         allowed_root.add(".gitignore")
         prefix = ("src", "tunarag")
@@ -39,13 +41,17 @@ def check_distribution(archive: Path) -> None:
         runtime = path.parts[: len(prefix)] == prefix and (
             path.suffix == ".py" or path.name == "py.typed"
         )
-        metadata = (
-            len(path.parts) == 2
-            and path.parts[0].startswith("tunarag_python-")
-            and path.parts[0].endswith(metadata_suffix)
-            if metadata_suffix
-            else len(path.parts) == 1
-        ) and path.name in allowed_root
+        if metadata_suffix:
+            metadata = (
+                path.parts[0].startswith("tunarag_python-")
+                and path.parts[0].endswith(metadata_suffix)
+                and (
+                    (len(path.parts) == 2 and path.name in allowed_root)
+                    or path.parts[1:] == ("licenses", "LICENSE")
+                )
+            )
+        else:
+            metadata = len(path.parts) == 1 and path.name in allowed_root
         if original.is_absolute() or ".." in original.parts or not (runtime or metadata):
             invalid.append(name)
     missing = required - normalized

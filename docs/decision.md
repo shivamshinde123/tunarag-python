@@ -1,5 +1,18 @@
 # TunaRAG Decision Log
 
+## 2026-10-09 Make illustration meaning and license distribution explicit
+
+Use illustrations only where they explain a boundary or decision not already conveyed
+by the adjacent diagram. Keep candidate validation/fallback and SQLite recovery visuals;
+move tradeoffs to objectives. Remove the generic loop and replace one-way adapter and
+ambiguous dataset imagery with two-way framework control and untouched holdout separation.
+Record each disposition and new-image QA in `illustration-audit.md`.
+
+Retain the declared MIT license, now with its full standard text and owner notice in
+`LICENSE`. Include and require it in wheels/source archives; document no-warranty and
+liability terms without promising universal legal immunity. Already-published 0.3.0
+archives cannot be amended; these packaging changes await a future release.
+
 ## 2026-10-09 Publish lean 0.3.0 distributions
 
 PyPI remains at 0.2.1; publish the already-versioned 0.3.0 framework-only release rather

@@ -103,8 +103,6 @@ A **study** contains ordered **trials**. Each trial evaluates one complete candi
 against every dataset example. Same-named sample metrics are aggregated into trial metrics, then the
 objective converts those metrics into one larger-is-better score.
 
-![A hand-drawn Xiaohei operating TunaRAG's iterative optimization loop](docs/assets/tunarag-python-readme-illustrations/01-optimization-loop.png)
-
 TunaRAG does not create or host a RAG application, provision indexes, manage provider credentials,
 or expose a hosted API. Your application keeps ownership of those concerns.
 
@@ -228,7 +226,10 @@ chain = RunnableLambda(lambda inputs: {"answer": inputs["question"]})
 adapter = LangChainAdapter(chain)
 ```
 
-![A hand-drawn Xiaohei connecting a framework RAG pipeline through TunaRAG](docs/assets/tunarag-python-readme-illustrations/02-rag-adapter-boundary.png)
+![TunaRAG sends settings and a query through an official adapter to a separate framework RAG; answers and usage return in the opposite direction](docs/assets/tunarag-python-readme-illustrations/07-framework-adapter-control.png)
+
+The adapter connects two responsibilities; it does not move your RAG into TunaRAG.
+Your framework must consume the candidate settings for tuning to change its behavior.
 
 Candidate parameters go into framework configuration or initial ADK session state. A parameter
 only changes behavior if the framework consumes it. For model, prompt, retriever, or index choices
@@ -402,8 +403,6 @@ and [integration reference](https://github.com/shivamshinde123/tunarag-python/bl
 
 ## Evaluation datasets
 
-![A hand-drawn Xiaohei normalizing, validating, hashing, and splitting evaluation records](docs/assets/tunarag-python-readme-illustrations/03-dataset-preparation.png)
-
 ### Canonical model
 
 ```python
@@ -471,6 +470,13 @@ optimization_data = split_dataset.select(DatasetSplit.OPTIMIZE)
 
 Splits are hash-based and stable across input order. Group splitting keeps related examples
 together. `select()` rejects an empty split.
+
+![Tune and choose a configuration using optimization data while keeping the test set untouched for a final check](docs/assets/tunarag-python-readme-illustrations/08-held-out-evaluation.png)
+
+Pass only the selected optimization subset to the tuning study. Use validation data for
+development decisions, and evaluate the frozen winner on the untouched test subset.
+TunaRAG does not automatically enforce this separation or run the final held-out evaluation;
+calling `optimize()` with the test set would use it for parameter selection and leak test data.
 
 For custom examples, use a user-managed version:
 
@@ -677,6 +683,11 @@ the configured prefix. Mapping and RAGAS failures become `EvaluationError`. Cred
 configuration remain owned by your RAGAS components.
 
 ## Objectives
+
+![A hand-drawn Xiaohei adjusting quality, cost, and latency tradeoffs to choose a configuration](docs/assets/tunarag-python-readme-illustrations/06-results-and-reports.png)
+
+Your objective weights define the tradeoff; the winning configuration is best among the
+evaluated trials under that objective, not a guarantee of the globally best RAG.
 
 ```python
 from tunarag import Objective, ObjectiveDirection, ObjectiveTerm
@@ -1014,8 +1025,6 @@ reconciliation is not included in V0.2.
 
 ## Results and reports
 
-![A hand-drawn Xiaohei balancing quality, cost, and latency before exporting the winning result](docs/assets/tunarag-python-readme-illustrations/06-results-and-reports.png)
-
 `OptimizationResult` exposes:
 
 ```python
@@ -1178,3 +1187,21 @@ LangChain, LangGraph, and Google ADK 2.x are official integrations. Additional f
 For deeper contracts and architecture, see [`docs/api-specification.md`](docs/api-specification.md),
 [`docs/system-architecture-document.md`](docs/system-architecture-document.md), and
 [`docs/technical-design-document.md`](docs/technical-design-document.md).
+
+## License and responsibility
+
+TunaRAG is distributed under the [MIT License](https://opensource.org/license/mit).
+The full text and copyright notice are in the repository and distribution `LICENSE` file.
+It permits use, modification,
+and redistribution subject to retaining the copyright and permission notice. The software
+is provided **as is, without warranty**, and the license includes a limitation of authors'
+and copyright holders' liability. The complete license text, not this summary, governs.
+
+You are responsible for testing fitness for your use case, validating generated answers,
+protecting data and credentials, setting provider-side spending limits, and monitoring costs.
+TunaRAG does not guarantee accuracy, security, optimization improvements, or provider bills.
+See the [Security Policy](https://github.com/shivamshinde123/tunarag-python/blob/main/SECURITY.md)
+for boundaries and known responsibilities.
+
+No license can guarantee protection from every claim or override applicable mandatory law.
+Seek qualified legal advice for liability-sensitive use or distribution.
