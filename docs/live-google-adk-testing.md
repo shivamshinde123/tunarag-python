@@ -8,19 +8,7 @@ campaign. Separate credential-free tests deliberately inject provider responses.
 
 ## Pipeline and provider boundary
 
-```mermaid
-flowchart LR
-    PDF[Local paper PDF] --> Loader[LangChain PyPDFLoader]
-    Loader --> Split[RecursiveCharacterTextSplitter]
-    Split --> Vectors[InMemoryVectorStore + cached OpenRouter embeddings]
-    Candidate[TunaRAG candidate top_k] --> Session[Isolated ADK session state]
-    Session --> Callback[ADK before_model_callback]
-    Vectors --> Callback
-    Callback --> Model[ADK LiteLlm + guarded OpenRouter client]
-    Model --> Output[Final event with answer and retrieved context]
-    Output --> Scores[RAGAS faithfulness and context recall + page recall]
-    Scores --> Store[SQLite trials/cache and local MLflow]
-```
+![Live ADK validation: load and index a PDF, retrieve using candidate top_k, generate through ADK, score answers and persist results.](assets/diagrams/live-google-adk.svg)
 
 LangChain supplies PDF parsing, splitting, caching, and vector retrieval. ADK owns
 agent orchestration and generation. A framework callback invokes the LangChain

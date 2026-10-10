@@ -1,0 +1,10 @@
+flowchart TD
+    Run["GoogleADKAdapter.run"] --> Runner["Resolve and validate real Runner or factory result"]
+    Runner --> State["Map candidate to initial session state"]
+    State --> Session["Create isolated session"]
+    Session --> Events["Consume Runner.run_async events"]
+    Events --> Usage["Capture tokens and final response"]
+    Usage --> Output["Map final event to evaluation output"]
+    Output --> Cleanup["Finally: close event stream and delete temporary session"]
+    Events -->|Failure or cancellation| Cleanup
+    Cleanup --> Result["Return output and usage, or propagate failure to optimizer"]

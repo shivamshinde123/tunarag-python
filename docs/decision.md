@@ -432,3 +432,17 @@ to runtime dependencies or distributing documentation in the PyPI wheel. Label
 standalone scripts, contextual snippets, and credential-dependent templates clearly.
 Verify syntax and offline behavior without making new paid provider calls. Use
 native Word rendering when the bundled LibreOffice renderer is unavailable.
+
+## 2026-10-10 Publish diagrams as self-contained static assets
+
+The deployed home and live Google ADK pages replaced their Mermaid blocks with empty
+containers in Chromium, despite successfully fetching Mermaid from an unpinned external CDN.
+The seven README PNGs loaded correctly. Replace the two browser-rendered diagrams with
+checked-in SVGs and add SVG illustrations above the existing architecture and seven code-flow
+outlines. Preserve editable Mermaid sources and copyable text outlines. Static SVGs render
+without JavaScript or a third-party CDN, including instant navigation and offline previews;
+white backgrounds preserve label contrast in either theme. A repository renderer normalizes
+intrinsic SVG dimensions to prevent percentage-only images collapsing in Markdown. Keep the README PNGs for PyPI
+compatibility. Strict builds now validate image targets, SVG contents and PNG headers before
+deployment; regression tests reject browser-dependent diagrams and missing assets. This is
+a documentation-only change, not a package runtime or PyPI release.

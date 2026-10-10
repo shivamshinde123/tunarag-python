@@ -1,0 +1,10 @@
+flowchart TD
+    Dataset["Evaluation dataset"] --> Optimizer["Optimizer"]
+    Strategy["Search strategy"] -->|Candidate| Optimizer
+    Optimizer --> Adapter["Official framework adapter"]
+    Adapter --> Pipeline["User-owned framework RAG"]
+    Pipeline --> Evaluators["Evaluators"]
+    Evaluators --> Objective["Objective"]
+    Objective --> Optimizer
+    Optimizer --> Store[("SQLite store")]
+    Optimizer --> Result["OptimizationResult"]

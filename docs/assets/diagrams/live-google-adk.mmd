@@ -1,0 +1,11 @@
+flowchart TD
+    PDF["Local paper PDF"] --> Loader["LangChain PyPDFLoader"]
+    Loader --> Split["RecursiveCharacterTextSplitter"]
+    Split --> Vectors["InMemoryVectorStore and cached OpenRouter embeddings"]
+    Candidate["TunaRAG candidate: top_k"] --> Session["Isolated ADK session state"]
+    Session --> Callback["ADK before_model_callback"]
+    Vectors --> Callback
+    Callback --> Model["ADK LiteLlm and guarded OpenRouter client"]
+    Model --> Output["Final event: answer and retrieved context"]
+    Output --> Scores["RAGAS faithfulness, context recall and page recall"]
+    Scores --> Store["SQLite trials/cache and local MLflow"]

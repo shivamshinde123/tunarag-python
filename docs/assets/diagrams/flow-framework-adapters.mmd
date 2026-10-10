@@ -1,0 +1,9 @@
+flowchart TD
+    Run["LangChainAdapter.run / LangGraphAdapter.run"] --> Resolve["Resolve runnable or candidate factory"]
+    Resolve --> Input["Map EvaluationExample to framework input"]
+    Input --> Config["Map Candidate to configurable namespace"]
+    Config --> Invoke["Await runnable.ainvoke with input and config"]
+    Invoke --> Output["Optional raw-output mapping"]
+    Output --> Usage["Collect message usage or custom usage"]
+    Usage --> Latency["Append measured runnable latency"]
+    Latency --> Result["Return output and usage to shared trial runner"]

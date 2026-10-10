@@ -1,0 +1,14 @@
+flowchart TD
+    Inputs["Resolve and validate inputs"] --> Study["Create study or resume compatible state"]
+    Study --> Candidate["Suggest, validate, deduplicate and reserve"]
+    Candidate --> Execution["Compatible cache or bounded framework samples"]
+    Execution --> Evaluation["Collect usage; evaluate and aggregate metrics"]
+    Evaluation --> Metric["MetricEvaluator: sync/async scorer"]
+    Evaluation --> Ragas["RagasEvaluator: mapped sample and lazy aevaluate"]
+    Metric --> Objective["Evaluate objective"]
+    Ragas --> Objective
+    Objective --> Commit["Commit terminal state"]
+    Commit --> Notify["Notify strategy and post-commit callbacks"]
+    Notify --> Stop{"Stop rules satisfied?"}
+    Stop -->|No| Candidate
+    Stop -->|Yes| Result["OptimizationResult"]

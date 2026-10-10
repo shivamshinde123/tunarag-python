@@ -45,3 +45,33 @@ must actually be consumed by the framework; split selection and final evaluation
 the caller's responsibility. A tied envelope is a leakage-prevention metaphor, not an
 encryption/security guarantee. The tradeoff winner is best among evaluated trials under
 the chosen objective, not a globally optimal configuration.
+
+## 2026-10-10 GitHub Pages rendering audit
+
+The deployed home and live Google ADK pages produced empty Mermaid containers in
+Chromium; the external Mermaid request returned successfully but no diagram SVG
+appeared. All seven Usage Guide PNGs loaded with nonzero intrinsic dimensions.
+The architecture outline and seven code-flow outlines were intentionally plain
+text rather than broken image files; they now have companion visual diagrams.
+
+| Surface | Correction |
+|---|---|
+| Home | Static optimization-overview SVG instead of runtime Mermaid |
+| Live Google ADK testing | Static PDF/retrieval/ADK/scoring SVG |
+| System architecture | Visual framework, storage and callback relationships above the text outline |
+| Code flow | Seven visual flows covering setup, optimization, resume, trial lifecycle, quickstart and framework adapters |
+| README / Usage Guide | Keep the seven working PNGs unchanged |
+
+Each new SVG has an editable Mermaid source, explanatory alternative text, a white
+background and explicit intrinsic dimensions. These prevent dependency on external
+Mermaid scripts and avoid tall SVGs collapsing into tiny percentage-sized images.
+Detailed text outlines remain available for copying and accessible reading.
+
+Local verification: strict MkDocs build; 17 unique image assets checked across 38
+built HTML pages (including 404); browser navigation through all 37 sitemap pages
+without broken images or runtime Mermaid containers. Check the seven code-flow
+images at 1440px and 390px in light and dark themes. Verify instant navigation to
+the live ADK guide preserves the page context and displays its SVG. Browser checks
+serve the local build through the production URL layout, not a deployed-site claim.
+Automated build checks and regression tests guard missing assets, empty SVGs,
+percentage-only sizing and reintroduced browser-dependent diagrams.

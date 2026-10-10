@@ -7,6 +7,10 @@
 TunaRAG runs in the user's Python process and controls optimization studies. The application framework
 continues to own retrieval, generation, providers, corpus resources, and application semantics.
 
+![System architecture: the optimizer orchestrates official framework adapters, evaluators, strategy and SQLite; callbacks mirror committed events to MLflow.](assets/diagrams/system-architecture.svg)
+
+The following text outline provides a copyable alternative:
+
 ```text
 Application or CLI
        |
