@@ -61,20 +61,3 @@ configuration. Copy `.env.example` to `.env`; Git ignores the resulting secret-b
 
 Never commit `.env`, print the API key, include it in TunaRAG candidate parameters, or place it in
 reports. `.env.example` contains placeholders only and is safe to version.
-
-## Live integration tests
-
-The dedicated `tests/live/.env.example` defines `OPENROUTER_API_KEY`,
-`TUNARAG_LIVE_CHAT_MODEL`, `TUNARAG_LIVE_JUDGE_MODEL`, and
-`TUNARAG_LIVE_EMBEDDING_MODEL`. These belong to the test harness, not core settings.
-Dotenv loading requires `--live-env`; existing environment values take precedence.
-Normal quality CI never enables either flag; a separate real-dependency job enables
-`--live` while excluding paid tests. No CI job enables `--live-paid`. Provider requests require both
-flags, a key, and a session request cap. The host is fixed to HTTPS OpenRouter.
-See [live test setup, defaults, and spending limits](live-integration-test-plan.md).
-
-The optional ADK campaign additionally installs `.[live-adk-test]` and sets
-`LITELLM_LOCAL_MODEL_COST_MAP=true` before LiteLLM import to use its bundled pricing
-metadata. Generation reuses the fixture's guarded OpenRouter client, with retries
-disabled and at most 512 output tokens. This variable is test configuration, not a
-core TunaRAG setting. See [live ADK scope and execution](live-google-adk-testing.md).

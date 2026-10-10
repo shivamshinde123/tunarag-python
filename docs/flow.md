@@ -5,8 +5,6 @@ sdist/wheel build -> metadata and archive-content checks -> GitHub OIDC PyPI upl
 fresh index installation/import. See `package-distribution.md`. Repository test and
 documentation assets never enter the installed wheel.
 
-> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
-
 ## Current flow
 
 ![Setup, dataset preparation, SQLite attempts, recovery and cache validation.](assets/diagrams/flow-setup.svg)
@@ -198,40 +196,3 @@ GoogleADKAdapter.run(candidate, example)
 
 Runner factories and input/state/output mappers configure framework components rather than
 implementing a new RAG runtime. The application manages runner lifetime and provider credentials.
-
-## Extended verification flow
-
-`tests/live/test_campaign.py` loads a PDF using LangChain, separates development and
-held-out records, and builds official retrieval/document chains through a candidate
-factory. LangGraph wraps that chain in a compiled graph. Optimizer execution persists
-four concurrent trials and mirrors durable events to local MLflow. After compatible
-zero-call resume and incompatible-identity rejection, exported winning parameters
-rebuild an independent pipeline for held-out evaluation. RAGAS is applied only to the
-prespecified held-out subset. See `comprehensive-testing.md` for coverage and limits.
-
-`tests/live/test_google_adk.py` loads/splits the same PDF through LangChain, builds
-a cached embedding/vector index, and uses an ADK before-model callback to retrieve
-the candidate-controlled number of chunks from session state. ADK LiteLlm executes
-generation through the existing budget-guarded OpenRouter client. After-model
-metadata carries retrieved contexts into the adapter output mapper and RAGAS.
-Two trials persist through SQLite and local MLflow, followed by zero-call completed
-resume, incompatible-revision rejection, exported winner reuse, held-out scoring,
-and session cleanup. See `live-google-adk-testing.md` for exact scope.
-
-`tests/live/test_quality.py` first calibrates a structured-output reference judge
-against contrasting complete, incomplete, incorrect and abstaining answers. Only
-after that gate passes does it score existing frozen held-out answer files. It
-never reruns retrieval/generation or changes the previously chosen winner. The
-test evaluator maps semantic atomic-fact verdicts to estimated completeness,
-contradiction and reference-quality metrics; rubric/model/prompt fingerprints
-identify the scoring configuration. See `quality-validation-plan.md` for ordered
-stages, evidence and unexecuted boundaries. See `reliability-validation.md` for
-the bounded follow-up campaigns, tool bridge and guarded recovery gateway.
-
-Mixed-topic testing loads four approved PDF sources, selects exact source quotes,
-generates QA with one model, independently answers with another, and rejects
-disagreements before freezing development/held-out records. LangChain then indexes
-the complete corpus for tuning and held-out model comparisons. Separate tests inject
-SDK transport faults and measure simulated local stress. Adversarial retrieved text
-is evaluated against original and hardened prompt boundaries; failures remain visible.
-See `multicorpus-validation.md` for evidence and the unresolved security boundary.

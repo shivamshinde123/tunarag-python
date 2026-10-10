@@ -38,20 +38,11 @@ and using advanced tuning features.
 or documentation images. Framework dependencies are optional extras. See
 [package contents and release checks](https://shivamshinde123.github.io/tunarag-python/package-distribution/).
 
-**Live integration checks:** [OpenRouter, RAGAS, and MLflow test plan](https://shivamshinde123.github.io/tunarag-python/live-integration-test-plan/).
-
-**End-to-end verification:** [Full-PDF campaigns, held-out quality checks, crash recovery,
-and clean-wheel testing](https://shivamshinde123.github.io/tunarag-python/comprehensive-testing/). Paid tests are explicit opt-ins;
-ordinary CI never makes paid provider calls.
-These opt-in tests include spending safeguards; normal tests never make paid calls.
-
-**Google ADK validation:** [Real OpenRouter RAG tuning, RAGAS scoring, SQLite resume,
-and MLflow checks](https://shivamshinde123.github.io/tunarag-python/live-google-adk-testing/).
-
-**Quality and reliability:** [Ordered validation plan](https://shivamshinde123.github.io/tunarag-python/quality-validation-plan/)
-and [bounded repeated tuning, ADK tools, billing and recovery checks](https://shivamshinde123.github.io/tunarag-python/reliability-validation/).
-See [mixed-topic validation](https://shivamshinde123.github.io/tunarag-python/multicorpus-validation/) for cross-model QA,
-simulated faults/load, and the unresolved adversarial-prompt failure.
+**Contributor verification:** Test plans and campaign evidence remain in the
+[repository documentation](https://github.com/shivamshinde123/tunarag-python/tree/main/docs).
+Paid tests are explicit opt-ins; ordinary CI never makes paid provider calls.
+The [mixed-topic validation report](https://github.com/shivamshinde123/tunarag-python/blob/main/docs/multicorpus-validation.md)
+records known adversarial-prompt failures; tuning does not guarantee document safety.
 
 ## Comprehensive Usage Guide
 
