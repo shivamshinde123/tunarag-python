@@ -422,3 +422,13 @@ hashes. Keep model validation distinct from human verification. Separate simulat
 SDK failures/local stress from paid quality calls. Preserve the adversarial failure
 even after prompt-boundary hardening; passing tuning and CI does not prove untrusted
 document safety. See `multicorpus-validation.md` for the measured scope and limits.
+
+## 2026-10-10 Provide an editable progressive usage handbook
+
+Maintain tutorial prose in `usage-handbook.md` and expand API examples directly from
+the README and repository examples with `scripts/build_usage_handbook.py`. Publish
+an editable DOCX alongside that source without adding document-authoring libraries
+to runtime dependencies or distributing documentation in the PyPI wheel. Label
+standalone scripts, contextual snippets, and credential-dependent templates clearly.
+Verify syntax and offline behavior without making new paid provider calls. Use
+native Word rendering when the bundled LibreOffice renderer is unavailable.
