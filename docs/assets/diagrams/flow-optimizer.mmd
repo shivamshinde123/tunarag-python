@@ -1,0 +1,18 @@
+flowchart TD
+    Start["Optimizer.aoptimize: fingerprint and create study"] --> Suggest["Suggest and reserve candidate"]
+    Suggest --> Attempt["Start leased attempt"]
+    Attempt --> Cache{"Compatible cache hit?"}
+    Cache -->|Yes| Objective["Aggregate metrics and evaluate objective"]
+    Cache -->|No| Workers["Bounded, timed sample workers"]
+    Workers --> Objective
+    Workers -->|Transient failure| Retry["Finish attempt with usage; bounded backoff"]
+    Retry --> Attempt
+    Objective --> Commit["Atomic terminal commit"]
+    Commit --> Write["Write successful uncached metrics"]
+    Write --> Events["Dispatch durable events in order"]
+    Events --> Observe["Observe committed success"]
+    Observe --> Stop{"Stopping condition reached?"}
+    Stop -->|No| Suggest
+    Stop -->|Yes| Result["Complete study; OptimizationResult and UsageSummary"]
+    Result --> Export["Rank and export redacted JSON/CSV"]
+    Events --> MLflow["Optional best-effort MLflow mirror"]

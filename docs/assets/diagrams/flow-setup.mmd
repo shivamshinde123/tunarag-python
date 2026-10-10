@@ -1,0 +1,11 @@
+flowchart TD
+    Caller["Caller"] --> Settings["Resolve settings and validate typed values"]
+    Settings --> Dataset["Normalize dataset, derive version and optional grouped splits"]
+    Dataset --> Synthetic["Optional provenance-bearing synthetic QA"]
+    Synthetic --> Configure["Configure search, objective and stopping rules"]
+    Configure --> Storage["Initialize or migrate SQLite and cache"]
+    Storage --> Reserve["Reserve unique ordered candidate"]
+    Reserve --> Attempt["Start leased attempt; execute outside transaction"]
+    Attempt --> Commit["Atomically commit terminal state, usage and event"]
+    Commit --> Recovery["Recover expired leases and replay ordered events"]
+    Storage --> Cache["Validate cache checksum and TTL; quarantine corruption"]

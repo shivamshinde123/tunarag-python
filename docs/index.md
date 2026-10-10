@@ -59,17 +59,7 @@ python -m pip install "tunarag-python[frameworks,ragas,mlflow]"
 
 ## How it works
 
-```mermaid
-flowchart LR
-    D[Evaluation dataset] --> O[Optimizer]
-    S[Search strategy] -->|Candidate| O
-    O --> A[Your RAG adapter]
-    A --> E[Evaluators]
-    E --> J[Objective]
-    J --> O
-    O --> DB[(SQLite store)]
-    O --> R[OptimizationResult]
-```
+![Optimization overview: dataset and strategy feed the optimizer, which executes a framework RAG, evaluates results and persists trials.](assets/diagrams/site-overview.svg)
 
 The optimizer proposes a candidate configuration, runs the user-owned RAG over the evaluation
 dataset, evaluates its outputs, calculates one benefit-oriented objective, and records the trial.

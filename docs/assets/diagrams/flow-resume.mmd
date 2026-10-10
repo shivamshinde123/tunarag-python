@@ -1,0 +1,12 @@
+flowchart TD
+    Resume["Optimizer.aresume"] --> Identity["Load study and compare semantic fingerprints"]
+    Identity --> Guard{"Compatible and safe to resume?"}
+    Guard -->|No| Reject["ResumeError: incompatible, terminal failure or live lease"]
+    Guard -->|Yes| Recover["Abandon expired attempts in this study"]
+    Recover --> Rebuild["Rebuild summaries, usage, attempts and cache markers"]
+    Rebuild --> Replay["Replay successful strategy observations"]
+    Replay --> Completed{"Study already completed?"}
+    Completed -->|Yes| Result["Rebuild OptimizationResult without provider execution"]
+    Completed -->|No| Continue["Continue pending/recoverable trials before new suggestions"]
+    Continue --> Stop["Persist stopping reason and complete study"]
+    Stop --> Result

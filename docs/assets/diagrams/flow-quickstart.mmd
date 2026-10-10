@@ -1,0 +1,7 @@
+flowchart TD
+    Example["examples/quickstart.py"] --> Dataset["Canonical EvaluationDataset"]
+    Dataset --> Search["IntegerRange search space for top_k"]
+    Search --> Configure["LangChainAdapter and MetricEvaluator"]
+    Configure --> Optimize["Safe synchronous Optimizer entry point"]
+    Optimize --> Store[("SQLite study")]
+    Store --> Reports["Redacted JSON and CSV reports"]

@@ -17,8 +17,16 @@ Its Python fences are executed by `tests/test_usage_documentation.py` so example
 drift from the package API.
 
 README illustration source files live under `docs/assets/tunarag-python-readme-illustrations/`.
-The README uses repository-relative paths so private GitHub repositories render the images, while
-MkDocs copies the same canonical files into the published site.
+The README uses public GitHub Pages image URLs so GitHub and PyPI can load them even when the
+repository is private. MkDocs copies the canonical files into the published site.
+
+`docs/assets/diagrams/` contains editable `.mmd` sources and static SVG/PNG diagrams.
+The Pages site uses SVGs rather than browser-side Mermaid rendering. The repository-only
+`scripts/check_docs_diagrams.py` verifies all built image references and rejects empty SVGs,
+missing images and runtime Mermaid containers before deployment; `tests/test_docs_diagrams.py`
+covers these failure cases. Neither diagram assets nor authoring tools enter PyPI archives.
+`scripts/render_docs_diagrams.py` regenerates existing Pages SVGs through an installed
+Mermaid CLI and sets intrinsic image sizes so tall diagrams do not collapse in browsers.
 
 ```text
 tunarag-python/

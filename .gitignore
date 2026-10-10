@@ -9,6 +9,7 @@ __pycache__/
 .coverage
 htmlcov/
 site/
+.playwright-cli/
 
 # Local environments
 .venv/

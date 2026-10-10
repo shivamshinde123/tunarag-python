@@ -1,0 +1,14 @@
+flowchart TD
+    Application["Application or CLI"] --> Optimizer["Optimizer"]
+    Optimizer <--> Strategy["SearchStrategy"]
+    Optimizer --> Runner["TrialRunner"]
+    Runner --> Adapter["Official framework adapter"]
+    Adapter --> LangChain["User-owned LangChain runnable"]
+    Adapter --> LangGraph["User-owned compiled LangGraph"]
+    Adapter --> ADK["User-owned Google ADK Runner"]
+    Runner --> Evaluators["Evaluators"]
+    Evaluators --> Objective["Objective"]
+    Objective --> Optimizer
+    Optimizer --> Store[("ExperimentStore and cache")]
+    Store --> Events["Committed events and callbacks"]
+    Events --> MLflow["Optional MLflow mirror"]

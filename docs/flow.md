@@ -9,6 +9,10 @@ documentation assets never enter the installed wheel.
 
 ## Current flow
 
+![Setup, dataset preparation, SQLite attempts, recovery and cache validation.](assets/diagrams/flow-setup.svg)
+
+Copyable step-by-step outline:
+
 ```text
 caller
   -> Settings.resolve(defaults, selected TOML, known environment, overrides)
@@ -39,6 +43,10 @@ that executes adapters and evaluators. Package boundaries translate contextual f
 structured errors.
 
 ## Implemented optimizer flow
+
+![Optimizer lifecycle with cache branching, bounded retries, commits and stopping.](assets/diagrams/flow-optimizer.svg)
+
+Copyable step-by-step outline:
 
 ```text
 Optimizer.aoptimize
@@ -79,6 +87,10 @@ than historical duplicates.
 
 ## Implemented resume flow
 
+![Resume validation, lease recovery, replay and zero-execution completed-study reload.](assets/diagrams/flow-resume.svg)
+
+Copyable step-by-step outline:
+
 ```text
 Optimizer.aresume
   -> load study and compare the current semantic configuration hash
@@ -97,6 +109,10 @@ candidate while advancing its private generator. Live leases cause a retryable `
 rather than unsafe duplicate execution. Failed and cancelled studies remain terminal.
 
 ## Target optimization flow
+
+![Trial lifecycle from input validation through evaluation, commit and stopping.](assets/diagrams/flow-trial-lifecycle.svg)
+
+Copyable step-by-step outline:
 
 ```text
 Optimizer.aoptimize
@@ -121,6 +137,10 @@ orchestration, then outward to optional integrations and examples.
 
 ## Reference example flow
 
+![Offline quickstart from dataset and search space to SQLite and reports.](assets/diagrams/flow-quickstart.svg)
+
+Copyable step-by-step outline:
+
 ```text
 examples/quickstart.py
   -> create a canonical EvaluationDataset from records
@@ -137,6 +157,10 @@ fake LLM. Fake embeddings and generation make it an offline wiring test, not a q
 is imported by the installable package.
 
 ## Framework runnable flow
+
+![Framework adapter input and config mapping, invocation, usage and output.](assets/diagrams/flow-framework-adapters.svg)
+
+Copyable step-by-step outline:
 
 ```text
 LangChainAdapter.run or LangGraphAdapter.run
@@ -155,6 +179,10 @@ the adapter fingerprint and candidate; framework exceptions remain subject to th
 timeout, redaction, and failure-isolation policy.
 
 ## Google ADK flow
+
+![ADK runner execution with isolated sessions, final events and guaranteed cleanup.](assets/diagrams/flow-google-adk.svg)
+
+Copyable step-by-step outline:
 
 ```text
 GoogleADKAdapter.run(candidate, example)
