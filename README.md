@@ -30,6 +30,10 @@ indexes, provider clients, and credentials; TunaRAG owns the optimization workfl
 
 **Documentation:** [shivamshinde123.github.io/tunarag-python](https://shivamshinde123.github.io/tunarag-python/)
 
+**Usage handbook:** [Download the editable DOCX handbook](https://shivamshinde123.github.io/tunarag-python/TunaRAG_Python_Usage_Handbook.docx).
+Start with RAG basics, then follow practical code examples for integrating your framework pipeline
+and using advanced tuning features.
+
 **Lightweight distribution:** pip installs runtime code and metadata, not tests, datasets,
 or documentation images. Framework dependencies are optional extras. See
 [package contents and release checks](https://shivamshinde123.github.io/tunarag-python/package-distribution/).
