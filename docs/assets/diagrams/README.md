@@ -27,6 +27,7 @@ Verify every built image reference before publishing:
 
 ```sh
 python -m mkdocs build --strict
+python scripts/check_docs_site.py site --write-redirects
 python scripts/check_docs_diagrams.py site
 ```
 

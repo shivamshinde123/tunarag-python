@@ -49,7 +49,7 @@ jobs:
       - name: Verify documentation diagram assets
         run: python scripts/check_docs_diagrams.py site
       - name: Verify public documentation boundary
-        run: python scripts/check_docs_site.py site
+        run: python scripts/check_docs_site.py site --write-redirects
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v6

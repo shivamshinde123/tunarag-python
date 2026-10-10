@@ -21,6 +21,9 @@ drift from the package API.
 `exclude_docs` list keeps contributor planning, historical validation campaigns and audits
 in the repository without publishing or indexing them. `scripts/check_docs_site.py` checks
 that built files, sitemap and search data do not accidentally expose those internal pages.
+Run it with `--write-redirects` after building to generate noindex compatibility redirects
+for retired URLs. Only exact generated redirect stubs are allowed at those paths; internal
+content remains excluded. Its HTML anchor audit also rejects stale sidebar and body links.
 
 README illustration source files live under `docs/assets/tunarag-python-readme-illustrations/`.
 The README uses public GitHub Pages image URLs so GitHub and PyPI can load them even when the
