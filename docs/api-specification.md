@@ -1,7 +1,5 @@
 # TunaRAG API Specification
 
-> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
-
 ## Status
 
 This is the living V0.3 Python API contract. The companion

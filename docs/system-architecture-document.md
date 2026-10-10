@@ -1,7 +1,5 @@
 # TunaRAG System Architecture
 
-> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
-
 ## Context
 
 TunaRAG runs in the user's Python process and controls optimization studies. The application framework

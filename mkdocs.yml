@@ -85,22 +85,7 @@ nav:
       - API Specification: api-specification.md
       - Data and Extraction: data-extraction-specification.md
       - Environment Configuration: environment-config-reference.md
-      - Package Distribution: package-distribution.md
-      - Code Flow: flow.md
-      - README Example Verification: readme-example-verification.md
-      - Live Integration Testing: live-integration-test-plan.md
-      - Comprehensive Testing: comprehensive-testing.md
-      - Live Google ADK Testing: live-google-adk-testing.md
-      - Quality Validation Plan: quality-validation-plan.md
-      - Bounded Reliability Validation: reliability-validation.md
-      - Mixed-topic Validation: multicorpus-validation.md
-  - Architecture:
-      - System Architecture: system-architecture-document.md
-      - Technical Design: technical-design-document.md
-      - Component Map: component-map.md
-      - Database Schema: database-schema.md
-      - Repository Structure: file-folder-structure.md
-      - Technology Stack: tech-stack.md
+      - Package Contents: package-distribution.md
   - API Reference:
       - Overview: reference/index.md
       - Optimization Engine: reference/engine.md
@@ -113,18 +98,34 @@ nav:
       - Results and Domain Models: reference/models.md
       - Runtime Policies and Errors: reference/runtime.md
       - Synthetic Data: reference/synthetic.md
-  - Project:
-      - Product Requirements: product-requirements-document.md
-      - Coding Conventions: coding-conventions.md
-      - Decision Log: decision.md
-      - Illustration Audit: illustration-audit.md
-      - Diagram Sources: assets/diagrams/README.md
-      - UI and UX: ui-ux-wireframes.md
+  - Internals:
+      - System Architecture: system-architecture-document.md
+      - Code Flow: flow.md
+      - Components: component-map.md
+      - SQLite Schema: database-schema.md
+      - Technical Design: technical-design-document.md
 
 exclude_docs: |
   *.docx
   !TunaRAG_Python_Usage_Handbook.docx
   usage-handbook.md
+  readme-example-verification.md
+  live-integration-test-plan.md
+  comprehensive-testing.md
+  live-google-adk-testing.md
+  quality-validation-plan.md
+  reliability-validation.md
+  multicorpus-validation.md
+  product-requirements-document.md
+  coding-conventions.md
+  decision.md
+  illustration-audit.md
+  assets/diagrams/README.md
+  ui-ux-wireframes.md
+  file-folder-structure.md
+  tech-stack.md
+  assets/diagrams/*.mmd
+  assets/diagrams/live-google-adk.svg
 
 strict: true
 copyright: Copyright &copy; 2026 Shivam Shinde

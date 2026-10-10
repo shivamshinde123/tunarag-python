@@ -1,11 +1,9 @@
 # TunaRAG Python
 
-> V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
-
 **Find the best configuration for your existing RAG application.**
 
 TunaRAG is a Python-first optimization toolkit for retrieval-augmented generation systems. Attach
-an LangChain, LangGraph, or Google ADK RAG pipeline; define the configurations to explore; and
+a LangChain, LangGraph, or Google ADK RAG pipeline; define the configurations to explore; and
 measure the tradeoff between answer quality, cost, and latency.
 
 [Get started](usage.md#installation){ .md-button .md-button--primary }

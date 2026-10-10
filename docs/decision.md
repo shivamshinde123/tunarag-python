@@ -446,3 +446,17 @@ intrinsic SVG dimensions to prevent percentage-only images collapsing in Markdow
 compatibility. Strict builds now validate image targets, SVG contents and PNG headers before
 deployment; regression tests reject browser-dependent diagrams and missing assets. This is
 a documentation-only change, not a package runtime or PyPI release.
+
+## 2026-10-10 Separate public package documentation from repository records
+
+Focus GitHub Pages on installation, practical usage, public API contracts, configuration
+and supported internals. Exclude historical test campaigns, product planning, contributor
+conventions, implementation decision logs, illustration audits, wireframes and repository
+inventories from publication and search, not just from navigation. Preserve these source
+documents in git for contributors and AI-agent context. Keep the downloadable handbook,
+working diagrams and API reference. The Usage Guide includes the README from its purpose
+section onward so users do not scroll through repeated marketing, manual contents and internal
+test links. Material's generated table of contents provides section navigation.
+Replace obsolete Pages links in the README with a concise repository verification link.
+Package Contents explains archive boundaries without historical release IDs or byte counts.
+Public-site regression checks validate exclusions in built files, sitemap and search data.

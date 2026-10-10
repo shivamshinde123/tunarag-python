@@ -1,56 +1,47 @@
-# Package distribution
+# Package Contents
 
-## Published 0.3.0 artifacts (2026-10-09)
+TunaRAG's installable distribution contains the optimizer, not the repository's
+test datasets, documentation or example applications.
 
-The PyPI wheel is **67,908 bytes** and the source archive is **71,827 bytes**. The
-previous pre-release source build was 6,784,100 bytes, mostly repository assets.
-Release PR #48 passed all 11 CI checks; OIDC publication run `37981326626` succeeded
-from tag `v0.3.0`. Both published archives passed the allowlist and index SHA-256
-verification. A fresh PyPI install with the LangChain extra ran the offline quickstart
-and produced SQLite, JSON and CSV results without provider calls. See
-[`RELEASE_CHECKLIST.md`](https://github.com/shivamshinde123/tunarag-python/blob/main/RELEASE_CHECKLIST.md)
-for the release gates and evidence.
+## What pip installs
 
-Version 0.3.0 is the framework-only release: use the official LangChain, LangGraph, or
-Google ADK adapters. See the changelog for migration from 0.2.1.
+| Included in the wheel | Not included |
+|---|---|
+| `tunarag` runtime modules and official adapter code | Tests and validation campaigns |
+| `py.typed` for Python typing support | PDFs, provider receipts and generated outputs |
+| Package metadata and dependency declarations | Documentation, diagrams and the DOCX handbook |
+| README metadata and the full MIT license | Example scripts, CI workflows and authoring tools |
 
-Version 0.3.1 builds also include the full MIT `LICENSE` text: at the source
-archive root and in the wheel's `.dist-info/licenses/LICENSE`. Both are required by
-the archive guard. Published 0.3.0 has the MIT metadata declaration but cannot be
-retroactively changed; the full-text license asset ships in 0.3.1.
+The source distribution contains runtime source and the files needed to rebuild
+the wheel: build configuration, README, changelog, license and generated metadata.
+It is not a full repository checkout. To run repository tests or examples, use the
+[GitHub repository](https://github.com/shivamshinde123/tunarag-python).
 
-The 0.3.1 README uses pre-rendered PNGs with public absolute URLs, not Mermaid source
-blocks or repository-relative image links. Editable Mermaid source and rendered images
-live in `docs/assets/diagrams/`; none are bundled into the runtime archives.
+## Choose only the extras you need
 
-## What pip downloads
+Dependencies are installed separately, not copied into TunaRAG's wheel. Frameworks,
+RAGAS and MLflow can be substantially larger than TunaRAG itself. Use the extra
+matching your application:
 
-The wheel contains only `tunarag` runtime modules, the `py.typed` marker, and generated
-distribution metadata (including the README and MIT license declaration). Normal pip
-installation uses this universal Python wheel. Tests, PDFs, illustration images,
-documentation-site sources, examples, CI workflows, and developer tools are not bundled.
+```console
+python -m pip install "tunarag-python[langchain]"
+python -m pip install "tunarag-python[langgraph]"
+python -m pip install "tunarag-python[google-adk]"
+```
 
-Current source builds contain `src/tunarag`, `pyproject.toml`, `README.md`, `CHANGELOG.md`, `LICENSE`,
-generated `PKG-INFO`, and the small `.gitignore` automatically retained by Hatchling.
-It is sufficient to rebuild the wheel with the declared build
-backend. Earlier source distributions included repository assets; 0.3.0 explicitly
-allowlists required files. Get the GitHub checkout to run tests or build the docs site.
+Add `ragas` or `mlflow` only when using those integrations, for example:
 
-Dependencies are not copied into either archive. Frameworks, RAGAS, MLflow, documentation,
-and development dependencies are optional extras, installed only when requested. Their
-separate dependencies can be much larger than TunaRAG itself. Install only the extras
-needed for your pipeline, for example `pip install "tunarag-python[langchain]==0.3.1"`.
+```console
+python -m pip install "tunarag-python[langchain,ragas]"
+```
 
-## Release checks
+See the [installation guide](usage.md#installation) for setup and supported extras.
+Your application still supplies its corpus, pipeline and provider credentials.
 
-`python scripts/check_distribution.py dist` validates every release archive. Both CI and
-the trusted publishing workflow run this gate; unexpected files stop publication. Secrets,
-live receipts, private datasets, and local generated outputs must never be included.
-Rebuilding from the source archive and importing a freshly installed wheel verifies that
-excluding repository assets does not break installation.
+## License and safety
 
-Publishing uses GitHub Actions OIDC, not a repository-stored PyPI token. Release from a
-green, immutable version tag and verify the published index artifacts in a fresh environment.
-Packaging checks do not replace functional testing. In particular, the negative prompt
-injection findings in [mixed-topic validation](multicorpus-validation.md) remain known
-limitations; this release does not claim malicious retrieved documents are safe.
+The full MIT license ships with the distribution. Review the
+[license and responsibility guidance](usage.md#license-and-responsibility) and
+[Security Policy](https://github.com/shivamshinde123/tunarag-python/blob/main/SECURITY.md).
+Installing a small package does not guarantee safe retrieved content, accurate
+answers or controlled provider bills.

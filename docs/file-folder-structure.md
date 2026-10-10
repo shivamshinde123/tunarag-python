@@ -10,11 +10,17 @@ the archive boundary: only runtime source and essential build/metadata files rea
 
 > V0.3 scope: TunaRAG tunes genuine LangChain runnables, compiled LangGraph graphs, and Google ADK 2.x runners through official adapters. Handwritten RAG adapters are unsupported. Evaluators, search strategies, and callbacks remain extensible.
 
-The site's [Usage Guide](usage.md) is generated from the root `README.md`, which remains the
+The site's [Usage Guide](usage.md) includes the root `README.md` from its purpose section onward,
+omitting the duplicated product introduction, manual contents list and repository verification links. The README remains the
 canonical user-facing guide for installing the package,
 connecting supported framework RAG pipelines, running every public feature, and operating studies.
 Its Python fences are executed by `tests/test_usage_documentation.py` so examples cannot silently
 drift from the package API.
+
+`mkdocs.yml` publishes user-facing guides, the API reference and selected internals. Its
+`exclude_docs` list keeps contributor planning, historical validation campaigns and audits
+in the repository without publishing or indexing them. `scripts/check_docs_site.py` checks
+that built files, sitemap and search data do not accidentally expose those internal pages.
 
 README illustration source files live under `docs/assets/tunarag-python-readme-illustrations/`.
 The README uses public GitHub Pages image URLs so GitHub and PyPI can load them even when the
