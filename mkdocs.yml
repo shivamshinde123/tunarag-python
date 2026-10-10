@@ -127,6 +127,8 @@ nav:
 
 exclude_docs: |
   *.docx
+  !TunaRAG_Python_Usage_Handbook.docx
+  usage-handbook.md
 
 strict: true
 copyright: Copyright &copy; 2026 Shivam Shinde

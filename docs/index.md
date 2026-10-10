@@ -77,6 +77,8 @@ The process stops according to explicit trial, budget, time, score, failure, or 
 
 ## Start reading
 
+- Download the [editable DOCX usage handbook](TunaRAG_Python_Usage_Handbook.docx)
+  for a progressive course with complete framework scripts and advanced tuning examples.
 - Follow the [comprehensive usage guide](usage.md) for executable examples of every public feature.
 - Use the [API reference](reference/index.md) for signatures and source-level contracts.
 - Read the [system architecture](system-architecture-document.md) and
