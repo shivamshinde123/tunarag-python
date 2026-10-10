@@ -460,3 +460,14 @@ test links. Material's generated table of contents provides section navigation.
 Replace obsolete Pages links in the README with a concise repository verification link.
 Package Contents explains archive boundaries without historical release IDs or byte counts.
 Public-site regression checks validate exclusions in built files, sitemap and search data.
+
+## 2026-10-10 Preserve retired URLs without restoring internal pages
+
+Removing internal pages also removed URLs that readers may have in an older sidebar,
+bookmarks or published documents. Generate small noindex redirect stubs after the MkDocs
+build, pointing each retired URL at a relevant current guide. Do not restore internal
+content or include redirect URLs in navigation, sitemap or search. Audit anchor links
+throughout built HTML, including sidebars and footers, and reject retired targets.
+Disable instant navigation so each page navigation loads the current sidebar rather than
+retaining in-memory navigation across a deployment. Unknown URLs remain genuine 404s.
+The user-reported comprehensive-testing URL now redirects to the production checklist.
