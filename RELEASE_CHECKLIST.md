@@ -8,12 +8,33 @@ evaluation-cache entries are not reused (see CHANGELOG, Migration). New options:
 `events_mapper`, `ObjectiveTerm.min_coverage`, `MetricEvaluator(identity=)`, and
 `SyntheticDatasetBuilder(allow_partial=)`. Documentation builds now require `mkdocstrings` 1.x.
 
-- [ ] All PR #57 CI checks pass (Linux and Windows, Python 3.10-3.13, build, live-dependencies).
-- [ ] Merge PR #57; create annotated tag `v0.4.0` on the merge commit.
-- [ ] Run `publish.yml` with `target=pypi` from `v0.4.0`; confirm the trusted publication.
-- [ ] Verify PyPI metadata and a fresh install (`tunarag.__version__ == "0.4.0"`) running the
+- [x] All PR #57 CI checks pass (Linux and Windows, Python 3.10-3.13, build, live-dependencies).
+- [x] Merge PR #57; create annotated tag `v0.4.0` on the merge commit.
+- [x] Run `publish.yml` with `target=pypi` from `v0.4.0`; confirm the trusted publication.
+- [x] Verify PyPI metadata and a fresh install (`tunarag.__version__ == "0.4.0"`) running the
   provider-free quickstart.
-- [ ] Create the GitHub release `v0.4.0` from the CHANGELOG 0.4.0 section.
+- [x] Create the GitHub release `v0.4.0` from the CHANGELOG 0.4.0 section.
+
+### Publication evidence (2026-11-21)
+
+- Release PR: #57, merged with an owner-approved admin override because `main` is locked and
+  requires a review; merge commit `e17b2d2b1dfeed78ba120f14883d540c855b964f`, annotated tag
+  `v0.4.0`. All 11 CI checks passed on head `22fa3ba` before the merge.
+- Successful trusted publication: Actions run `44941171649` (build, `twine check`, distribution
+  allowlist, then `publish-pypi`). TestPyPI was not used.
+- PyPI wheel `tunarag_python-0.4.0-py3-none-any.whl`: 78,021 bytes, SHA-256
+  `5a009dee3d9feb86bf1f869e7468e678a304365cc08a8bcfaf7224afdac8cace`.
+- PyPI source archive `tunarag_python-0.4.0.tar.gz`: 85,457 bytes, SHA-256
+  `952d1a61b0d65167b3f7a52dfa33a8bdfc8913e2a88d2b6e4a10bd0bcadeb9e5`.
+- Both archives were downloaded independently, matched the index digests, and passed
+  `scripts/check_distribution.py`.
+- A fresh `tunarag-python[langchain]==0.4.0` install from PyPI reported 0.4.0, exposed the new
+  options, and ran the provider-free quickstart (SQLite, JSON and CSV outputs written).
+- Before release: 268 unit tests passed (39 live tests skipped), plus `mypy --strict`, ruff, and
+  `mkdocs build --strict` with both docs checks. The paid live suite passed 22 tests with 17
+  opt-in campaign tests skipped. Real OpenRouter reruns are recorded in
+  `docs/audit-2026-11-21/README.md`.
+- GitHub release `v0.4.0` is marked Latest.
 
 ## 0.3.1 follow-up
 
