@@ -2,11 +2,14 @@
 
 import asyncio
 import json
+import logging
+import math
 import sqlite3
 import time
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from statistics import fmean
 from typing import Any, TypeVar, cast
 
@@ -22,16 +25,25 @@ from .contracts import (
     SearchStrategy,
 )
 from .domain import Candidate, MetricValue, UsageRecord, ValueStatus
-from .errors import ResumeError, SearchSpaceError, SyncInAsyncContextError
+from .errors import ResumeError, SearchSpaceError, SyncInAsyncContextError, TunaRAGError
 from .integrations.google_adk import GoogleADKAdapter
 from .integrations.runnables import LangChainAdapter, LangGraphAdapter
 from .objective import Objective, ObjectiveResult
-from .result import OptimizationResult, TrialSummary, UsageSummary
+from .result import OptimizationResult, TrialSummary, summarize_usage
 from .retry import RetryPolicy
 from .serialization import content_hash
 from .stopping import MaxTrials, StopCondition, StopContext
-from .store import AttemptStatus, SQLiteStore, StudyRecord, StudyStatus, TrialRecord, TrialStatus
+from .store import (
+    AttemptStatus,
+    SQLiteStore,
+    StudyEvent,
+    StudyRecord,
+    StudyStatus,
+    TrialRecord,
+    TrialStatus,
+)
 
+_LOGGER = logging.getLogger("tunarag")
 _OBJECTIVE_METRIC = "tunarag.objective"
 _CACHE_PAYLOAD_VERSION = 1
 _T = TypeVar("_T")
@@ -41,14 +53,7 @@ _T = TypeVar("_T")
 class _TrialFailure(Exception):
     stage: str
     cause_type: str
-    usage: tuple[UsageRecord, ...]
     retryable: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class _SampleResult:
-    metrics: tuple[MetricValue, ...]
-    usage: tuple[UsageRecord, ...]
 
 
 class Optimizer:
@@ -143,13 +148,6 @@ class Optimizer:
                 stage="resume.validate",
                 details={"study_id": study_id},
             )
-        if study.status in {StudyStatus.FAILED, StudyStatus.CANCELLED}:
-            raise ResumeError(
-                "failed or cancelled studies are terminal and cannot resume",
-                stage="resume.validate",
-                details={"study_id": study_id, "status": study.status.value},
-            )
-
         self._event_cursors[study.id] = self._latest_event_sequence(study.id)
         self._event_locks[study.id] = asyncio.Lock()
         summaries = self._load_terminal_summaries(study.id)
@@ -158,7 +156,10 @@ class Optimizer:
             return _build_result(
                 study.id, study.status, self._persisted_stop_reason(study.id), summaries
             )
-        if study.status is StudyStatus.CREATED:
+        prior_elapsed = _active_seconds(self._store.list_events(study.id))
+        previous_status = study.status
+        if study.status is not StudyStatus.RUNNING:
+            # Created, interrupted (Ctrl-C/cancel) and crashed studies all continue from SQLite.
             study = self._store.transition_study(study.id, StudyStatus.RUNNING)
 
         abandoned = self._store.abandon_expired_attempts(study_id=study.id)
@@ -189,10 +190,13 @@ class Optimizer:
                 "terminal_trials": len(summaries),
                 "unfinished_trials": len(unfinished),
                 "abandoned_attempts": len(abandoned),
+                "previous_status": previous_status.value,
             },
         )
         await self._dispatch_events(study.id)
-        return await self._continue_study(dataset, study, summaries, unfinished)
+        return await self._continue_study(
+            dataset, study, summaries, unfinished, prior_elapsed=prior_elapsed
+        )
 
     async def _continue_study(
         self,
@@ -200,8 +204,11 @@ class Optimizer:
         study: StudyRecord,
         summaries: list[TrialSummary],
         unfinished: Sequence[TrialRecord],
+        *,
+        prior_elapsed: float = 0.0,
     ) -> OptimizationResult:
-        started_at = self._clock()
+        # TimeBudget counts active run time across resumes, not downtime between them.
+        started_at = self._clock() - prior_elapsed
         pending = list(unfinished)
         stop_reason = "completed"
         search_exhausted = False
@@ -436,16 +443,20 @@ class Optimizer:
                 trial.id, lease_seconds=self._retry_policy.lease_seconds
             )
             await self._dispatch_events(trial.study_id)
+            # Usage is appended as each sample finishes, so money spent before a trial
+            # timeout, failure, or cancellation is still recorded.
+            spent: list[UsageRecord] = []
+            committed = False
             try:
                 if cached_metrics is None:
-                    metrics, usage = await _wait_for(
-                        self._execute_candidate(dataset, candidate),
+                    metrics = await _wait_for(
+                        self._execute_candidate(dataset, candidate, spent),
                         self._retry_policy.trial_timeout_seconds,
                     )
                 else:
-                    metrics, usage = cached_metrics, ()
-                objective = self._evaluate_objective(metrics, usage)
-                accumulated_usage.extend(usage)
+                    metrics = cached_metrics
+                usage = tuple(spent)
+                objective = self._evaluate_objective(metrics)
                 objective_metric = MetricValue(
                     _OBJECTIVE_METRIC, cast(float, objective.score), objective.status
                 )
@@ -456,6 +467,8 @@ class Optimizer:
                     metrics=(*metrics, objective_metric),
                     usage=usage,
                 )
+                committed = True
+                accumulated_usage.extend(usage)
                 cached = cached_metrics is not None
                 if cached:
                     self._store.append_event(
@@ -476,22 +489,37 @@ class Optimizer:
                     cached=cached,
                 )
             except asyncio.CancelledError:
-                self._store.commit_trial_result(
-                    trial.id,
-                    status=TrialStatus.CANCELLED,
-                    attempt_id=attempt.id,
-                    error="trial cancelled",
-                )
-                raise
-            except _TrialFailure as failure:
-                accumulated_usage.extend(failure.usage)
-                failure_message = f"{failure.stage} failed: {failure.cause_type}"
-                if failure.retryable and attempt.number < self._retry_policy.max_retries:
+                if not committed:
+                    # Leave the trial running without an active attempt: resume re-runs it.
                     self._store.finish_attempt(
                         attempt.id,
-                        AttemptStatus.FAILED,
-                        usage=failure.usage,
-                        error=failure_message,
+                        AttemptStatus.CANCELLED,
+                        usage=tuple(spent),
+                        error="attempt cancelled",
+                    )
+                raise
+            except Exception as error:
+                failure = (
+                    error
+                    if isinstance(error, _TrialFailure)
+                    else _TrialFailure(
+                        "trial", _describe(error), self._retry_policy.is_retryable(error)
+                    )
+                )
+                usage = tuple(spent)
+                accumulated_usage.extend(usage)
+                failure_message = f"{failure.stage} failed: {failure.cause_type}"
+                # Persisted errors stay redacted; the full cause goes to the console log only.
+                _LOGGER.warning(
+                    "trial %d attempt %d %s (cause: %s)",
+                    trial.sequence,
+                    attempt.number,
+                    failure_message,
+                    _cause_text(error),
+                )
+                if failure.retryable and attempt.number < self._retry_policy.max_retries:
+                    self._store.finish_attempt(
+                        attempt.id, AttemptStatus.FAILED, usage=usage, error=failure_message
                     )
                     delay = self._retry_policy.delay_before_retry(attempt.number)
                     self._store.append_event(
@@ -504,18 +532,15 @@ class Optimizer:
                         },
                     )
                     await self._dispatch_events(trial.study_id)
-                    try:
-                        await self._sleeper(delay)
-                    except asyncio.CancelledError:
-                        self._store.transition_trial(trial.id, TrialStatus.CANCELLED)
-                        raise
+                    # A cancellation here leaves the trial recoverable for resume.
+                    await self._sleeper(delay)
                     cached_metrics = None
                     continue
                 self._store.commit_trial_result(
                     trial.id,
                     status=TrialStatus.FAILED,
                     attempt_id=attempt.id,
-                    usage=failure.usage,
+                    usage=usage,
                     error=failure_message,
                 )
                 await self._dispatch_events(trial.study_id)
@@ -531,78 +556,25 @@ class Optimizer:
                     cached=cached_metrics is not None,
                     error=failure_message,
                 )
-            except Exception as error:
-                classified_failure = _TrialFailure(
-                    "trial", type(error).__name__, (), self._retry_policy.is_retryable(error)
-                )
-                accumulated_usage.extend(classified_failure.usage)
-                failure_message = (
-                    f"{classified_failure.stage} failed: {classified_failure.cause_type}"
-                )
-                if classified_failure.retryable and attempt.number < self._retry_policy.max_retries:
-                    self._store.finish_attempt(
-                        attempt.id, AttemptStatus.FAILED, error=failure_message
-                    )
-                    delay = self._retry_policy.delay_before_retry(attempt.number)
-                    self._store.append_event(
-                        trial.study_id,
-                        "trial.retry_scheduled",
-                        {
-                            "trial_id": trial.id,
-                            "attempt": attempt.number,
-                            "delay_seconds": delay,
-                        },
-                    )
-                    await self._dispatch_events(trial.study_id)
-                    try:
-                        await self._sleeper(delay)
-                    except asyncio.CancelledError:
-                        self._store.transition_trial(trial.id, TrialStatus.CANCELLED)
-                        raise
-                    cached_metrics = None
-                    continue
-                self._store.commit_trial_result(
-                    trial.id,
-                    status=TrialStatus.FAILED,
-                    attempt_id=attempt.id,
-                    error=failure_message,
-                )
-                await self._dispatch_events(trial.study_id)
-                return TrialSummary(
-                    id=trial.id,
-                    sequence=trial.sequence,
-                    candidate=candidate,
-                    status=TrialStatus.FAILED,
-                    metrics=(),
-                    usage=tuple(accumulated_usage),
-                    objective=None,
-                    attempts=attempt.number + 1,
-                    cached=False,
-                    error=failure_message,
-                )
 
     async def _execute_candidate(
-        self, dataset: Dataset, candidate: Candidate
-    ) -> tuple[tuple[MetricValue, ...], tuple[UsageRecord, ...]]:
+        self, dataset: Dataset, candidate: Candidate, spent: list[UsageRecord]
+    ) -> tuple[MetricValue, ...]:
         observations: dict[str, list[MetricValue]] = defaultdict(list)
-        usage: list[UsageRecord] = []
         try:
             examples = [example async for example in dataset]
         except Exception as error:
             raise _TrialFailure(
-                "dataset",
-                type(error).__name__,
-                (),
-                self._retry_policy.is_retryable(error),
+                "dataset", _describe(error), self._retry_policy.is_retryable(error)
             ) from error
         if not examples:
-            raise _TrialFailure("dataset", "empty", tuple(usage))
+            raise _TrialFailure("dataset", "empty")
 
         semaphore = asyncio.Semaphore(self._settings.sample_concurrency)
 
-        async def bounded(example: Any) -> _SampleResult:
+        async def bounded(example: Any) -> tuple[MetricValue, ...]:
             async with semaphore:
-                return await self._execute_sample(candidate, example)
+                return await self._execute_sample(candidate, example, spent)
 
         outcomes = await asyncio.gather(
             *(bounded(example) for example in examples), return_exceptions=True
@@ -610,28 +582,21 @@ class Optimizer:
         first_failure: _TrialFailure | None = None
         for outcome in outcomes:
             if isinstance(outcome, _TrialFailure):
-                usage.extend(outcome.usage)
-                if first_failure is None:
-                    first_failure = outcome
+                first_failure = first_failure or outcome
                 continue
             if isinstance(outcome, BaseException):
                 raise outcome
-            usage.extend(outcome.usage)
-            for metric in outcome.metrics:
+            for metric in outcome:
                 observations[metric.name].append(metric)
         if first_failure is not None:
-            raise _TrialFailure(
-                first_failure.stage,
-                first_failure.cause_type,
-                tuple(usage),
-                first_failure.retryable,
-            ) from first_failure
+            raise first_failure
         if not observations:
-            raise _TrialFailure("evaluation", "no_metrics", tuple(usage))
-        return _aggregate_metrics(observations, len(examples)), tuple(usage)
+            raise _TrialFailure("evaluation", "no_metrics")
+        return _aggregate_metrics(observations, len(examples))
 
-    async def _execute_sample(self, candidate: Candidate, example: Any) -> _SampleResult:
-        usage: tuple[UsageRecord, ...] = ()
+    async def _execute_sample(
+        self, candidate: Candidate, example: Any, spent: list[UsageRecord]
+    ) -> tuple[MetricValue, ...]:
         stage = "adapter"
         try:
             output, sample_usage = await _wait_for(
@@ -641,6 +606,7 @@ class Optimizer:
             usage = tuple(sample_usage)
             if any(not isinstance(item, UsageRecord) for item in usage):
                 raise TypeError("adapter usage must contain UsageRecord values")
+            spent.extend(usage)
             sample_metrics: list[MetricValue] = []
             sample_names: set[str] = set()
             for evaluator in self._evaluators:
@@ -660,29 +626,23 @@ class Optimizer:
                         raise ValueError(f"duplicate metric for sample: {metric.name}")
                     sample_names.add(metric.name)
                     sample_metrics.append(metric)
-            return _SampleResult(tuple(sample_metrics), usage)
+            return tuple(sample_metrics)
         except Exception as error:
             raise _TrialFailure(
-                stage,
-                type(error).__name__,
-                usage,
-                self._retry_policy.is_retryable(error),
+                stage, _describe(error), self._retry_policy.is_retryable(error)
             ) from error
 
-    def _evaluate_objective(
-        self, metrics: Sequence[MetricValue], usage: tuple[UsageRecord, ...]
-    ) -> ObjectiveResult:
+    def _evaluate_objective(self, metrics: Sequence[MetricValue]) -> ObjectiveResult:
         try:
             objective = self._objective.evaluate(metrics)
         except Exception as error:
             raise _TrialFailure(
-                "objective",
-                type(error).__name__,
-                usage,
-                self._retry_policy.is_retryable(error),
+                "objective", _describe(error), self._retry_policy.is_retryable(error)
             ) from error
         if objective.score is None:
-            raise _TrialFailure("objective", "unavailable", usage)
+            raise _TrialFailure("objective", "unavailable")
+        if not math.isfinite(objective.score):
+            raise _TrialFailure("objective", "non_finite")
         return objective
 
     def _read_cache(self, trial: TrialRecord, key: CacheKey) -> tuple[MetricValue, ...] | None:
@@ -766,6 +726,7 @@ class Optimizer:
                     "direction": term.direction.value,
                     "minimum": term.minimum,
                     "maximum": term.maximum,
+                    "min_coverage": term.min_coverage,
                 }
                 for term in self._objective.terms
             ],
@@ -913,6 +874,7 @@ def _stop_context(summaries: Sequence[TrialSummary], elapsed_seconds: float) -> 
         successful_trials=successful,
         failed_trials=failed,
         objective_scores=scores,
+        failure_history=tuple(summary.status is TrialStatus.FAILED for summary in summaries),
     )
 
 
@@ -932,14 +894,14 @@ def _build_result(
     best = (
         max(successful, key=lambda item: _objective_score(item.objective)) if successful else None
     )
-    all_usage = [item for summary in summaries for item in summary.usage]
+    all_usage = tuple(item for summary in summaries for item in summary.usage)
     return OptimizationResult(
         study_id=study_id,
         study_status=study_status,
         stop_reason=stop_reason,
         trials=tuple(summaries),
         best_trial=best,
-        usage=_usage_summary(all_usage),
+        usage=summarize_usage(all_usage),
     )
 
 
@@ -949,27 +911,48 @@ def _objective_score(result: ObjectiveResult | None) -> float:
     return result.score
 
 
-def _usage_summary(usage: Sequence[UsageRecord]) -> UsageSummary:
-    input_tokens = sum(item.input_tokens or 0 for item in usage)
-    output_tokens = sum(item.output_tokens or 0 for item in usage)
-    exact_cost = sum(item.cost or 0.0 for item in usage if item.status is ValueStatus.EXACT)
-    estimated_cost = sum(item.cost or 0.0 for item in usage if item.status is not ValueStatus.EXACT)
-    latency = sum(item.latency_seconds or 0.0 for item in usage)
-    statuses = {item.status for item in usage}
-    if not usage or statuses == {ValueStatus.UNAVAILABLE}:
-        status = ValueStatus.UNAVAILABLE
-    elif statuses == {ValueStatus.EXACT}:
-        status = ValueStatus.EXACT
-    else:
-        status = ValueStatus.ESTIMATED
-    return UsageSummary(
-        input_tokens,
-        output_tokens,
-        exact_cost,
-        estimated_cost,
-        latency,
-        status,
-    )
+def _describe(error: BaseException) -> str:
+    """Name a failure without leaking third-party messages, which may contain user data.
+
+    TunaRAG's own error messages are authored diagnostics, so they are kept.
+    """
+
+    name = type(error).__name__
+    if isinstance(error, TunaRAGError):
+        return f"{name}: {error.message}"
+    return name
+
+
+def _cause_text(error: BaseException) -> str:
+    root = error.__cause__ if isinstance(error, _TrialFailure) and error.__cause__ else error
+    return f"{type(root).__name__}: {root}"[:500]
+
+
+def _active_seconds(events: Sequence[StudyEvent]) -> float:
+    """Sum the run segments (start/resume to last event) recorded in the event log."""
+
+    total = 0.0
+    segment_start: float | None = None
+    last: float | None = None
+    for event in events:
+        timestamp = _event_time(event)
+        if timestamp is None:
+            continue
+        if event.type in {"study.running", "study.resumed"}:
+            if segment_start is not None and last is not None:
+                total += max(0.0, last - segment_start)
+            segment_start = timestamp
+        last = timestamp
+    if segment_start is not None and last is not None:
+        total += max(0.0, last - segment_start)
+    return total
+
+
+def _event_time(event: StudyEvent) -> float | None:
+    try:
+        return datetime.fromisoformat(event.created_at).timestamp()
+    except (TypeError, ValueError):
+        return None
 
 
 def _type_name(value: object) -> str:

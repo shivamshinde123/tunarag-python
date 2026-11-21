@@ -471,3 +471,37 @@ throughout built HTML, including sidebars and footers, and reject retired target
 Disable instant navigation so each page navigation loads the current sidebar rather than
 retaining in-memory navigation across a deployment. Unknown URLs remain genuine 404s.
 The user-reported comprehensive-testing URL now redirects to the production checklist.
+## 2026-11-21 Fix the code-vs-documentation audit findings
+
+A full audit (`docs/audit-2026-11-21/`) built real LangChain, LangGraph, and Google ADK RAG
+apps on OpenRouter and found 20 places where behavior contradicted the documentation. All are
+fixed, each with a regression test in `tests/test_audit_regressions.py`. Key decisions:
+
+- **Bad values fail a trial, not a study.** `MetricValue`/`UsageRecord` reject NaN/infinity at
+  construction, so the failure happens inside the trial boundary; the objective is also guarded.
+- **Interrupted and crashed studies are resumable.** Cancellation finishes in-flight attempts as
+  cancelled (trial stays running, so recoverable) and keeps the `cancelled` study status as a
+  record; `cancelled -> running` and `failed -> running` transitions are allowed for resume. We
+  kept the status rather than leaving the study `running` so the interruption stays visible.
+- **Usage is captured with LangChain's own callback handler** rather than only scanning output,
+  because the most common RAG chains return plain strings. Output scanning stays as a fallback.
+  Cost needs prices: an optional `token_prices` table yields `estimated` cost; without it, cost
+  is reported as `unavailable`, never as exact $0.
+- **Retry classification is structural** (exception type names in the MRO, HTTP status
+  attributes, explicit causes) so TunaRAG stays free of provider SDK imports.
+- **Without an explicit identity, identity hashes code, not file positions.** Named functions
+  hash their source (stable across Python versions); lambdas hash their own bytecode (their
+  "source" is the enclosing line, which would make unrelated edits break resume). Paths and line
+  numbers are excluded so moving a project does not invalidate studies. Direct runnables are
+  fingerprinted structurally; a `UserWarning` asks for `identity` because structure cannot see
+  prompt text or indexes.
+- **An explicit identity replaces code fingerprinting.** Found while rebasing onto 0.3.1: the
+  upstream process-recovery test closes over a run mode that differs between the crashed run and
+  its resume. Code/closure fingerprints made an explicitly versioned pipeline unresumable. A
+  declared identity is the user's contract, so with it TunaRAG keeps only callable names.
+- **Third-party error text is logged, not persisted.** Persisted trial errors keep stage, type,
+  and TunaRAG's own message; the provider's message goes to the `tunarag` logger (privacy).
+- **Breaking identity change accepted** (alpha; ships after 0.3.1): dataset versions are
+  order-independent, floats are type-tagged in canonical hashes, and fingerprints changed, so
+  older in-progress studies cannot resume and old cache entries are not reused. Resume refuses
+  explicitly rather than silently mixing semantics.

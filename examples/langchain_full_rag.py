@@ -66,6 +66,9 @@ OPENROUTER_SITE_URL = os.getenv("OPENROUTER_SITE_URL")
 OPENROUTER_APP_NAME = os.getenv("OPENROUTER_APP_NAME", "TunaRAG LangChain Example")
 CHAT_MODEL = os.getenv("TUNARAG_CHAT_MODEL", "openai/gpt-4.1-mini")
 EMBEDDING_MODEL = os.getenv("TUNARAG_EMBEDDING_MODEL", "openai/text-embedding-3-small")
+# USD per 1M (input, output) tokens, used to estimate cost. Update it if you change the model
+# or your provider's prices change; unknown models simply report cost as unavailable.
+TOKEN_PRICES = {"openai/gpt-4.1-mini": (0.40, 1.60)}
 
 SOURCE_DOCUMENTS = (
     Document(
@@ -291,6 +294,7 @@ async def main() -> None:
         factory=build_chain,
         input_key="input",
         output_mapper=_adapter_output,
+        token_prices=TOKEN_PRICES,
         identity={
             "example": "langchain-full-rag",
             "version": 1,
@@ -355,6 +359,10 @@ async def main() -> None:
         print(f"4. Best parameters: {dict(result.best_candidate.parameters)}")
         print(f"   Best objective score: {result.best_trial.objective.score}")
         print(f"   Study ID: {result.study_id}")
+        print(
+            f"   Usage: {result.usage.input_tokens} input / {result.usage.output_tokens} output "
+            f"tokens, about ${result.usage.estimated_cost:.4f} ({result.usage.status.value})"
+        )
 
         tuned = await build_chain(result.best_candidate).ainvoke(
             {"input": "How does TunaRAG recover from interruptions?"}

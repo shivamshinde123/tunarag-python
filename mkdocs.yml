@@ -125,6 +125,8 @@ exclude_docs: |
   tech-stack.md
   assets/diagrams/*.mmd
   assets/diagrams/live-google-adk.svg
+  /audit-2026-11-21/
+  /diagrams/
 
 strict: true
 copyright: Copyright &copy; 2026 Shivam Shinde

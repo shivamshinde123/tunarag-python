@@ -51,8 +51,9 @@ _STUDY_TRANSITIONS = {
     StudyStatus.CREATED: {StudyStatus.RUNNING, StudyStatus.FAILED, StudyStatus.CANCELLED},
     StudyStatus.RUNNING: {StudyStatus.COMPLETED, StudyStatus.FAILED, StudyStatus.CANCELLED},
     StudyStatus.COMPLETED: set(),
-    StudyStatus.FAILED: set(),
-    StudyStatus.CANCELLED: set(),
+    # Interrupted (cancelled) and crashed (failed) studies may be resumed.
+    StudyStatus.FAILED: {StudyStatus.RUNNING},
+    StudyStatus.CANCELLED: {StudyStatus.RUNNING},
 }
 _TRIAL_TRANSITIONS = {
     TrialStatus.PENDING: {

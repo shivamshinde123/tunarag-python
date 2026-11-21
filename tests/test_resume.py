@@ -215,7 +215,9 @@ def test_completed_study_can_be_loaded_without_reexecution(tmp_path) -> None:
     store.close()
 
 
-def test_resume_rejects_unknown_and_terminal_failed_studies(tmp_path) -> None:
+def test_resume_rejects_unknown_but_continues_crashed_and_interrupted_studies(
+    tmp_path,
+) -> None:
     store = SQLiteStore(tmp_path / "terminal.sqlite")
     dataset = InMemoryDataset((1,), version="v1")
     optimizer = optimizer_for(store, tmp_path, SequenceStrategy(()), max_trials=1)
@@ -223,10 +225,20 @@ def test_resume_rejects_unknown_and_terminal_failed_studies(tmp_path) -> None:
     with pytest.raises(ResumeError, match="unknown"):
         asyncio.run(optimizer.aresume(dataset, study_id="missing"))
 
-    study = store.create_study("failed", optimizer._study_configuration(dataset))
-    store.transition_study(study.id, StudyStatus.FAILED)
-    with pytest.raises(ResumeError, match="terminal"):
-        asyncio.run(optimizer.aresume(dataset, study_id=study.id))
+    for status in (StudyStatus.FAILED, StudyStatus.CANCELLED):
+        resumable = optimizer_for(
+            store, tmp_path, SequenceStrategy([Candidate({"multiplier": 2})]), max_trials=1
+        )
+        study = store.create_study(status.value, resumable._study_configuration(dataset))
+        store.transition_study(study.id, StudyStatus.RUNNING)
+        store.transition_study(study.id, status)
+
+        result = asyncio.run(resumable.aresume(dataset, study_id=study.id))
+
+        assert result.study_status is StudyStatus.COMPLETED
+        assert result.best_candidate == Candidate({"multiplier": 2})
+        resumed = [e for e in store.list_events(study.id) if e.type == "study.resumed"]
+        assert resumed[-1].payload["previous_status"] == status.value
     store.close()
 
 

@@ -7,6 +7,7 @@ import pytest
 from pipeline_fixtures import framework_fixture
 
 from tunarag import (
+    AttemptStatus,
     Candidate,
     InMemoryDataset,
     MetricValue,
@@ -262,7 +263,7 @@ def test_sync_wrapper_runs_outside_loop_and_rejects_active_loop(tmp_path) -> Non
     second_store.close()
 
 
-def test_cancellation_persists_terminal_states_and_propagates(tmp_path) -> None:
+def test_cancellation_is_recorded_and_leaves_the_study_resumable(tmp_path) -> None:
     async def scenario() -> tuple[CapturingStore, str]:
         started = asyncio.Event()
 
@@ -274,6 +275,9 @@ def test_cancellation_persists_terminal_states_and_propagates(tmp_path) -> None:
                 started.set()
                 await asyncio.Event().wait()
                 raise AssertionError("unreachable")
+
+            def fingerprint(self) -> Any:
+                return {"pipeline": "cancel-test"}
 
         store = CapturingStore(tmp_path / "cancel.sqlite")
         optimizer = Optimizer(
@@ -296,6 +300,29 @@ def test_cancellation_persists_terminal_states_and_propagates(tmp_path) -> None:
 
     store, study_id = asyncio.run(scenario())
 
+    # Ctrl-C/cancel is recorded on the study, but the interrupted trial stays recoverable:
+    # running, with its attempt finished as cancelled, so resume re-runs it immediately.
     assert store.get_study(study_id).status is StudyStatus.CANCELLED
-    assert store.list_trials(study_id)[0].status is TrialStatus.CANCELLED
+    trial = store.list_trials(study_id)[0]
+    assert trial.status is TrialStatus.RUNNING
+    assert [attempt.status for attempt in store.list_attempts(trial.id)] == [
+        AttemptStatus.CANCELLED
+    ]
+
+    class SamePipeline(MultiplyingAdapter):
+        def fingerprint(self) -> Any:
+            return {"pipeline": "cancel-test"}
+
+    resumed = Optimizer(
+        adapter=framework_fixture(SamePipeline()),
+        strategy=SequenceStrategy([]),
+        evaluators=[QualityEvaluator()],
+        objective=Objective((ObjectiveTerm("quality"),)),
+        store=store,
+        settings=settings(tmp_path, max_trials=1),
+    )
+    result = asyncio.run(resumed.aresume(InMemoryDataset((1,), version="v1"), study_id=study_id))
+    assert result.study_status is StudyStatus.COMPLETED
+    assert [summary.status for summary in result.trials] == [TrialStatus.SUCCEEDED]
+    assert result.trials[0].attempts == 2
     store.close()

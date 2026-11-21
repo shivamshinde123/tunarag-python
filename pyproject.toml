@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tunarag-python"
-version = "0.3.1"
+version = "0.4.0"
 description = "Tune LangChain, LangGraph, and Google ADK RAG pipelines"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -74,7 +74,8 @@ docs = [
     "mkdocs>=1.6,<2",
     "mkdocs-include-markdown-plugin>=7,<8",
     "mkdocs-material>=9.5,<10",
-    "mkdocstrings[python]>=0.27,<1",
+    # mkdocstrings 0.x breaks with pymdown-extensions 13 (Highlight requires `md`).
+    "mkdocstrings[python]>=1,<2",
 ]
 live-adk-test = [
     "google-adk>=2.11,<3",
@@ -122,6 +123,10 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# Audit reproduction scripts print long human-readable probe results.
+"docs/audit-2026-11-21/scripts/*.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.10"

@@ -2,21 +2,25 @@
 
 from __future__ import annotations
 
-import inspect
+import math
 import time
+import warnings
 from collections.abc import Callable, Mapping, Sequence
 from importlib import import_module
 from typing import Any
 
 from ..dataset import EvaluationExample
-from ..domain import Candidate, UsageRecord
+from ..domain import Candidate, UsageRecord, ValueStatus
 from ..errors import MissingOptionalDependencyError
+from ..serialization import callable_identity, callable_name
 
 RunnableFactory = Callable[[Candidate], Any]
 RunnableInputMapper = Callable[[Any, Candidate], Any]
 RunnableConfigMapper = Callable[[Candidate], Mapping[str, Any] | None]
 RunnableOutputMapper = Callable[[Any], Any]
 RunnableUsageMapper = Callable[[Any], Sequence[UsageRecord]]
+TokenPrices = Mapping[str, tuple[float, float]]
+"""Model name -> (USD per 1M input tokens, USD per 1M output tokens)."""
 
 
 class _RunnableAdapter:
@@ -31,6 +35,7 @@ class _RunnableAdapter:
         output_mapper: RunnableOutputMapper | None,
         usage_mapper: RunnableUsageMapper | None,
         capture_message_usage: bool,
+        token_prices: TokenPrices | None,
         identity: Any,
         framework: str,
     ) -> None:
@@ -60,8 +65,10 @@ class _RunnableAdapter:
         self._output_mapper = output_mapper
         self._usage_mapper = usage_mapper
         self._capture_message_usage = capture_message_usage
+        self._token_prices = validate_token_prices(token_prices)
         self._identity = identity
         self._framework = framework
+        warn_missing_identity(self, identity)
 
     async def run(self, candidate: Candidate, example: Any) -> tuple[Any, tuple[UsageRecord, ...]]:
         """Invoke one framework runnable for a TunaRAG candidate and example."""
@@ -69,11 +76,16 @@ class _RunnableAdapter:
         runnable = self._resolve_runnable(candidate)
         runnable_input = self._map_input(example, candidate)
         config = self._map_config(candidate)
+        handler = None
+        if self._usage_mapper is None and self._capture_message_usage:
+            handler = _usage_handler()
+            if handler is not None:
+                config = _with_callback(config, handler)
         started_at = time.perf_counter()
         raw_output = await runnable.ainvoke(runnable_input, config=config)
         latency = time.perf_counter() - started_at
         output = raw_output if self._output_mapper is None else self._output_mapper(raw_output)
-        usage = list(self._map_usage(raw_output))
+        usage = list(self._map_usage(raw_output, handler))
         usage.append(
             UsageRecord(
                 component=f"{self._framework}.runnable",
@@ -85,17 +97,26 @@ class _RunnableAdapter:
     def fingerprint(self) -> dict[str, Any]:
         """Return stable, provider-secret-free adapter semantics."""
 
-        runnable_identity = _type_name(self._runnable) if self._runnable is not None else None
+        # An explicit identity is the user's declaration of the pipeline version and replaces
+        # automatic code fingerprinting (which would also see run-varying closure state).
+        code = callable_identity if self._identity is None else callable_name
+        runnable: Any = None
+        if self._runnable is not None:
+            runnable = (
+                runnable_identity(self._runnable)
+                if self._identity is None
+                else _type_name(self._runnable)
+            )
         return {
             "integration": self._framework,
-            "schema_version": 1,
-            "runnable": runnable_identity,
-            "factory": _callable_identity(self._factory),
+            "schema_version": 2,
+            "runnable": runnable,
+            "factory": code(self._factory),
             "input_key": self._input_key,
-            "input_mapper": _callable_identity(self._input_mapper),
-            "config_mapper": _callable_identity(self._config_mapper),
-            "output_mapper": _callable_identity(self._output_mapper),
-            "usage_mapper": _callable_identity(self._usage_mapper),
+            "input_mapper": code(self._input_mapper),
+            "config_mapper": code(self._config_mapper),
+            "output_mapper": code(self._output_mapper),
+            "usage_mapper": code(self._usage_mapper),
             "capture_message_usage": self._capture_message_usage,
             "identity": self._identity,
         }
@@ -124,7 +145,7 @@ class _RunnableAdapter:
             raise TypeError("config_mapper must return a mapping or None")
         return config
 
-    def _map_usage(self, raw_output: Any) -> tuple[UsageRecord, ...]:
+    def _map_usage(self, raw_output: Any, handler: Any) -> tuple[UsageRecord, ...]:
         if self._usage_mapper is not None:
             usage = tuple(self._usage_mapper(raw_output))
             if any(not isinstance(item, UsageRecord) for item in usage):
@@ -132,7 +153,25 @@ class _RunnableAdapter:
             return usage
         if not self._capture_message_usage:
             return ()
-        return _message_usage(raw_output, framework=self._framework)
+        counts: list[tuple[str | None, int | None, int | None]] = []
+        if handler is not None:
+            # Every chat-model call inside the runnable, even when the output is a string.
+            for model, metadata in sorted(dict(handler.usage_metadata).items()):
+                counts.append(
+                    (
+                        str(model) if model else None,
+                        _token_count(metadata.get("input_tokens")),
+                        _token_count(metadata.get("output_tokens")),
+                    )
+                )
+        if not counts:
+            counts = _message_usage(raw_output)
+        return tuple(
+            priced_usage(
+                f"{self._framework}.message", model, input_tokens, output_tokens, self._token_prices
+            )
+            for model, input_tokens, output_tokens in counts
+        )
 
 
 class LangChainAdapter(_RunnableAdapter):
@@ -149,6 +188,7 @@ class LangChainAdapter(_RunnableAdapter):
         output_mapper: RunnableOutputMapper | None = None,
         usage_mapper: RunnableUsageMapper | None = None,
         capture_message_usage: bool = True,
+        token_prices: TokenPrices | None = None,
         identity: Any = None,
     ) -> None:
         super().__init__(
@@ -160,6 +200,7 @@ class LangChainAdapter(_RunnableAdapter):
             output_mapper=output_mapper,
             usage_mapper=usage_mapper,
             capture_message_usage=capture_message_usage,
+            token_prices=token_prices,
             identity=identity,
             framework="langchain",
         )
@@ -179,6 +220,7 @@ class LangGraphAdapter(_RunnableAdapter):
         output_mapper: RunnableOutputMapper | None = None,
         usage_mapper: RunnableUsageMapper | None = None,
         capture_message_usage: bool = True,
+        token_prices: TokenPrices | None = None,
         identity: Any = None,
     ) -> None:
         super().__init__(
@@ -190,13 +232,113 @@ class LangGraphAdapter(_RunnableAdapter):
             output_mapper=output_mapper,
             usage_mapper=usage_mapper,
             capture_message_usage=capture_message_usage,
+            token_prices=token_prices,
             identity=identity,
             framework="langgraph",
         )
 
 
-def _message_usage(output: Any, *, framework: str) -> tuple[UsageRecord, ...]:
-    records: list[UsageRecord] = []
+def validate_token_prices(prices: TokenPrices | None) -> dict[str, tuple[float, float]] | None:
+    """Check a model -> (input, output) USD-per-million-token price table."""
+
+    if prices is None:
+        return None
+    if not isinstance(prices, Mapping):
+        raise TypeError("token_prices must map model names to (input, output) prices")
+    checked: dict[str, tuple[float, float]] = {}
+    for model, pair in prices.items():
+        if not isinstance(model, str) or not model.strip():
+            raise ValueError("token_prices keys must be model names")
+        if not isinstance(pair, (tuple, list)) or len(pair) != 2:
+            raise ValueError("token_prices values must be (input_per_million, output_per_million)")
+        values = tuple(float(value) for value in pair)
+        if any(not math.isfinite(value) or value < 0 for value in values):
+            raise ValueError("token prices must be finite and not negative")
+        checked[model] = (values[0], values[1])
+    return checked
+
+
+def priced_usage(
+    component: str,
+    model: str | None,
+    input_tokens: int | None,
+    output_tokens: int | None,
+    prices: Mapping[str, tuple[float, float]] | None,
+) -> UsageRecord:
+    """Build a model-call usage record, estimating cost when the model has a price.
+
+    The component name stays stable (callers filter on it); the model only selects the price.
+    """
+
+    price = None if prices is None or model is None else prices.get(model)
+    if price is None:
+        return UsageRecord(component, input_tokens=input_tokens, output_tokens=output_tokens)
+    cost = ((input_tokens or 0) * price[0] + (output_tokens or 0) * price[1]) / 1_000_000
+    return UsageRecord(
+        component,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        cost=cost,
+        status=ValueStatus.ESTIMATED,
+        pricing_version="token_prices",
+    )
+
+
+def warn_missing_identity(adapter: object, identity: Any) -> None:
+    if identity is None:
+        warnings.warn(
+            f"{type(adapter).__name__} has no identity=...; cached results and resumed "
+            "studies can only distinguish pipelines by code structure. Pass identity with "
+            "your corpus, index, model, and prompt revisions.",
+            UserWarning,
+            stacklevel=4,
+        )
+
+
+def runnable_identity(runnable: Any, *, _depth: int = 0) -> Any:
+    """Best-effort structural identity: type, wrapped functions, graph nodes, chain steps."""
+
+    identity: dict[str, Any] = {"type": _type_name(runnable)}
+    if _depth > 6:
+        return identity
+    function = getattr(runnable, "func", None) or getattr(runnable, "afunc", None)
+    if callable(function):
+        identity["function"] = callable_identity(function)
+    nodes = getattr(getattr(runnable, "builder", None), "nodes", None)
+    if isinstance(nodes, Mapping):
+        identity["nodes"] = {
+            str(name): runnable_identity(getattr(spec, "runnable", spec), _depth=_depth + 1)
+            for name, spec in sorted(nodes.items(), key=lambda item: str(item[0]))
+        }
+    steps = getattr(runnable, "steps", None)
+    if isinstance(steps, list):
+        identity["steps"] = [runnable_identity(step, _depth=_depth + 1) for step in steps]
+    return identity
+
+
+def _usage_handler() -> Any:
+    try:
+        return import_module("langchain_core.callbacks").UsageMetadataCallbackHandler()
+    except (ImportError, AttributeError):
+        return None
+
+
+def _with_callback(config: Mapping[str, Any] | None, handler: Any) -> dict[str, Any]:
+    merged = {} if config is None else dict(config)
+    callbacks = merged.get("callbacks")
+    if callbacks is None:
+        merged["callbacks"] = [handler]
+    elif isinstance(callbacks, (list, tuple)):
+        merged["callbacks"] = [*callbacks, handler]
+    elif hasattr(callbacks, "copy") and hasattr(callbacks, "add_handler"):
+        manager = callbacks.copy()
+        manager.add_handler(handler, inherit=True)
+        merged["callbacks"] = manager
+    return merged
+
+
+def _message_usage(output: Any) -> list[tuple[str | None, int | None, int | None]]:
+    records: list[tuple[str | None, int | None, int | None]] = []
     visited: set[int] = set()
 
     def collect(value: Any) -> None:
@@ -215,13 +357,10 @@ def _message_usage(output: Any, *, framework: str) -> tuple[UsageRecord, ...]:
             input_tokens = _token_count(metadata.get("input_tokens"))
             output_tokens = _token_count(metadata.get("output_tokens"))
             if input_tokens is not None or output_tokens is not None:
-                records.append(
-                    UsageRecord(
-                        component=f"{framework}.message",
-                        input_tokens=input_tokens,
-                        output_tokens=output_tokens,
-                    )
-                )
+                response = getattr(value, "response_metadata", None)
+                model = response.get("model_name") if isinstance(response, Mapping) else None
+                model_name = model if isinstance(model, str) else None
+                records.append((model_name, input_tokens, output_tokens))
         if isinstance(value, Mapping):
             for item in value.values():
                 collect(item)
@@ -230,7 +369,7 @@ def _message_usage(output: Any, *, framework: str) -> tuple[UsageRecord, ...]:
                 collect(item)
 
     collect(output)
-    return tuple(records)
+    return records
 
 
 def _token_count(value: Any) -> int | None:
@@ -255,14 +394,6 @@ def _require_runnable(value: Any, framework: str) -> None:
         raise TypeError(
             f"{framework} integration requires a real {name}, not a custom ainvoke object"
         )
-
-
-def _callable_identity(value: Callable[..., Any] | None) -> str | None:
-    if value is None:
-        return None
-    if inspect.ismethod(value) or inspect.isfunction(value):
-        return f"{value.__module__}.{value.__qualname__}"
-    return _type_name(value)
 
 
 def _type_name(value: Any) -> str:

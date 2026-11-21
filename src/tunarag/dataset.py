@@ -136,12 +136,16 @@ class EvaluationDataset:
         ids = [example.id for example in self.examples]
         if len(ids) != len(set(ids)):
             raise ValueError("dataset example ids must be unique")
+        # Order-independent: samples are aggregated, so reordering rows is the same dataset.
         version = content_hash(
             {
                 "schema_version": _SCHEMA_VERSION,
-                "examples": [example.semantic_data() for example in self.examples],
+                "examples": [
+                    example.semantic_data()
+                    for example in sorted(self.examples, key=lambda example: example.id)
+                ],
             },
-            namespace="tunarag:dataset:v1",
+            namespace="tunarag:dataset:v2",
         )
         object.__setattr__(self, "version", version)
 
@@ -157,6 +161,7 @@ class EvaluationDataset:
 
         mapping = field_map or DatasetFieldMap()
         examples: list[EvaluationExample] = []
+        first_record_for_id: dict[str, int] = {}
         for index, record in enumerate(records, start=1):
             if not isinstance(record, Mapping):
                 raise DatasetError(
@@ -164,7 +169,7 @@ class EvaluationDataset:
                     details={"source": source, "record": index},
                 )
             try:
-                examples.append(_example_from_record(record, mapping))
+                example = _example_from_record(record, mapping)
             except (TypeError, ValueError, json.JSONDecodeError) as error:
                 raise DatasetError(
                     "dataset record is invalid",
@@ -174,6 +179,17 @@ class EvaluationDataset:
                         "cause": type(error).__name__,
                     },
                 ) from error
+            if example.id in first_record_for_id:
+                raise DatasetError(
+                    "duplicate example: give each record a unique id (records without an id "
+                    "get one derived from their content, so identical rows collide)",
+                    details={
+                        "source": source,
+                        "records": [first_record_for_id[example.id], index],
+                    },
+                )
+            first_record_for_id[example.id] = index
+            examples.append(example)
         try:
             return cls(tuple(examples))
         except ValueError as error:

@@ -21,7 +21,7 @@ def expand_source() -> str:
     def feature(match):
         body = sections[match.group(1)]
         body = re.sub(r"^### ", "#### ", body, flags=re.M)
-        body = body.replace("V0.2", "V0.3.1")
+        body = body.replace("V0.2", "V0.4.0")
         return body
 
     def example(match):
@@ -95,7 +95,7 @@ def build(output: Path) -> None:
     code_style.paragraph_format.right_indent = Inches(0.1)
     code_style.paragraph_format.widow_control = False
     header = section.header.paragraphs[0]
-    header.text = "TunaRAG Python Usage Handbook  |  Version 0.3.1"
+    header.text = "TunaRAG Python Usage Handbook  |  Version 0.4.0"
     header.style = document.styles["Normal"]
     for run in header.runs:
         run.font.size = Pt(8)
@@ -245,7 +245,7 @@ def build(output: Path) -> None:
         index += 1
 
     document.core_properties.title = "TunaRAG Python Usage Handbook"
-    document.core_properties.subject = "Practical progressive usage of TunaRAG Python 0.3.1"
+    document.core_properties.subject = "Practical progressive usage of TunaRAG Python 0.4.0"
     document.core_properties.author = "TunaRAG Documentation"
     output.parent.mkdir(parents=True, exist_ok=True)
     document.save(output)

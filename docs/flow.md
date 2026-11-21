@@ -92,7 +92,8 @@ Copyable step-by-step outline:
 ```text
 Optimizer.aresume
   -> load study and compare the current semantic configuration hash
-  -> reject failed/cancelled studies and running attempts with live leases
+  -> move cancelled/failed studies back to running; reject attempts with live leases
+  -> sum prior active time from the event log (TimeBudget continues, downtime excluded)
   -> abandon expired attempts scoped to the selected study
   -> rebuild terminal summaries, objective values, usage, attempts, and cache markers
   -> replay successful observations (or strategy-specific replay)
@@ -104,7 +105,9 @@ Completed compatible studies are read and replayed without adapter/evaluator exe
 `Fingerprintable` component can contribute stable secret-safe semantics to study and cache
 identity. `RandomSearch` fingerprints its search space and seed and verifies each replayed
 candidate while advancing its private generator. Live leases cause a retryable `ResumeError`
-rather than unsafe duplicate execution. Failed and cancelled studies remain terminal.
+rather than unsafe duplicate execution. A cancellation (Ctrl-C) finishes in-flight attempts as
+cancelled and leaves their trials running, so they are recoverable immediately; after a hard
+process kill they become recoverable once their lease expires.
 
 ## Target optimization flow
 

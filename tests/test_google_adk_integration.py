@@ -101,7 +101,7 @@ def test_adk_maps_parameters_and_usage() -> None:
             output, usage = await GoogleADKAdapter(pipeline).run(
                 Candidate({"top_k": 3}), EvaluationExample("q", "question")
             )
-            assert output == {"answer": "top_k=3"}
+            assert output == {"answer": "top_k=3", "tool_responses": []}
             assert usage[0].input_tokens == 4
             assert usage[0].output_tokens == 2
             assert usage[-1].component == "google_adk.runner"

@@ -164,7 +164,9 @@ dataset = EvaluationDataset.from_records(
 )
 optimizer = Optimizer(
     adapter=LangChainAdapter(
-        factory=build_chain, input_mapper=lambda example, candidate: example.query
+        factory=build_chain,
+        input_mapper=lambda example, candidate: example.query,
+        identity={"quickstart": "offline-langchain", "revision": 1},
     ),
     strategy=RandomSearch(SearchSpace({"top_k": IntegerRange(1, 2)}), seed=7),
     evaluators=(
@@ -205,7 +207,7 @@ from langchain_core.runnables import RunnableLambda
 from tunarag import LangChainAdapter
 
 chain = RunnableLambda(lambda inputs: {"answer": inputs["question"]})
-adapter = LangChainAdapter(chain)
+adapter = LangChainAdapter(chain, identity={"chain": "echo", "revision": 1})
 ```
 
 ![TunaRAG sends settings and a query through an official adapter to a separate framework RAG; answers and usage return in the opposite direction](https://shivamshinde123.github.io/tunarag-python/assets/tunarag-python-readme-illustrations/07-framework-adapter-control.png)
@@ -229,8 +231,14 @@ adapter = LangChainAdapter(
 ```
 
 Include stable corpus, index, model, prompt, and mapper revisions in `identity` for cache and resume
-compatibility. Never include credentials. Framework factories and mapping callbacks remain normal
-Python configuration code; retrieval and generation execute through the framework.
+compatibility. Never include credentials. When you pass `identity`, it is the pipeline's
+declared version: TunaRAG uses it (plus the names of your factory and mappers) and does not
+fingerprint code, so bump it whenever behavior changes. An adapter without `identity` emits a
+`UserWarning` and is identified by code structure instead (factory and mapper code, wrapped
+`RunnableLambda` functions, LangGraph node functions, chain steps, ADK agent instruction, model and
+tools), which cannot see prompt-text, index, or model-setting changes. Framework factories and
+mapping callbacks remain normal Python configuration code; retrieval and generation execute through
+the framework.
 
 ## LangChain integration
 
@@ -301,13 +309,25 @@ adapter = LangChainAdapter(
             output_tokens=output["usage"]["output_tokens"],
         ),
     ),
+    identity={"chain": "support-rag", "version": 2},
 )
 ```
 
-The default usage mapper recursively discovers standard `usage_metadata` in mappings, sequences,
-and message objects. The adapter always adds `langchain.runnable` latency. Set
+By default the adapter attaches LangChain's `UsageMetadataCallbackHandler` to the run, so token
+usage is captured from every chat-model call inside the runnable, including chains such as
+`create_retrieval_chain` whose answer is a plain string. If no callback usage is seen (for example
+nested calls on Python 3.10 without an explicit `config`), it falls back to discovering standard
+`usage_metadata` in mappings, sequences, and message objects. Token records keep the component
+name `langchain.message` (`langgraph.message` for graphs); the reported model name is used to look
+up `token_prices`. The adapter always adds `langchain.runnable` latency. Set
 `capture_message_usage=False` to disable automatic token extraction. A custom `usage_mapper` takes
 precedence.
+
+Providers do not report dollar cost to LangChain, so cost is **unavailable** unless you price it.
+Pass `token_prices={"<model name>": (usd_per_1m_input, usd_per_1m_output)}` (keys match the
+model name the provider reports, e.g. `"openai/gpt-4.1-mini"` through OpenRouter); priced records
+get an `estimated` cost, which `CostBudget` counts. The same option exists on
+`LangGraphAdapter` and `GoogleADKAdapter`.
 
 For a complete provider-backed pipeline—from documents and embeddings through optimization and
 reports—run
@@ -360,6 +380,7 @@ adapter = LangGraphAdapter(
     },
     config_mapper=lambda candidate: None,
     output_mapper=lambda state: state["answer"],
+    identity={"graph": "qa", "revision": 2},
 )
 ```
 
@@ -375,10 +396,14 @@ agent tools, corpus retrieval, and runner ownership remain with the application.
 
 Use `factory=lambda candidate: build_runner(candidate)` when tuning settings such as a model or
 retrieval tool that require constructing an agent. `state_mapper` can map candidates to agent state;
-`output_mapper` receives the final ADK event, allowing retrieval evidence to be exposed for RAGAS.
-By default the output is `{"answer": final_text}`. Usage captures reported model token counts and
-runner latency; dollar cost is unavailable unless your evaluator supplies a priced metric.
-Missing final responses and ADK error events fail the trial rather than becoming empty answers.
+By default the output is `{"answer": final_text, "tool_responses": [{"name": ..., "response": ...}]}`:
+tool results such as retrieved passages are collected from the whole run, so retrieval metrics and
+RAGAS can see the evidence. `output_mapper` receives only the final ADK event; `events_mapper`
+receives every event of the run (use one or the other) for custom outputs. Usage captures reported
+model token counts and runner latency; pass `token_prices` (keyed by the event's `model_version`)
+for an estimated cost. Missing final responses and ADK error events fail the trial rather than
+becoming empty answers; the trial records the ADK error code, and the provider's error message is
+logged to the console (not persisted).
 
 See the executable [ADK example](https://github.com/shivamshinde123/tunarag-python/blob/main/examples/google_adk_tuning.py)
 and [integration reference](https://github.com/shivamshinde123/tunarag-python/blob/main/docs/reference/integrations.md).
@@ -434,8 +459,10 @@ csv_dataset = EvaluationDataset.from_csv("evaluation.csv")
 ```
 
 JSON contains an array; JSONL contains one object per nonblank line. CSV collection and metadata
-cells are JSON-encoded. Missing IDs are deterministically derived. Every `EvaluationDataset` has a
-content-derived `version` used by caches and resume validation.
+cells are JSON-encoded. Missing IDs are deterministically derived from the record's content, so two
+identical rows without IDs are reported as a duplicate (with both record numbers). Every
+`EvaluationDataset` has a content-derived `version` used by caches and resume validation; it does
+not depend on row order.
 
 ### Deterministic splitting
 
@@ -522,7 +549,10 @@ generation_usage = generated.usage
 
 `SourceSpan` is a zero-based half-open range. TunaRAG validates spans, confidence, cardinality,
 source IDs, and usage. Generated examples carry provenance and `synthetic=True`. Review them before
-using them as gold data. Generation usage is separate from optimization usage.
+using them as gold data. Generation usage is separate from optimization usage. Every document is
+attempted; if some fail, the error lists each failed document and its cause. Pass
+`allow_partial=True` to keep the successful documents instead (failed IDs are in
+`generated.failed_document_ids`).
 
 ## Search spaces and strategies
 
@@ -637,7 +667,13 @@ class RetrievalEvaluator:
 
 `MetricEvaluator` accepts sync or async scorers. `None`, NaN, and infinity become unavailable;
 nonnumeric values raise `EvaluationError`. Coverage must be `[0, 1]`. `tunarag.objective` is a
-reserved metric name.
+reserved metric name. `MetricValue` rejects NaN and infinity, so a custom evaluator that produces
+one fails that trial (the study continues); return `None` for "no value".
+
+Without `identity=`, a `MetricEvaluator`'s identity includes a digest of its scorer's code, so
+editing a scorer, or swapping one lambda for another, invalidates cached scores. Pass `identity=`
+to declare the scorer's version yourself, for example when its behavior depends on outside state
+(files, models, thresholds read at call time); the code digest is then not used.
 
 ### RAGAS
 
@@ -660,9 +696,12 @@ ragas_evaluator = RagasEvaluator(
 )
 ```
 
-TunaRAG constructs one RAGAS `SingleTurnSample` and calls the async evaluation API. Names receive
-the configured prefix. Mapping and RAGAS failures become `EvaluationError`. Credentials and provider
-configuration remain owned by your RAGAS components.
+TunaRAG constructs one RAGAS `SingleTurnSample` and calls the async evaluation API. Each call uses
+its own copies of the metric objects, so concurrent samples cannot detach each other's judge LLM.
+Names receive the configured prefix. Mapping and RAGAS failures become `EvaluationError`; with
+`raise_exceptions=False`, a sample RAGAS could not score becomes unavailable and lowers the
+metric's coverage. Use `ObjectiveTerm(..., min_coverage=1.0)` for judge metrics that must cover
+every sample. Credentials and provider configuration remain owned by your RAGAS components.
 
 ## Objectives
 
@@ -698,7 +737,10 @@ objective = Objective(
 Bounded metrics are normalized and clamped to `[0, 1]`; bounded minimize terms become
 `1 - normalized`. Unbounded maximize terms use raw values and unbounded minimize terms use negative
 values. Weights are contributions and are not automatically normalized. A missing or unavailable
-required metric makes the objective unavailable.
+required metric makes the objective unavailable, and so does a metric whose coverage (the fraction
+of samples that produced it) is below the term's `min_coverage` (default `0.0`). A metric measured
+on only some samples makes the objective `estimated`. An unavailable objective fails the trial, not
+the study.
 
 Usage does not automatically become an objective metric. Emit `cost_usd` or `latency_seconds` from
 an evaluator when you want those values in the objective.
@@ -748,6 +790,12 @@ cache_policy = "read_write"
 | `TUNARAG_CACHE_POLICY` | `read_write` |
 
 Cache policies: `off`, `read_only`, `write_only`, `read_write`. Settings contain no provider keys.
+
+`Optimizer` reads the limits, concurrency, retry, timeout, and cache-policy settings. The path
+settings and `seed` are resolved values for your application to use: TunaRAG does not open
+`db_path` or `cache_dir` by itself (pass `SQLiteStore(settings.db_path)` and a `SQLiteCache`, as
+below), does not write to `artifact_dir`, and does not seed strategies from `seed` (pass
+`RandomSearch(space, seed=settings.seed)`).
 
 ## Running optimization
 
@@ -835,14 +883,16 @@ Stop conditions are OR-composed:
 |---|---|
 | `MaxTrials(limit)` | Completed trial count reaches the limit |
 | `CostBudget(limit, count_estimated=True)` | Exact plus optional estimated cost reaches limit |
-| `TimeBudget(seconds)` | Wall-clock duration reaches limit |
+| `TimeBudget(seconds)` | Active run time (summed across resumes) reaches limit |
 | `TargetScore(target)` | Any benefit-oriented objective reaches target |
 | `MaxFailures(limit, consecutive=False)` | Total or trailing consecutive failures reach limit |
 | `NoImprovement(patience, min_delta=0, warmup_trials=1)` | Best score stops improving |
 
 Always include a hard bound. Conditions are checked between trial batches, so active trials can
 finish after a cost, time, score, failure, or stagnation threshold is reached. Use `concurrency=1`
-for strict between-trial stopping.
+for strict between-trial stopping. `CostBudget` only sees priced usage: give your adapter
+`token_prices` (or a `usage_mapper` that sets `cost`), otherwise cost is unavailable and the budget
+never triggers. Usage from attempts that fail or time out still counts.
 
 ```python
 from tunarag import RetryPolicy
@@ -856,9 +906,14 @@ policy = RetryPolicy(
 )
 ```
 
-Three retries means four total attempts. Timeouts and connection errors are retryable. A
-`TunaRAGError` retries only when `retryable=True`; other exceptions fail that trial. Backoff is
-deterministic and capped. Attempt usage is append-only, including failed attempts.
+Three retries means four total attempts. Timeouts, connection errors, rate limits (HTTP 429), and
+transient server errors (408 and 5xx) are retryable, including provider SDK exceptions (OpenAI,
+httpx, LiteLLM, Google GenAI, ...) recognized by type name or HTTP status without importing those
+SDKs, and wrapped causes. A `TunaRAGError` retries when `retryable=True` or when it wraps such a
+transient cause; other exceptions fail that trial. Backoff is deterministic and capped. Attempt
+usage is append-only, including failed, timed-out, and cancelled attempts. Each failed attempt is
+logged to the `tunarag` logger with its underlying cause; persisted errors keep only the stage and
+exception type (plus TunaRAG's own message), so third-party text never lands in SQLite or reports.
 
 `concurrency` bounds simultaneous trials; `sample_concurrency` bounds samples inside each trial.
 Their product approximates maximum concurrent adapter calls. Completion may be concurrent, but
@@ -884,8 +939,9 @@ optimizer = Optimizer(
 )
 ```
 
-Identity includes dataset version, candidate, adapter, and evaluators. A hit skips adapter and
-evaluator execution but still calculates the objective and records the trial.
+Identity includes dataset version, candidate, adapter, and evaluators (including digests of
+factory, mapper, and scorer code; see `identity` above). A hit skips adapter and evaluator execution
+but still calculates the objective and records the trial.
 
 Direct API:
 
@@ -928,8 +984,11 @@ resumed = await resumed_optimizer.aresume(dataset, study_id=result.study_id)
 
 Resume validates semantic configuration and dataset identity, returns completed studies without
 provider execution, abandons expired leases, replays committed strategy history, continues
-unfinished work, and schedules new candidates. Unknown, failed, cancelled, or incompatible studies
-raise `ResumeError`. An active lease produces a retryable error; retry later.
+unfinished work, and schedules new candidates. Interrupted (Ctrl-C/cancelled) and crashed (failed)
+studies resume too: their in-flight trials are re-run. A cancellation releases its attempts at
+once; after a hard process kill, attempts stay leased until `trial_timeout_seconds + 60` passes,
+and resuming earlier raises a retryable `ResumeError`. Unknown or incompatible studies raise
+`ResumeError`.
 
 Read persisted state:
 
@@ -990,9 +1049,10 @@ optimizer = Optimizer(
 )
 ```
 
-One MLflow run is created per study. Candidate parameters, committed metrics, statuses, and event
+One MLflow run is created per study, also across processes: a resumed study finds its run by the
+`tunarag.study_id` tag and reopens it. Candidate parameters, committed metrics, statuses, and event
 position are mirrored. An MLflow outage does not invalidate local results. Automatic external
-reconciliation is not included in V0.2.
+reconciliation of missed events is not included.
 
 ## Results and reports
 
@@ -1039,8 +1099,11 @@ result.write_json("artifacts/result.json")
 result.write_csv("artifacts/trials.csv")
 ```
 
-Reports are deterministic and redacted. Usage separates exact and estimated cost. A completed result
-may have no best candidate if every trial failed or every objective was unavailable.
+Reports are deterministic and redacted. Usage separates exact and estimated cost; `usage.status`
+says how well cost is known: `exact` (every model call has an exact cost), `estimated` (some are
+estimated or unpriced), or `unavailable` (no cost reported, never shown as an exact $0). A
+completed result may have no best candidate if every trial failed or every objective was
+unavailable.
 
 ## Errors, privacy, and secrets
 
@@ -1116,7 +1179,9 @@ class EvenInteger:
         }
 ```
 
-Provider descriptions and component fingerprints must not expose secrets.
+Custom parameters are identified for cache and resume by their type and `describe()` output, so
+keep `describe()` complete and deterministic. Provider descriptions and component fingerprints must
+not expose secrets.
 
 ## Production checklist
 
@@ -1135,7 +1200,7 @@ Provider descriptions and component fingerprints must not expose secrets.
 
 ## Limitations and glossary
 
-V0.2 does not provide a hosted service/dashboard, automatic RAG construction, vector-database
+V0.4 does not provide a hosted service/dashboard, automatic RAG construction, vector-database
 provisioning, distributed workers, Pareto optimization, Bayesian/evolutionary search, encrypted
 payloads, MLflow reconciliation, provider pricing management, or a TypeScript implementation.
 LangChain, LangGraph, and Google ADK 2.x are official integrations. Additional frameworks require a future first-party integration; custom RAG adapters are unsupported.

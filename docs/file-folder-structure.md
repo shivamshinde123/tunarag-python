@@ -37,6 +37,13 @@ covers these failure cases. Neither diagram assets nor authoring tools enter PyP
 `scripts/render_docs_diagrams.py` regenerates existing Pages SVGs through an installed
 Mermaid CLI and sets intrinsic image sizes so tall diagrams do not collapse in browsers.
 
+The "how it works" diagram series lives under `docs/diagrams/`: seven editable `.excalidraw`
+sources (logos embedded), their 2x PNG exports in `docs/diagrams/png/`, and a `README.md` giving
+the reading order and a talk track for each diagram.
+
+`docs/audit-2026-11-21/` holds a full code-vs-documentation audit (`README.md`) and the probe and
+real-RAG scripts that reproduce each finding (`scripts/`).
+
 ```text
 tunarag-python/
 |-- .github/workflows/ci.yml # Linux/Windows quality and build matrix

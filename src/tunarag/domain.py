@@ -1,5 +1,6 @@
 """Immutable domain values shared by the package contracts."""
 
+import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from enum import Enum
@@ -43,6 +44,8 @@ class MetricValue:
             raise ValueError("metric coverage must be between 0 and 1")
         if self.value is not None and not isinstance(self.value, (int, float)):
             raise TypeError("metric value must be numeric or None")
+        if self.value is not None and not math.isfinite(self.value):
+            raise ValueError("metric value must be finite; use None for an unavailable value")
 
 
 @dataclass(frozen=True, slots=True)
@@ -66,8 +69,8 @@ class UsageRecord:
                 raise ValueError(f"{name} must not be negative")
         for name in ("cost", "latency_seconds"):
             usage_value: Any = getattr(self, name)
-            if usage_value is not None and usage_value < 0:
-                raise ValueError(f"{name} must not be negative")
+            if usage_value is not None and (not math.isfinite(usage_value) or usage_value < 0):
+                raise ValueError(f"{name} must be finite and not negative")
 
 
 @dataclass(frozen=True, slots=True)

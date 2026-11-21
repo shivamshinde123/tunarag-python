@@ -42,12 +42,12 @@ def test_langchain_adapter_has_minimal_runnable_defaults() -> None:
     output, usage = asyncio.run(adapter.run(candidate, example()))
 
     assert output == {"answer": message}
-    assert runnable.calls == [
-        (
-            {"question": "What is TunaRAG?"},
-            {"configurable": {"top_k": 3}},
-        )
-    ]
+    assert len(runnable.calls) == 1
+    runnable_input, config = runnable.calls[0]
+    assert runnable_input == {"question": "What is TunaRAG?"}
+    assert config["configurable"] == {"top_k": 3}
+    # A usage callback rides along so token counts are captured even for string outputs.
+    assert len(config["callbacks"]) == 1
     assert usage[0] == UsageRecord(
         component="langchain.message",
         input_tokens=4,
@@ -108,6 +108,7 @@ def test_runnable_factory_builds_per_candidate_and_customizes_usage() -> None:
     assert built == [candidate]
     assert usage[0] == UsageRecord("provider", output_tokens=1)
     assert adapter.fingerprint()["identity"] == {"pipeline": "support-rag-v2"}
+    # With an explicit identity, callables are identified by name, not by code digest.
     assert adapter.fingerprint()["factory"].endswith("factory")
 
 
