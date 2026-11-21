@@ -20,7 +20,7 @@ Every finding below was **reproduced**. The scripts are in [`scripts/`](scripts/
 ## Status: all findings fixed (2026-11-21)
 
 Every finding below was fixed in the same session. Each has a regression test in
-[`tests/test_audit_regressions.py`](../../tests/test_audit_regressions.py) (27 tests), and the
+[`tests/test_audit_regressions.py`](../../tests/test_audit_regressions.py) (28 tests), and the
 real-model runs were repeated against the fixed code.
 
 **Results after the fixes:**
