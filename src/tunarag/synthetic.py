@@ -98,6 +98,7 @@ class SyntheticDatasetResult:
 
     dataset: EvaluationDataset
     usage: tuple[UsageRecord, ...]
+    failed_document_ids: tuple[str, ...] = ()
 
 
 class SyntheticDatasetBuilder:
@@ -111,6 +112,7 @@ class SyntheticDatasetBuilder:
         concurrency: int = 4,
         seed: int = 0,
         generator_version: str = "unspecified",
+        allow_partial: bool = False,
     ) -> None:
         for name, value in (
             ("samples_per_document", samples_per_document),
@@ -125,6 +127,9 @@ class SyntheticDatasetBuilder:
         self._concurrency = concurrency
         self._seed = seed
         self._generator_version = _required_text(generator_version, "generator version")
+        if not isinstance(allow_partial, bool):
+            raise TypeError("allow_partial must be a boolean")
+        self._allow_partial = allow_partial
 
     async def generate(self, documents: Sequence[SourceDocument]) -> SyntheticDatasetResult:
         """Generate and validate examples in source-document order."""
@@ -151,11 +156,37 @@ class SyntheticDatasetBuilder:
                     ) from error
                 return _validate_response(response, request)
 
-        responses = await asyncio.gather(*(bounded(document) for document in documents))
+        # Every document finishes; one failure does not discard the others' paid generations.
+        outcomes = await asyncio.gather(
+            *(bounded(document) for document in documents), return_exceptions=True
+        )
+        failed: list[str] = []
+        causes: list[dict[str, Any]] = []
+        succeeded: list[tuple[SourceDocument, SyntheticGenerationResponse]] = []
+        for document, outcome in zip(documents, outcomes, strict=True):
+            if isinstance(outcome, DatasetError):
+                failed.append(document.id)
+                causes.append(
+                    {"document_id": document.id, "error": outcome.message, **dict(outcome.details)}
+                )
+            elif isinstance(outcome, BaseException):
+                raise outcome
+            else:
+                succeeded.append((document, outcome))
+        if failed and (not self._allow_partial or not succeeded):
+            raise DatasetError(
+                f"synthetic QA generation failed for {len(failed)} of {len(documents)} "
+                f"documents (first: {causes[0]['error']})",
+                details={
+                    "failures": causes,
+                    "succeeded_document_ids": [document.id for document, _ in succeeded],
+                    "hint": "pass allow_partial=True to keep successful documents",
+                },
+            )
         examples: list[EvaluationExample] = []
         usage: list[UsageRecord] = []
         provider_identity = _provider_identity(self._provider)
-        for document, response in zip(documents, responses, strict=True):
+        for document, response in succeeded:
             request_seed = _document_seed(self._seed, document.id)
             usage.extend(response.usage)
             for index, item in enumerate(response.items):
@@ -196,7 +227,9 @@ class SyntheticDatasetBuilder:
                         synthetic=True,
                     )
                 )
-        return SyntheticDatasetResult(EvaluationDataset(tuple(examples)), tuple(usage))
+        return SyntheticDatasetResult(
+            EvaluationDataset(tuple(examples)), tuple(usage), tuple(failed)
+        )
 
 
 def _validate_response(

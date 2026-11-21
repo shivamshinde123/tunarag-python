@@ -93,14 +93,19 @@ class MLflowCallback:
         client = self._client_or_import()
         run_id = self._run_ids.get(event.study_id)
         if run_id is None:
-            tags = {
-                **self._tags,
-                "tunarag.study_id": event.study_id,
-                "tunarag.mirror": "event-callback",
-            }
-            run = client.create_run(self._experiment_id, tags=tags)
-            run_id = str(run.info.run_id)
+            # One run per study, also across processes: a resumed study reuses its run.
+            run_id = self._existing_run_id(client, event.study_id)
+            if run_id is None:
+                tags = {
+                    **self._tags,
+                    "tunarag.study_id": event.study_id,
+                    "tunarag.mirror": "event-callback",
+                }
+                run = client.create_run(self._experiment_id, tags=tags)
+                run_id = str(run.info.run_id)
             self._run_ids[event.study_id] = run_id
+        if event.type == "study.resumed" and hasattr(client, "update_run"):
+            client.update_run(run_id, status="RUNNING")
         client.set_tag(run_id, "tunarag.last_event", event.type)
         client.set_tag(run_id, "tunarag.last_event_sequence", event.sequence)
         if trial is not None:
@@ -128,6 +133,18 @@ class MLflowCallback:
             1.0 if trial.status is TrialStatus.FAILED else 0.0,
             step=trial.sequence,
         )
+
+    def _existing_run_id(self, client: MLflowClient, study_id: str) -> str | None:
+        search = getattr(client, "search_runs", None)
+        if search is None:
+            return None
+        runs = search(
+            [self._experiment_id],
+            filter_string=f"tags.`tunarag.study_id` = '{study_id}'",
+            max_results=1,
+            order_by=["attributes.start_time ASC"],
+        )
+        return str(runs[0].info.run_id) if runs else None
 
     def _client_or_import(self) -> MLflowClient:
         if self._client is not None:

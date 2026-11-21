@@ -83,13 +83,17 @@ def test_observations_and_replay_are_supplied_to_later_requests() -> None:
     provider = SequenceProvider([{"top_k": 2, "model": "small"}])
     strategy = LLMSearch(space(), provider)
     prior = Candidate({"top_k": 1, "model": "large"})
-    asyncio.run(strategy.replay(prior, (), ()))
+    unfinished = Candidate({"top_k": 3, "model": "small"})
+    # A live run only observes committed successes, so replay must match: an unfinished or
+    # failed reservation (no metrics) advances the suggestion counter but adds no history.
+    asyncio.run(strategy.replay(unfinished, (), ()))
+    asyncio.run(strategy.replay(prior, (MetricValue("quality", 0.4),), ()))
     asyncio.run(strategy.observe(prior, (MetricValue("quality", 0.5),), ()))
 
     asyncio.run(strategy.suggest())
 
     request = provider.requests[0]
-    assert request.suggestion_number == 1
+    assert request.suggestion_number == 2
     assert [item.candidate for item in request.observations] == [prior, prior]
     assert request.observations[1].metrics == (MetricValue("quality", 0.5),)
 

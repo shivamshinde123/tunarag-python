@@ -17,7 +17,7 @@ class FixturePipeline(LangChainAdapter):
             candidate, example = payload
             return await fixture.run(candidate, example)
 
-        super().__init__(RunnableLambda(invoke))
+        super().__init__(RunnableLambda(invoke), identity={"fixture": "engine-test"})
 
     async def run(self, candidate: Any, example: Any) -> Any:
         return await self._runnable.ainvoke((candidate, example))

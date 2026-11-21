@@ -70,7 +70,7 @@ def test_builder_redacts_provider_exception_messages() -> None:
         asyncio.run(builder.generate((SourceDocument("doc", "private source"),)))
 
     assert "private source" not in str(raised.value)
-    assert raised.value.details["cause"] == "RuntimeError"
+    assert raised.value.details["failures"][0]["cause"] == "RuntimeError"
 
 
 def test_builder_validates_counts_spans_and_inputs() -> None:

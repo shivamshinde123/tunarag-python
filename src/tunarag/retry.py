@@ -53,11 +53,56 @@ class RetryPolicy:
         )
 
     def is_retryable(self, error: BaseException) -> bool:
-        """Classify known transient failures without parsing messages."""
+        """Classify known transient failures without parsing messages.
 
-        if isinstance(error, TunaRAGError):
-            return error.retryable
-        return isinstance(error, (TimeoutError, asyncio.TimeoutError, ConnectionError))
+        Besides Python's own timeout/connection errors, this recognizes provider SDK
+        failures (OpenAI, httpx, LiteLLM, Google GenAI, Anthropic, ...) by exception type
+        name or HTTP status, without importing those SDKs: timeouts, dropped connections,
+        rate limits (429), and transient server errors (408, 5xx). Wrapped causes count.
+        """
+
+        current: BaseException | None = error
+        for _ in range(5):  # follow explicit `raise ... from` chains a few levels
+            if current is None:
+                return False
+            if isinstance(current, TunaRAGError):
+                if current.retryable:
+                    return True
+            elif _is_transient(current):
+                return True
+            current = current.__cause__
+        return False
+
+
+_TRANSIENT_TYPE_NAMES = frozenset(
+    {
+        "APITimeoutError",
+        "APIConnectionError",
+        "RateLimitError",
+        "InternalServerError",
+        "ServiceUnavailableError",
+        "Timeout",
+        "TimeoutException",
+        "TransportError",
+        "NetworkError",
+        "ConnectError",
+        "ReadError",
+        "RemoteProtocolError",
+    }
+)
+_TRANSIENT_STATUS_CODES = frozenset({408, 425, 429, 500, 502, 503, 504, 529})
+
+
+def _is_transient(error: BaseException) -> bool:
+    if isinstance(error, (TimeoutError, asyncio.TimeoutError, ConnectionError)):
+        return True
+    if any(cls.__name__ in _TRANSIENT_TYPE_NAMES for cls in type(error).__mro__):
+        return True
+    for attribute in ("status_code", "code", "status"):
+        value = getattr(error, attribute, None)
+        if isinstance(value, int) and not isinstance(value, bool):
+            return value in _TRANSIENT_STATUS_CODES
+    return False
 
 
 def _validate_optional_timeout(name: str, value: float | None) -> None:

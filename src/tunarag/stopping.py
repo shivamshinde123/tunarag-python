@@ -16,6 +16,7 @@ class StopContext:
     successful_trials: int = 0
     failed_trials: int = 0
     objective_scores: tuple[float | None, ...] = ()
+    failure_history: tuple[bool, ...] = ()
 
     def __post_init__(self) -> None:
         if (
@@ -33,6 +34,8 @@ class StopContext:
             raise ValueError("trial status counts exceed completed trials")
         if self.objective_scores and len(self.objective_scores) != self.completed_trials:
             raise ValueError("objective score history must match completed trials")
+        if self.failure_history and len(self.failure_history) != self.completed_trials:
+            raise ValueError("failure history must match completed trials")
         for name in ("exact_cost", "estimated_cost", "elapsed_seconds"):
             value = getattr(self, name)
             if not math.isfinite(value) or value < 0:
@@ -133,9 +136,13 @@ class MaxFailures:
     def should_stop(self, context: StopContext) -> bool:
         if not self.consecutive:
             return context.failed_trials >= self.limit
+        # Count trailing failed trials only; cancelled or abandoned trials are not failures.
+        history = context.failure_history or tuple(
+            score is None for score in context.objective_scores
+        )
         failures = 0
-        for score in reversed(context.objective_scores):
-            if score is not None:
+        for failed in reversed(history):
+            if not failed:
                 break
             failures += 1
         return failures >= self.limit

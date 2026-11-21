@@ -1,5 +1,6 @@
 """Objective aggregation for quality, cost, and latency metrics."""
 
+import math
 from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
@@ -23,10 +24,18 @@ class ObjectiveTerm:
     direction: ObjectiveDirection = ObjectiveDirection.MAXIMIZE
     minimum: float | None = None
     maximum: float | None = None
+    min_coverage: float = 0.0
+    """Fraction of samples that must have produced the metric (e.g. 1.0 for judge metrics)."""
 
     def __post_init__(self) -> None:
         if not self.metric.strip():
             raise ValueError("objective metric must not be empty")
+        if (
+            isinstance(self.min_coverage, bool)
+            or not math.isfinite(self.min_coverage)
+            or not 0.0 <= self.min_coverage <= 1.0
+        ):
+            raise ValueError("objective min_coverage must be between 0 and 1")
         if self.weight < 0:
             raise ValueError("objective weight must not be negative")
         if self.minimum is not None and self.maximum is not None and self.minimum >= self.maximum:
@@ -61,7 +70,7 @@ class Objective:
         status = ValueStatus.EXACT
         for term in self.terms:
             metric = by_name.get(term.metric)
-            if metric is None or metric.value is None:
+            if metric is None or metric.value is None or metric.coverage < term.min_coverage:
                 return ObjectiveResult(None, ValueStatus.UNAVAILABLE)
             value = float(metric.value)
             if term.minimum is not None and term.maximum is not None:
@@ -70,6 +79,7 @@ class Objective:
             if term.direction is ObjectiveDirection.MINIMIZE:
                 value = 1.0 - value if term.minimum is not None else -value
             score += term.weight * value
-            if metric.status is ValueStatus.ESTIMATED:
+            # A metric measured on only some samples is an estimate of the full-dataset value.
+            if metric.status is ValueStatus.ESTIMATED or metric.coverage < 1.0:
                 status = ValueStatus.ESTIMATED
         return ObjectiveResult(score, status)

@@ -251,7 +251,7 @@ def _trial_dict(trial: TrialSummary) -> dict[str, Any]:
 def _trial_csv_row(
     study_id: str, trial: TrialSummary, metric_names: tuple[str, ...]
 ) -> dict[str, Any]:
-    usage = _summarize_usage(trial.usage)
+    usage = summarize_usage(trial.usage)
     candidate = redact(trial.candidate.parameters)
     row: dict[str, Any] = {
         "study_id": study_id,
@@ -287,11 +287,27 @@ def _objective_score(trial: TrialSummary) -> float:
     return trial.objective.score
 
 
-def _summarize_usage(records: tuple[UsageRecord, ...]) -> UsageSummary:
-    statuses = {record.status for record in records}
-    if not records or statuses == {ValueStatus.UNAVAILABLE}:
+def summarize_usage(records: tuple[UsageRecord, ...]) -> UsageSummary:
+    """Aggregate usage; `status` describes how well the dollar cost is known.
+
+    A record without a cost never counts as an exact $0: if no record reports a cost the
+    status is `unavailable`, and if only some model calls are priced it is `estimated`.
+    Latency-only records (no tokens and no cost) do not affect the cost status.
+    """
+
+    priced = [record for record in records if record.cost is not None]
+    billable = [
+        record
+        for record in records
+        if record.cost is not None
+        or record.input_tokens is not None
+        or record.output_tokens is not None
+    ]
+    if not priced:
         status = ValueStatus.UNAVAILABLE
-    elif statuses == {ValueStatus.EXACT}:
+    elif len(priced) == len(billable) and all(
+        record.status is ValueStatus.EXACT for record in priced
+    ):
         status = ValueStatus.EXACT
     else:
         status = ValueStatus.ESTIMATED
@@ -299,10 +315,10 @@ def _summarize_usage(records: tuple[UsageRecord, ...]) -> UsageSummary:
         input_tokens=sum(record.input_tokens or 0 for record in records),
         output_tokens=sum(record.output_tokens or 0 for record in records),
         exact_cost=sum(
-            record.cost or 0.0 for record in records if record.status is ValueStatus.EXACT
+            cast(float, record.cost) for record in priced if record.status is ValueStatus.EXACT
         ),
         estimated_cost=sum(
-            record.cost or 0.0 for record in records if record.status is not ValueStatus.EXACT
+            cast(float, record.cost) for record in priced if record.status is not ValueStatus.EXACT
         ),
         latency_seconds=sum(record.latency_seconds or 0.0 for record in records),
         status=status,

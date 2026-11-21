@@ -50,19 +50,23 @@ Authentication, invalid configuration/output, and missing ground truth are nonre
 rate limits, transient networks, and provider 5xx responses are generally retryable. Exhausted
 trial failure does not fail the study by default.
 
-The implemented `RetryPolicy` retries structured errors explicitly marked retryable plus
-timeouts and connection failures. Attempt numbers start at zero and every retry starts a new
+The implemented `RetryPolicy` retries structured errors explicitly marked retryable, timeouts,
+connection failures, rate limits, and transient 408/5xx provider errors (recognized by exception
+type name or HTTP status, including wrapped causes). Attempt numbers start at zero and every retry starts a new
 leased attempt. Backoff is deterministic exponential delay capped by policy. A failed
 retryable attempt commits its observed usage and terminal attempt state in one transaction,
-while the trial remains running. Sample timeout wraps each adapter and evaluator call; trial
-timeout wraps complete dataset execution. Cancellation is never converted into a retry.
+while the trial remains running. Usage is appended per finished sample, so a trial timeout or
+cancellation still records the usage already spent. Sample timeout wraps each adapter and
+evaluator call; trial timeout wraps complete dataset execution. Cancellation is never converted
+into a retry: the attempt is finished as cancelled and the trial stays recoverable.
 
 Resume compares dataset, search-space, objective, adapter, evaluator, strategy, schema, and
 cache fingerprints; abandons expired attempts; reconstructs budgets; replays terminal results;
 and continues sequence numbers. Incompatibility requires an explicit fork.
 
-This flow is implemented for created, running, and completed compatible studies. Failed and
-cancelled studies are terminal. Recovery is scoped to one study, and unexpired attempt leases
+This flow is implemented for created, running, cancelled, failed, and completed compatible
+studies; cancelled and failed studies transition back to running and their in-flight trials are
+re-run. `TimeBudget` counts the active run time recorded in earlier segments of the event log. Recovery is scoped to one study, and unexpired attempt leases
 produce a retryable `ResumeError`. Terminal summaries are rebuilt from metrics, append-only
 usage, attempts, trial errors, and cache-hit events. Pending and recoverable trials execute
 before new suggestions. The durable `study.stopping` event preserves the result stop reason.

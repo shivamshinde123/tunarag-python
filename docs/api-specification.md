@@ -60,10 +60,13 @@ state or rebuild retrievers, prompts, splitters, and models. Output mappers rece
 output. Usage mappers return `UsageRecord` values.
 
 The adapters always report exact invocation latency. With automatic message usage enabled, they
-recursively collect unique mapping, sequence, or message objects exposing standard
-`usage_metadata.input_tokens` and `usage_metadata.output_tokens`. Provider costs remain unknown
-unless an explicit usage mapper supplies them. Framework exceptions propagate to the optimizer's
-normal timeout, retry, redaction, and trial-isolation boundaries.
+attach LangChain's `UsageMetadataCallbackHandler` to the invocation config (appended to any
+callbacks the config mapper supplies) and report one `<framework>.model:<model>` record per model
+seen; when the handler records nothing they fall back to recursively collecting unique mapping,
+sequence, or message objects exposing standard `usage_metadata`. Provider costs remain unknown
+unless `token_prices` (model -> USD per 1M input/output tokens; estimated cost) or an explicit
+usage mapper supplies them. Framework exceptions propagate to the optimizer's normal timeout,
+retry, redaction, and trial-isolation boundaries.
 
 Adapter fingerprints include framework, schema version, runnable/factory type identity, mapper
 identities, usage behavior, and caller-supplied semantic `identity`. They never introspect a
@@ -132,8 +135,12 @@ reads provider credentials, or creates directories. `Settings.as_dict` is safe t
 trial_timeout_seconds=300.0, base_delay_seconds=0.5,
 max_delay_seconds=30.0)` validates bounded attempts and deterministic capped exponential
 backoff. `None` disables an individual timeout when constructing the policy directly. Known
-retryable failures are structured `TunaRAGError` values marked `retryable`, `TimeoutError`, and
-`ConnectionError`; arbitrary exceptions are nonretryable.
+retryable failures are `TimeoutError`, `ConnectionError`, structured `TunaRAGError` values marked
+`retryable`, and provider SDK exceptions recognized without importing the SDK: by type name in the
+exception's MRO (`APITimeoutError`, `APIConnectionError`, `RateLimitError`, `InternalServerError`,
+`ServiceUnavailableError`, httpx `TimeoutException`/`TransportError`/`NetworkError`, ...) or by an
+integer `status_code`/`code`/`status` of 408, 425, 429, 500, 502, 503, 504, or 529. Explicit
+`raise ... from` causes are followed up to five levels. Other exceptions are nonretryable.
 
 `StopContext` carries committed totals, elapsed time, success/failure counts, and objective score
 history in durable trial order. Built-in conditions are `MaxTrials(limit)`, `CostBudget(limit,
@@ -197,8 +204,10 @@ behavioral configuration without exposing secrets.
 `tunarag.integrations.MLflowCallback(store, experiment_id="0", tracking_uri=None, tags=None,
 client=None)` implements `EventCallback`. Install with `pip install 'tunarag-python[mlflow]'`;
 V0.1 supports MLflow `>=3,<4`. Supplying a client enables testing or custom authentication without
-importing MLflow. A callback instance creates one MLflow run per study encountered in the current
-process. On terminal trial events it reads already committed candidates and metrics from SQLite,
+importing MLflow. A callback keeps one MLflow run per study: before creating a run it searches the
+experiment for a run tagged with the study's `tunarag.study_id` (requires a client with
+`search_runs`), so a resumed study reuses its run, and a `study.resumed` event sets it back to
+`RUNNING` (via `update_run` when available). On terminal trial events it reads already committed candidates and metrics from SQLite,
 logs redacted candidate parameters under sequence-qualified names, logs metrics at the durable
 trial sequence step, and records trial status. Study completion/failure/cancellation terminates
 the mirror run as `FINISHED`, `FAILED`, or `KILLED`.
@@ -271,8 +280,9 @@ secret-safe fingerprint when behavior can change without changing the Python typ
 matching configuration hash, abandons expired attempts only in the selected study, rejects live
 leases with retryable `ResumeError`, reconstructs all terminal summaries and usage, replays
 successful trials into the strategy, and continues pending/recoverable work. Compatible
-completed studies load without adapter/evaluator execution. Failed and cancelled studies are
-terminal. The optional `ReplayableSearchStrategy.replay` contract lets a strategy distinguish
+completed studies load without adapter/evaluator execution. Failed and cancelled studies
+transition back to running and continue; cancellation leaves interrupted trials recoverable
+without waiting for a lease. The optional `ReplayableSearchStrategy.replay` contract lets a strategy distinguish
 state restoration from live observation. Replay-aware strategies receive every durably reserved
 candidate, including failed or unfinished trials; ordinary strategies receive only successful
 observations. `RandomSearch` uses replay to verify candidates and advance its seeded generator.
@@ -303,15 +313,20 @@ V0.3 removes the generic public RAG adapter protocol and restricts `Optimizer(ad
 `LangChainAdapter | LangGraphAdapter | GoogleADKAdapter`. A wrong adapter type raises `TypeError`
 before allocating a store. A wrong factory result fails its trial through normal retry policy.
 
-`GoogleADKAdapter(runner=None, *, factory=None, state_mapper=None, output_mapper=None, identity=None)`
-requires exactly one fixed runner or synchronous candidate factory. `state_mapper(candidate)`
-returns initial session state; without it, the candidate parameters are used. `output_mapper(event)`
-receives the final ADK event; by default, the output is an answer mapping containing text parts
-without reasoning parts. A new session is created for every sample/retry and deleted after
+`GoogleADKAdapter(runner=None, *, factory=None, state_mapper=None, output_mapper=None,
+events_mapper=None, token_prices=None, identity=None)` requires exactly one fixed runner or
+synchronous candidate factory, and at most one of `output_mapper`/`events_mapper`.
+`state_mapper(candidate)` returns initial session state; without it, the candidate parameters are
+used. `output_mapper(event)` receives the final ADK event; `events_mapper(events)` receives every
+event of the run. By default, the output is `{"answer": text, "tool_responses": [...]}`: the final
+text parts without reasoning parts, plus every function response (`name`, `response`) seen during
+the run, so retrieval evidence reaches evaluators. A new session is created for every sample/retry and deleted after
 execution, including failure or cancellation. The application retains runner ownership.
-Missing final responses or error events raise `AdapterError`; missing SDKs raise
+Missing final responses or error events raise `AdapterError` (error events carry the ADK
+`error_code`; the free-text `error_message` is only logged); missing SDKs raise
 `MissingOptionalDependencyError`. Reported input/output tokens and runner latency are returned as
-`UsageRecord` values; provider cost is unavailable by default.
+`UsageRecord` values; provider cost is unavailable unless `token_prices` is keyed by the event's
+`model_version`.
 
 The distribution is `tunarag-python`; the import package is `tunarag`. Public APIs follow
 semantic versioning. SQLite schemas and cache formats have independent versions and explicit

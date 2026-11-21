@@ -17,11 +17,11 @@ or changes semantics through a hidden environment mode.
 | `TUNARAG_HOME` | Platform data directory | Base local state |
 | `TUNARAG_DB_PATH` | `<home>/experiments.db` | SQLite database |
 | `TUNARAG_CACHE_DIR` | `<home>/cache` | Cache payloads |
-| `TUNARAG_ARTIFACT_DIR` | `<home>/artifacts` | Reports and exports |
+| `TUNARAG_ARTIFACT_DIR` | `<home>/artifacts` | Resolved for your reports and exports; TunaRAG does not write here itself |
 | `TUNARAG_MAX_TRIALS` | `25` | Trial limit |
 | `TUNARAG_CONCURRENCY` | `4` | Trial concurrency |
 | `TUNARAG_SAMPLE_CONCURRENCY` | `8` | Per-trial sample concurrency |
-| `TUNARAG_SEED` | `0` | Root seed |
+| `TUNARAG_SEED` | `0` | Resolved seed for your strategies (e.g. `RandomSearch(space, seed=settings.seed)`); not applied automatically |
 | `TUNARAG_MAX_RETRIES` | `2` | Retry limit |
 | `TUNARAG_SAMPLE_TIMEOUT_SECONDS` | `60.0` | Deadline for each adapter or evaluator call |
 | `TUNARAG_TRIAL_TIMEOUT_SECONDS` | `300.0` | Deadline for one complete candidate execution |

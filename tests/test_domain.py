@@ -31,5 +31,5 @@ def test_domain_values_validate_boundaries() -> None:
     with pytest.raises(ValueError, match="coverage"):
         MetricValue("quality", 0.9, coverage=1.1)
 
-    with pytest.raises(ValueError, match="must not be negative"):
+    with pytest.raises(ValueError, match="not negative"):
         UsageRecord("llm", cost=-1)

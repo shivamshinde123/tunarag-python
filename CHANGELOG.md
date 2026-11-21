@@ -1,5 +1,44 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Code audit fixes (`docs/audit-2026-11-21/`), each covered by `tests/test_audit_regressions.py`:
+  - A NaN or infinite metric or cost fails only its trial instead of crashing the study.
+  - Ctrl-C/cancelled and crashed (failed) studies can be resumed; interrupted trials re-run.
+  - Token usage is captured from every chat-model call (LangChain usage callback), including
+    string-output chains such as `create_retrieval_chain`; new `token_prices` option on all
+    adapters gives an estimated cost so `CostBudget` works.
+  - Unknown cost is reported as `unavailable`, not an exact $0.
+  - Usage from failed, timed-out, and cancelled attempts is recorded.
+  - Provider timeouts, connection errors, rate limits (429), and 408/5xx errors are retryable,
+    including OpenAI, httpx, LiteLLM, and Google GenAI exceptions and wrapped causes.
+  - Without an explicit `identity`, evaluator and adapter identities include digests of
+    scorer, factory, mapper, wrapped function, graph node, and ADK agent code, and adapters
+    warn. An explicit `identity` (now also accepted by `MetricEvaluator`) is the declared
+    version and replaces the code digests.
+  - RAGAS evaluations use per-call metric copies, fixing a race that silently dropped samples.
+  - Objectives mark partial-coverage metrics `estimated`; new `ObjectiveTerm.min_coverage`.
+  - Google ADK output includes `tool_responses` (retrieval evidence); new `events_mapper`;
+    error events keep their error code.
+  - MLflow reuses one run per study across processes and reopens it on resume.
+  - Custom search-space parameters (sample/accepts/describe) work with the optimizer.
+  - `TimeBudget` counts active time across resumes; consecutive `MaxFailures` ignores
+    cancelled trials; LLMSearch replay matches a live run's history.
+  - Dataset versions ignore row order; duplicate rows report their record numbers.
+  - Synthetic generation reports every failed document; `allow_partial=True` keeps the rest.
+  - Floats and numeric strings no longer share a hash.
+  - Failed attempts log their underlying cause to the `tunarag` logger.
+
+### Migration
+
+- The audit fixes change identity hashes (dataset versions, float encoding, adapter and evaluator
+  fingerprints). Studies started with earlier versions cannot be resumed (resume raises
+  `ResumeError`), and earlier evaluation-cache entries are not reused. Completed studies and
+  reports remain readable.
+- Pass `identity=` to every adapter to silence the new warning and version your pipeline.
+
 ## 0.3.1 - 2026-10-09
 
 - Replace both raw Mermaid README blocks with pre-rendered PNG diagrams compatible with PyPI.

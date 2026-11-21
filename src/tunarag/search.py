@@ -271,7 +271,9 @@ class LLMSearch:
     ) -> None:
         del usage
         self._suggestion_number += 1
-        self._observations.append(SearchObservation(candidate, tuple(metrics)))
+        # Match a live run, which only observes committed successes (those have metrics).
+        if metrics:
+            self._observations.append(SearchObservation(candidate, tuple(metrics)))
 
     def fingerprint(self) -> Any:
         provider_type = type(self._provider)

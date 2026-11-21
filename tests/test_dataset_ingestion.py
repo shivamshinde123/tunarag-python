@@ -124,8 +124,12 @@ def test_dataset_errors_do_not_include_record_values(tmp_path) -> None:
 
 
 def test_duplicate_ids_and_invalid_metadata_are_rejected() -> None:
-    with pytest.raises(DatasetError, match="validation"):
+    with pytest.raises(DatasetError, match="duplicate example") as duplicate:
         EvaluationDataset.from_records([{"id": "same", "query": "A"}, {"id": "same", "query": "B"}])
+    assert duplicate.value.details["records"] == [1, 2]
+    with pytest.raises(DatasetError, match="duplicate example") as derived:
+        EvaluationDataset.from_records([{"query": "same"}, {"query": "same"}])
+    assert derived.value.details["records"] == [1, 2]
     with pytest.raises(DatasetError, match="record"):
         EvaluationDataset.from_records([{"query": "A", "metadata": {"bad": float("nan")}}])
 

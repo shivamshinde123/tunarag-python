@@ -44,7 +44,7 @@ Studies own ordered trials. Trials own attempts, candidate configurations, metri
 
 ## Recovery flow
 
-Load study and terminal observations, mark expired running attempts abandoned, apply retry policy, reconstruct exact and estimated budgets, initialize strategy state, replay observations, rebuild candidate hashes, continue sequence numbers, and emit a resume event with counts.
+Load study and terminal observations (cancelled and failed studies return to running), mark expired running attempts abandoned, apply retry policy, reconstruct exact and estimated budgets and prior active time, initialize strategy state, replay observations, rebuild candidate hashes, continue sequence numbers, and emit a resume event with counts.
 
 ## Current implemented flow
 

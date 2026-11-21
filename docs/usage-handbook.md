@@ -220,9 +220,9 @@ The shared vector store is built once. Changing chunk_size in a SearchSpace alon
 
 create_retrieval_chain returns documents in context. The adapter output mapper converts those into text strings and source IDs alongside the answer. RAGAS wants context strings; retrieval recall wants stable IDs. If each PDF page or chunk has a different ID, use the same ID namespace in relevant_document_ids. Otherwise recall measures an ID mismatch, not retrieval quality.
 
-### A subtle cost limitation in this example
+### What this example's cost figure means
 
-The answer chain normally parses a message into a plain string. That may discard token usage metadata. This example does not implement exact provider-dollar tracking, and a zero or unavailable recorded cost must not be interpreted as free execution. Chapter 13 explains how to preserve AIMessage output and attach a usage mapper.
+The answer chain parses the model's message into a plain string, but the adapter still records token usage: it attaches LangChain's usage callback to every run, so each chat-model call is counted. The example passes token_prices for its default model, so the report shows an estimated dollar cost. That estimate uses list prices you supply; it is not a provider bill, and it covers only the answering model. Embeddings, judge calls, and search requests are billed separately. If you change the model without updating token_prices, cost is reported as unavailable, never as a free $0. Chapter 13 explains the options.
 
 Checkpoint: you can run the framework pipeline without the optimizer, changing top_k changes the retriever, the adapter output has answer/contexts/document_ids, and reports contain successful scored trials.
 
@@ -475,11 +475,15 @@ LLMSearch can fall back to deterministic random proposals when provider response
 
 ## Chapter 13 Track tokens cost and latency
 
-### Preserve model metadata before parsing
+### Automatic token capture and token_prices
 
-Framework chains often convert AIMessage to a string. The string no longer carries usage_metadata or response_metadata. If you need token accounting, preserve the AIMessage in raw output and use the adapter's usage_mapper. The mapper receives raw framework output before output_mapper transforms it.
+LangChainAdapter and LangGraphAdapter attach LangChain's UsageMetadataCallbackHandler to every invocation, so token counts are captured from every chat-model call inside your pipeline, even when the chain turns the AIMessage into a plain string. Records are named after the reported model, for example langchain.model:openai/gpt-4.1-mini. Google ADK reports token counts from its events.
 
-The live-test pipeline preserves the message using RunnablePassthrough as the answer-chain output parser. The following contextual changes apply inside the Chapter 6 factory. Adjust _adapter_output to use result['answer'].content when answer is an AIMessage. The adapter can automatically discover standard usage_metadata when it is preserved; a custom usage_mapper overrides that automatic extraction, so it must return every usage record you want to retain.
+Providers do not report dollar cost to the framework. Pass token_prices={model_name: (usd_per_1m_input, usd_per_1m_output)} to the adapter to get an estimated cost; keys must match the model name your provider reports. Without a price, cost is reported as unavailable, which also means a CostBudget cannot trigger. Supply rates from your own current provider pricing, not invented prices.
+
+### Advanced: a custom usage mapper
+
+Use a usage_mapper only when you need something the automatic capture cannot provide, such as provider-specific billing fields or a pricing model that is not per token. The mapper receives raw framework output before output_mapper transforms it, so the AIMessage must survive in that output. The live-test pipeline preserves the message using RunnablePassthrough as the answer-chain output parser. The following contextual changes apply inside the Chapter 6 factory. Adjust _adapter_output to use result['answer'].content when answer is an AIMessage. A custom usage_mapper replaces the automatic capture, so it must return every usage record you want to retain.
 
 ```python
 from langchain_core.runnables import RunnablePassthrough
@@ -588,7 +592,7 @@ Trial failure isolation means one failed candidate does not necessarily abort th
 
 ### Identity changes are your responsibility
 
-Cache validity depends on the dataset, candidate, adapter, and evaluator identities. Include corpus revision, prompt revision, model, embedding model, and chunking settings where they affect behavior. If you change the corpus behind an unchanged identity, a cache hit can hide the new behavior. An API key should never be included in that identity.
+Cache validity depends on the dataset, candidate, adapter, and evaluator identities. When an adapter or MetricEvaluator has no identity, TunaRAG fingerprints its code (factories, mappers, scorers, wrapped functions, graph nodes, ADK agent), so editing that code invalidates old entries, and adapters print a warning. Code cannot reveal data, so pass identity with corpus revision, prompt revision, model, embedding model, and chunking settings. Once you pass identity it is the declared version and code is no longer fingerprinted: bump it whenever behavior changes. If you change the corpus behind an unchanged identity, a cache hit can hide the new behavior. An API key should never be included in that identity.
 
 Persistent cache and in-process factory cache solve different problems. The factory cache reuses configured framework objects. Evaluation cache reuses prior evaluation work. Neither automatically provisions or persists your vector index. Manage the index's own persistence and version independently.
 
@@ -604,7 +608,7 @@ Privacy labels are metadata, not encryption or a policy enforcement engine. Prot
 
 Save the study ID as soon as it is available in durable storage or callbacks. Resume uses that ID, the same dataset identity, compatible adapter/evaluator/objective/settings identity, and a recreated search strategy with the same seed/provider fingerprint. Creating a new study with the same study_name is not resume.
 
-Committed successful trials are replayed into search history without rerunning provider requests. A completed study can reload from SQLite without provider execution. Unfinished work may need retry/recovery. An active attempt lease is not safely stolen immediately; wait for lease recovery semantics instead of forcing simultaneous runners on the same study.
+Committed successful trials are replayed into search history without rerunning provider requests. A completed study can reload from SQLite without provider execution. A study you stopped with Ctrl-C, or one that crashed, can also be resumed: its interrupted trials run again. After a hard process kill, an active attempt lease is not safely stolen immediately; wait for lease recovery (the trial timeout plus 60 seconds) instead of forcing simultaneous runners on the same study.
 
 Do not change a prompt and then expect the original study to resume as if nothing changed. If compatibility changes, start a new study, record the reason, and compare reports. You can version a campaign in your own naming scheme without weakening the identity checks.
 
@@ -638,7 +642,7 @@ Avoid immediately overwriting a working production configuration. Keep the basel
 
 GoogleADKAdapter accepts a genuine Google ADK 2.x Runner or a candidate-aware factory producing one. It creates isolated evaluation sessions, injects initial state, consumes final events, extracts supported usage evidence, and cleans up sessions. It is not a generic adapter for any object with run_async.
 
-If you pass top_k through initial state, your ADK tools or agent must read that state. If the pipeline's configuration is fixed at construction, use a runner factory that builds the actual agent/tools from candidate parameters. Merely setting a state key does not change retrieval automatically.
+By default the adapter returns the final answer plus every tool response from the run (tool_responses), so evaluators can measure retrieval from the passages your search tool returned. If you pass top_k through initial state, your ADK tools or agent must read that state. If the pipeline's configuration is fixed at construction, use a runner factory that builds the actual agent/tools from candidate parameters. Merely setting a state key does not change retrieval automatically.
 
 The following contextual helper is from the package examples. It expects an existing real Runner and a dataset. It is not a complete ADK application; create your framework RAG agent, retrieval tools, and provider clients according to ADK documentation, then call tune. Your agent must actually consume the candidate setting.
 

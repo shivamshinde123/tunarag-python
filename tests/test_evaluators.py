@@ -122,8 +122,11 @@ def test_ragas_evaluator_wraps_provider_errors_without_message_leakage(
 
 
 def test_ragas_evaluator_requires_optional_dependency(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delitem(sys.modules, "ragas", raising=False)
-    monkeypatch.delitem(sys.modules, "ragas.dataset_schema", raising=False)
+    def missing(name: str) -> Any:
+        raise ImportError(f"{name} is not installed")
+
+    # Works whether or not RAGAS is installed in the test environment.
+    monkeypatch.setattr("tunarag.evaluators.import_module", missing)
     evaluator = RagasEvaluator([object()], lambda _output, _example: {"response": "ok"})
 
     with pytest.raises(MissingOptionalDependencyError):

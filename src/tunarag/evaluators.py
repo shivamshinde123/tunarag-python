@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import inspect
 import math
 from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -12,6 +13,7 @@ from typing import Any
 from .contracts import Fingerprintable
 from .domain import MetricValue, ValueStatus
 from .errors import EvaluationError, MissingOptionalDependencyError
+from .serialization import callable_identity, callable_name
 
 MetricScorer = Callable[[Any, Any], float | None | Awaitable[float | None]]
 RagasSampleMapper = Callable[[Any, Any], Mapping[str, Any]]
@@ -26,6 +28,7 @@ class MetricEvaluator:
         scorer: MetricScorer,
         *,
         status: ValueStatus = ValueStatus.EXACT,
+        identity: Any = None,
     ) -> None:
         if not name.strip():
             raise ValueError("metric name must not be empty")
@@ -36,6 +39,7 @@ class MetricEvaluator:
         self._name = name
         self._scorer = scorer
         self._status = status
+        self._identity = identity
 
     async def evaluate(self, output: Any, example: Any) -> Sequence[MetricValue]:
         """Score one adapter output and evaluation example."""
@@ -53,7 +57,14 @@ class MetricEvaluator:
         return {
             "name": self._name,
             "status": self._status.value,
-            "scorer": _callable_identity(self._scorer),
+            # Without an explicit identity, a code digest makes different lambdas and edited
+            # functions differ; an explicit identity is the declared version instead.
+            "scorer": (
+                callable_identity(self._scorer)
+                if self._identity is None
+                else callable_name(self._scorer)
+            ),
+            "identity": self._identity,
         }
 
 
@@ -100,9 +111,13 @@ class RagasEvaluator:
         try:
             sample = dataset_schema.SingleTurnSample(**dict(sample_data))
             dataset = ragas.EvaluationDataset(samples=[sample])
+            # RAGAS attaches the judge LLM/embeddings to metric objects and detaches them when
+            # each call finishes. Samples run concurrently, so each call gets its own copies;
+            # otherwise one sample's cleanup strips the judge from another mid-evaluation.
+            metrics = [copy.copy(metric) for metric in self._metrics]
             result = await ragas.aevaluate(
                 dataset=dataset,
-                metrics=list(self._metrics),
+                metrics=metrics,
                 llm=self._llm,
                 embeddings=self._embeddings,
                 raise_exceptions=self._raise_exceptions,
@@ -141,7 +156,7 @@ class RagasEvaluator:
 
         return {
             "metrics": [_component_identity(metric) for metric in self._metrics],
-            "sample_mapper": _callable_identity(self._sample_mapper),
+            "sample_mapper": callable_identity(self._sample_mapper),
             "metric_prefix": self._metric_prefix,
             "llm": _component_identity(self._llm),
             "embeddings": _component_identity(self._embeddings),
@@ -167,12 +182,6 @@ def _numeric_score(value: Any, *, metric: str) -> float | None:
         )
     normalized = float(value)
     return normalized if math.isfinite(normalized) else None
-
-
-def _callable_identity(function: Callable[..., Any]) -> str:
-    module = getattr(function, "__module__", type(function).__module__)
-    name = getattr(function, "__qualname__", type(function).__qualname__)
-    return f"{module}.{name}"
 
 
 def _component_identity(component: Any) -> Any:
