@@ -1,5 +1,20 @@
 # Release Checklist
 
+## 0.4.0 release
+
+Ships the code-vs-documentation audit fixes (`docs/audit-2026-11-21/`, PR #57). This is a minor
+release because identity hashes changed: studies started with 0.3.x cannot be resumed and old
+evaluation-cache entries are not reused (see CHANGELOG, Migration). New options: `token_prices`,
+`events_mapper`, `ObjectiveTerm.min_coverage`, `MetricEvaluator(identity=)`, and
+`SyntheticDatasetBuilder(allow_partial=)`. Documentation builds now require `mkdocstrings` 1.x.
+
+- [ ] All PR #57 CI checks pass (Linux and Windows, Python 3.10-3.13, build, live-dependencies).
+- [ ] Merge PR #57; create annotated tag `v0.4.0` on the merge commit.
+- [ ] Run `publish.yml` with `target=pypi` from `v0.4.0`; confirm the trusted publication.
+- [ ] Verify PyPI metadata and a fresh install (`tunarag.__version__ == "0.4.0"`) running the
+  provider-free quickstart.
+- [ ] Create the GitHub release `v0.4.0` from the CHANGELOG 0.4.0 section.
+
 ## 0.3.1 follow-up
 
 This patch ships PyPI-compatible README diagram images, public documentation/asset URLs,

@@ -1200,7 +1200,7 @@ not expose secrets.
 
 ## Limitations and glossary
 
-V0.3 does not provide a hosted service/dashboard, automatic RAG construction, vector-database
+V0.4 does not provide a hosted service/dashboard, automatic RAG construction, vector-database
 provisioning, distributed workers, Pareto optimization, Bayesian/evolutionary search, encrypted
 payloads, MLflow reconciliation, provider pricing management, or a TypeScript implementation.
 LangChain, LangGraph, and Google ADK 2.x are official integrations. Additional frameworks require a future first-party integration; custom RAG adapters are unsupported.

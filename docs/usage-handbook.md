@@ -2,7 +2,7 @@
 
 An editable practical guide to integrating and tuning framework based RAG pipelines
 
-Package version 0.3.1 | Prepared 10 October 2026
+Package version 0.4.0 | Prepared 21 November 2026
 
 This handbook teaches you how to use TunaRAG around a RAG pipeline you already own. Start with an offline LangChain experiment, build a real provider-backed pipeline, connect its tunable settings to a search space, and learn how to judge, inspect, resume, and safely apply the resulting configurations. The later chapters cover LangGraph, Google ADK, LLM-guided search, RAGAS, custom objectives, resource accounting, and operational reliability.
 
@@ -75,7 +75,7 @@ cd tunarag-learning
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install "tunarag-python[langchain]==0.3.1"
+python -m pip install "tunarag-python[langchain]==0.4.0"
 python -c "import tunarag; print(tunarag.__file__)"
 ```
 
@@ -87,7 +87,7 @@ On macOS or Linux, use python3 -m venv .venv and source .venv/bin/activate inste
 
 The LangChain extra installs the framework integration dependency. Provider-specific packages are separate: the complete OpenRouter example needs langchain-openai, langchain-classic, langchain-text-splitters, and python-dotenv. Reading PDFs also needs a loader and a PDF parser. RAGAS and MLflow are optional and should be installed only when you intend to use them.
 
-After a successful pilot, record your actual resolved versions with python -m pip freeze. Pin the dependency environment for repeatable experiments. Package version 0.3.1 is the handbook baseline; provider and framework APIs can change independently. The examples use the API family installed by this package's current extras, not an assertion that every future upstream version is compatible.
+After a successful pilot, record your actual resolved versions with python -m pip freeze. Pin the dependency environment for repeatable experiments. Package version 0.4.0 is the handbook baseline; provider and framework APIs can change independently. The examples use the API family installed by this package's current extras, not an assertion that every future upstream version is compatible.
 
 ### Secrets belong to your application
 
@@ -197,7 +197,7 @@ It includes Python functions for choosing prompts, constructing framework object
 ### Install and prepare the files
 
 ```bash
-python -m pip install "tunarag-python[langchain]==0.3.1" langchain-classic langchain-openai langchain-text-splitters python-dotenv
+python -m pip install "tunarag-python[langchain]==0.4.0" langchain-classic langchain-openai langchain-text-splitters python-dotenv
 ```
 
 Put .env from Chapter 2 next to langchain_full_rag.py. The standalone version below deliberately loads .env from the script's own folder; the repository version loads it from the repository root. Run from your new folder so relative output paths are predictable.
@@ -791,7 +791,7 @@ The handbook includes 35 feature examples from the package README, three reposit
 
 ## Appendix B Verification and reproducibility
 
-This edition is derived from TunaRAG Python 0.3.1 public source, the current README, and its example files. The DOCX builder expands reference sections directly from those files to reduce signature drift. The standalone OpenRouter script changes only the .env location and its accompanying instructions; it is otherwise the repository example.
+This edition is derived from TunaRAG Python 0.4.0 public source, the current README, and its example files. The DOCX builder expands reference sections directly from those files to reduce signature drift. The standalone OpenRouter script changes only the .env location and its accompanying instructions; it is otherwise the repository example.
 
 The preparation checks compile the handbook's Python blocks, check source expansion and documentation structure, exercise the package's README examples offline, and run the existing offline suite. The PDF loader and LLMSearch template are integration examples, not claims of newly completed paid requests. The RAGAS judge template follows the repository's tested 0.4 compatibility path.
 
