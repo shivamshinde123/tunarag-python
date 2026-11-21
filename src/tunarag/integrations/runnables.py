@@ -168,7 +168,7 @@ class _RunnableAdapter:
             counts = _message_usage(raw_output)
         return tuple(
             priced_usage(
-                f"{self._framework}.model", model, input_tokens, output_tokens, self._token_prices
+                f"{self._framework}.message", model, input_tokens, output_tokens, self._token_prices
             )
             for model, input_tokens, output_tokens in counts
         )
@@ -265,15 +265,17 @@ def priced_usage(
     output_tokens: int | None,
     prices: Mapping[str, tuple[float, float]] | None,
 ) -> UsageRecord:
-    """Build a model-call usage record, estimating cost when the model has a price."""
+    """Build a model-call usage record, estimating cost when the model has a price.
 
-    name = component if model is None else f"{component}:{model}"
+    The component name stays stable (callers filter on it); the model only selects the price.
+    """
+
     price = None if prices is None or model is None else prices.get(model)
     if price is None:
-        return UsageRecord(name, input_tokens=input_tokens, output_tokens=output_tokens)
+        return UsageRecord(component, input_tokens=input_tokens, output_tokens=output_tokens)
     cost = ((input_tokens or 0) * price[0] + (output_tokens or 0) * price[1]) / 1_000_000
     return UsageRecord(
-        name,
+        component,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         cost=cost,

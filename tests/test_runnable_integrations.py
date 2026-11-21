@@ -49,7 +49,7 @@ def test_langchain_adapter_has_minimal_runnable_defaults() -> None:
     # A usage callback rides along so token counts are captured even for string outputs.
     assert len(config["callbacks"]) == 1
     assert usage[0] == UsageRecord(
-        component="langchain.model",
+        component="langchain.message",
         input_tokens=4,
         output_tokens=5,
     )

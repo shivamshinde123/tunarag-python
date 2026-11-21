@@ -154,7 +154,7 @@ def test_string_output_chain_still_reports_model_token_usage() -> None:
     assert output == "SQLite"
     model_usage = [item for item in usage if item.input_tokens]
     assert model_usage, "string-output chain lost its token usage"
-    assert model_usage[0].component == "langchain.model:audit-model"
+    assert model_usage[0].component == "langchain.message"
     assert (model_usage[0].input_tokens, model_usage[0].output_tokens) == (11, 3)
     assert model_usage[0].cost == pytest.approx((11 * 1.0 + 3 * 2.0) / 1_000_000)
     assert model_usage[0].status is ValueStatus.ESTIMATED

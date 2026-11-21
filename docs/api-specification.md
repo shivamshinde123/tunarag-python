@@ -61,7 +61,7 @@ output. Usage mappers return `UsageRecord` values.
 
 The adapters always report exact invocation latency. With automatic message usage enabled, they
 attach LangChain's `UsageMetadataCallbackHandler` to the invocation config (appended to any
-callbacks the config mapper supplies) and report one `<framework>.model:<model>` record per model
+callbacks the config mapper supplies) and report one `<framework>.message` record per model
 seen; when the handler records nothing they fall back to recursively collecting unique mapping,
 sequence, or message objects exposing standard `usage_metadata`. Provider costs remain unknown
 unless `token_prices` (model -> USD per 1M input/output tokens; estimated cost) or an explicit

@@ -477,7 +477,7 @@ LLMSearch can fall back to deterministic random proposals when provider response
 
 ### Automatic token capture and token_prices
 
-LangChainAdapter and LangGraphAdapter attach LangChain's UsageMetadataCallbackHandler to every invocation, so token counts are captured from every chat-model call inside your pipeline, even when the chain turns the AIMessage into a plain string. Records are named after the reported model, for example langchain.model:openai/gpt-4.1-mini. Google ADK reports token counts from its events.
+LangChainAdapter and LangGraphAdapter attach LangChain's UsageMetadataCallbackHandler to every invocation, so token counts are captured from every chat-model call inside your pipeline, even when the chain turns the AIMessage into a plain string. Token records are named langchain.message (langgraph.message for graphs); the reported model name, for example openai/gpt-4.1-mini, selects the price. Google ADK reports token counts from its events as google_adk.model records.
 
 Providers do not report dollar cost to the framework. Pass token_prices={model_name: (usd_per_1m_input, usd_per_1m_output)} to the adapter to get an estimated cost; keys must match the model name your provider reports. Without a price, cost is reported as unavailable, which also means a CostBudget cannot trigger. Supply rates from your own current provider pricing, not invented prices.
 

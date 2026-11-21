@@ -317,8 +317,9 @@ By default the adapter attaches LangChain's `UsageMetadataCallbackHandler` to th
 usage is captured from every chat-model call inside the runnable, including chains such as
 `create_retrieval_chain` whose answer is a plain string. If no callback usage is seen (for example
 nested calls on Python 3.10 without an explicit `config`), it falls back to discovering standard
-`usage_metadata` in mappings, sequences, and message objects. Records are named
-`langchain.model:<model name>`. The adapter always adds `langchain.runnable` latency. Set
+`usage_metadata` in mappings, sequences, and message objects. Token records keep the component
+name `langchain.message` (`langgraph.message` for graphs); the reported model name is used to look
+up `token_prices`. The adapter always adds `langchain.runnable` latency. Set
 `capture_message_usage=False` to disable automatic token extraction. A custom `usage_mapper` takes
 precedence.
 
