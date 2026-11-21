@@ -1,12 +1,24 @@
 """Probe non-finite values and dataset identity edge cases. PYTHONPATH=<repo>/src."""
+
 import asyncio
 import math
 
 from langchain_core.runnables import RunnableLambda
 
 from tunarag import (
-    DatasetError, EvaluationDataset, IntegerRange, LangChainAdapter, MaxTrials, MetricValue,
-    Objective, ObjectiveTerm, Optimizer, RandomSearch, SearchSpace, Settings, SQLiteStore,
+    DatasetError,
+    EvaluationDataset,
+    IntegerRange,
+    LangChainAdapter,
+    MaxTrials,
+    MetricValue,
+    Objective,
+    ObjectiveTerm,
+    Optimizer,
+    RandomSearch,
+    SearchSpace,
+    Settings,
+    SQLiteStore,
     UsageRecord,
 )
 
@@ -22,10 +34,15 @@ class NaNEvaluator:  # a custom evaluator, as the README shows (class with evalu
 
 
 def optimizer(evaluator, adapter, store):
-    return Optimizer(adapter=adapter, strategy=RandomSearch(SearchSpace({"k": IntegerRange(1, 3)}), seed=1),
-                     evaluators=[evaluator], objective=Objective((ObjectiveTerm("score"),)), store=store,
-                     settings=Settings.resolve(overrides={"concurrency": 1}, environ={}),
-                     stop_conditions=[MaxTrials(3)])
+    return Optimizer(
+        adapter=adapter,
+        strategy=RandomSearch(SearchSpace({"k": IntegerRange(1, 3)}), seed=1),
+        evaluators=[evaluator],
+        objective=Objective((ObjectiveTerm("score"),)),
+        store=store,
+        settings=Settings.resolve(overrides={"concurrency": 1}, environ={}),
+        stop_conditions=[MaxTrials(3)],
+    )
 
 
 async def run(label, evaluator, adapter):
@@ -41,15 +58,20 @@ async def run(label, evaluator, adapter):
         print(f"{label}: study={r.study_status.value} trials={statuses} {exported}")
     except Exception as error:
         sid = store._connection.execute("SELECT id, status FROM studies").fetchone()
-        print(f"{label}: WHOLE STUDY RAISED {type(error).__name__}: {error} (study status in DB: {sid[1]})")
+        print(
+            f"{label}: WHOLE STUDY RAISED {type(error).__name__}: {error} (study status in DB: {sid[1]})"
+        )
 
 
 async def main():
     plain = LangChainAdapter(RunnableLambda(lambda x: {"a": 1}), identity={"r": 1})
     await run("P5 custom evaluator returns NaN", NaNEvaluator(math.nan), plain)
     await run("P5b custom evaluator returns inf", NaNEvaluator(math.inf), plain)
-    nan_cost = LangChainAdapter(RunnableLambda(lambda x: {"a": 1}), identity={"r": 2},
-                                usage_mapper=lambda o: [UsageRecord("llm", cost=math.nan)])
+    nan_cost = LangChainAdapter(
+        RunnableLambda(lambda x: {"a": 1}),
+        identity={"r": 2},
+        usage_mapper=lambda o: [UsageRecord("llm", cost=math.nan)],
+    )
     await run("P6 usage cost is NaN", NaNEvaluator(1.0), nan_cost)
 
     try:

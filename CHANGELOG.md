@@ -30,6 +30,8 @@
   - Synthetic generation reports every failed document; `allow_partial=True` keeps the rest.
   - Floats and numeric strings no longer share a hash.
   - Failed attempts log their underlying cause to the `tunarag` logger.
+- Documentation builds require `mkdocstrings` 1.x; 0.x fails with `pymdown-extensions` 13
+  (`Highlight.__init__() missing 'md'`).
 
 ### Migration
 
