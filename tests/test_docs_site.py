@@ -67,7 +67,7 @@ def test_internal_sources_are_retained_but_excluded_from_site():
 def test_usage_guide_reuses_all_examples_without_readme_preamble():
     usage = (ROOT / "docs/usage.md").read_text(encoding="utf-8")
     assert 'include-markdown "../README.md" start="## Purpose and mental model"' in usage
-    assert "TunaRAG_Python_Usage_Handbook.docx" in usage
+    assert "TunaRAG_Python_Usage_Handbook.docx" not in usage
 
 
 @pytest.mark.parametrize(

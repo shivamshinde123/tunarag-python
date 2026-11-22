@@ -15,10 +15,9 @@ BUILDER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILDER)
 
 
-def test_readme_links_to_downloadable_handbook():
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    url = "https://shivamshinde123.github.io/tunarag-python/TunaRAG_Python_Usage_Handbook.docx"
-    assert f"[Download the editable DOCX handbook]({url})" in readme
+def test_outdated_handbook_is_not_advertised():
+    for page in ("README.md", "docs/index.md", "docs/usage.md", "docs/landing/index.html"):
+        assert "TunaRAG_Python_Usage_Handbook.docx" not in (ROOT / page).read_text(encoding="utf-8")
     assert (ROOT / "docs" / "TunaRAG_Python_Usage_Handbook.docx").is_file()
 
 
