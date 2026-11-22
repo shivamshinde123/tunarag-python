@@ -44,7 +44,7 @@ REDIRECT_TARGETS = {
     "ui-ux-wireframes": "usage/#running-optimization",
     "file-folder-structure": "component-map/",
     "tech-stack": "package-distribution/",
-    "usage-handbook": "TunaRAG_Python_Usage_Handbook.docx",
+    "usage-handbook": "usage/",
 }
 
 

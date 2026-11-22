@@ -520,3 +520,12 @@ halos, illustration tiles, the lilac band and the mist-tinted cards. Controls st
 uses its own slider glyph and no Popcorn branding. GitHub's About section holds only one website
 link, so it points to the landing page, which links to the documentation. Documentation URLs are
 unchanged.
+
+## 2026-11-22 Stop advertising the usage handbook
+
+The DOCX usage handbook has fallen behind the package, so stop linking it from the README,
+the docs home page, the Usage Guide and the landing page. The retired `usage-handbook` URL
+now redirects to the Usage Guide instead of the download. The file stays published at its old
+URL so the link in the 0.4.0 README on PyPI does not break. The handbook source and
+`scripts/build_usage_handbook.py` remain in the repository for a future refresh. A test
+guards against the links returning while the handbook is out of date.
