@@ -1,62 +1,65 @@
 # TunaRAG landing page: design reference
 
-> A terminal typeset on white paper
+> Warm broadsheet on cream paper, with pastel halos
 
-Adapted from the Vercel style reference on Refero Styles
-(https://styles.refero.design/style/f24daf3a-d43f-4dec-85a9-8ac1d5148a03).
-It borrows the visual system only. The page does not use Vercel's name, triangle mark or brand assets.
-TunaRAG uses its own slider glyph.
+Adapted from the Popcorn style reference on Refero Styles
+(https://styles.refero.design/style/93fe74fd-bac8-4d13-9d5b-3b5e242f74e6).
+It borrows the visual system only. The page does not use Popcorn's name, logo or product imagery.
+TunaRAG uses its own slider glyph, and its product visuals are code and result panels instead of phones.
 
 ## Principles
 
-- Monochrome: a near-white canvas, near-black type and hairline borders. The only colour is
-  Terminal Green, used for confirmations and short emphasised phrases.
-- Two type families. Geist handles reading text and Geist Mono handles labels. Labels, metadata
-  and code are always mono, uppercase where they act as labels, and 11–13px.
-- Depth comes from tone (`#fafafa` → `#ffffff` → `#171717`) and hairline rings, never from drop shadows.
-- The terminal is the demo. Code and run output serve as the product imagery, with no photos or
-  illustrations.
-- Work on a 4px grid with compact density and generous gaps (96–128px) between sections.
+- A serif headline does the emotional work. Display and section titles are set in a high-contrast
+  serif (weight 400, tight tracking). Everything functional is set in a quiet humanist sans.
+- The page sits on a warm cream canvas. Lifted surfaces are white and carry a single soft shadow.
+- Colour comes from pastels only. The conic Spectrum Wash (mint, sage, sky, cream, blush, lilac)
+  forms halos behind the product visuals and fills the feature illustration tiles. The Lilac Field
+  band marks a change of content zone. Mist Blue tints informational cards. Controls stay neutral.
+- Interactive elements are pills (100px radius). Cards use 12px radius, feature cards 24px.
+- The product is the hero. Overlapping, slightly rotated code and results panels float on a halo.
 
 ## Tokens
 
 | Token | Value | Role |
 |---|---|---|
-| `--paper` | `#fafafa` | Page canvas |
-| `--white` | `#ffffff` | Cards, code panels |
-| `--hairline` | `#ebebeb` | 1px borders |
-| `--smoke` | `#a8a8a8` | Placeholder, tertiary |
-| `--slate` | `#7d7d7d` | Integration strip names |
-| `--stone` | `#666666` | Captions, helper text |
-| `--charcoal` | `#4d4d4d` | Body copy |
-| `--obsidian` | `#171717` | Headings, primary buttons, inverted card |
-| `--carbon` | `#000000` | Brand glyph only |
-| `--green` | `#297a3a` | ✓ confirmations, accent phrases |
+| `--graphite` | `#393737` | Text, dark pill buttons, borders at low opacity |
+| `--canvas` | `#f7f7f7` | Page background, badge fills |
+| `--white` | `#ffffff` | Cards and panels |
+| `--fog` | `#888787` | Muted helper text, captions |
+| `--mist` | `#e9eff6` | Cool informational card tint |
+| `--lilac` | `#f3f0f8` | Section-break band |
+| `--wash` | conic 180deg: `#ebf6f2` `#e7f3e0` `#e5eff8` `#fef1d8` `#f7f4fa` `#f7dbe5` | Halos and illustration tiles only |
 
-Type scale: eyebrow 11px mono +0.071em uppercase · caption 13px · body 16px/1.5 · heading
-30px/1.1 −1.5px · display 56–64px/1.0 −0.06em at weight 450 (never above 500).
+Deeper pastel tints such as mint `#cfeee3`, sky `#d6e6f7`, butter `#fbe7b8`, blush `#f5cfdc` and
+lilac `#e4dcf3` may fill icon tiles and wash halos. They never colour text or controls.
 
-Radius: 6px for cards and buttons, 9999px only for nav pills. Card ring:
-`0 0 0 1px rgba(0,0,0,.08), 0 0 0 2px #fafafa`. Ghost ring: `0 0 0 1px #ebebeb`.
+Type: Source Serif 4 (substitute for Untitled Serif) at weight 400 for every heading of 30px and
+above. The display is 84px with −0.03em tracking and line-height 1.0, and sections use 40–58px with
+−0.025em. Inter (substitute for Messina Sans) handles body text at 16px/1.5, the 18px subheading at
+−0.02em, 13px captions, and weight 600 for button labels. Never set the serif below 20px.
 
-Layout: content is capped at 1280px, with 24–48px gutters (16px on phones). The nav is 64px,
-sticky and blurred, with no bottom border.
+Elevation: the only shadow is `rgba(0,0,0,.05) 0 4px 20px`, and it is never stacked.
+
+Layout: content is capped at 1200px, sections are about 96px apart, and phone gutters are 16px.
+Hero and section titles are centred, while body copy and FAQ items are left-aligned.
 
 ## Components
 
-- **Filled button**: `#171717` with white text, 14px, 6px radius. This is the single primary action.
-- **Ghost button**: transparent with a `#ebebeb` ring and `#4d4d4d` text.
-- **Eyebrow**: Geist Mono, 11px, uppercase, 12px above the heading it introduces.
-- **CLI panel**: a white card in 12–13px mono. Commands start with `›` and confirmations with a
-  green `✓`.
-- **Bordered card**: a white card with the ring above, a 30px title and 14–16px charcoal body copy.
-- **Inverted card**: `#171717` with white text. Use at most one per grid.
-- **Integration strip**: framework names in Geist, `#7d7d7d`, on one row with gaps of 24–32px.
+- **Pill CTA**: graphite fill, white Inter 16px/600 text, 100px radius. This is the only filled button.
+- **Status pill badge**: cream fill with a 1px graphite border, 13px text and the soft shadow. It sits
+  above the hero headline.
+- **Icon circle**: a 56px pill circle in cream with a 20%-graphite border and a single-tone line icon.
+- **Feature card**: white, 24px radius, soft shadow, with an illustration tile in a pastel wash.
+- **Product showcase**: two rotated white panels (code and ranked results) overlapping on a conic halo.
+- **Lilac band**: a full-bleed `#f3f0f8` section holding three white cards.
+- **FAQ accordion**: native `<details>` rows on white with a 15%-graphite hairline, no radius, and an
+  18px serif-free question.
 
 ## Don'ts
 
-- Do not add chromatic colour beyond Terminal Green.
-- Do not use radius above 6px on rectangles.
-- Do not use drop shadows.
-- Do not use bold display type.
-- Do not put labels in sans or body copy in mono.
+- Do not use saturated colour on CTAs, links or text.
+- Do not put gradients on buttons, badges or cards. Gradients belong only on halos and tiles.
+- Do not use pure black text.
+- Do not give interactive controls sharp corners.
+- Do not use more than one shadow value.
+- Do not set body line-height below 1.4.

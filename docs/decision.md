@@ -511,9 +511,12 @@ fixed, each with a regression test in `tests/test_audit_regressions.py`. Key dec
 Add a hand-written static landing page at `docs/landing/index.html`. MkDocs copies it unchanged
 to `/tunarag-python/landing/`, so it ships through the existing Pages workflow with no new build
 step, and the strict build and link checker cover its relative links. The visual system follows
-the Vercel style reference on Refero Styles: a monochrome canvas, Geist and Geist Mono, hairline
-borders, and terminal panels as product imagery. The user chose it over the OpenAI, Linear and
-Raycast styles because it suits a pip package whose demo is code. `docs/landing/DESIGN.md`
-records the adapted tokens and is excluded from the docs build. The page uses its own slider glyph
-and no Vercel branding. GitHub's About section holds only one website link, so it points to the
-landing page, which links to the documentation. Documentation URLs are unchanged.
+the Popcorn style reference on Refero Styles: a centred serif display, pill buttons, a cream
+canvas, and pastel conic-gradient halos behind the product visuals, which here are code and
+ranked-results panels. A first draft used the Vercel monochrome style. The user rejected it as too
+dull and black-and-white, so the page now uses every pastel surface the Popcorn system allows: the
+halos, illustration tiles, the lilac band and the mist-tinted cards. Controls stay neutral.
+`docs/landing/DESIGN.md` records the adapted tokens and is excluded from the docs build. The page
+uses its own slider glyph and no Popcorn branding. GitHub's About section holds only one website
+link, so it points to the landing page, which links to the documentation. Documentation URLs are
+unchanged.
