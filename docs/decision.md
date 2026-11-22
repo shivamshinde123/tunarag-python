@@ -529,3 +529,43 @@ now redirects to the Usage Guide instead of the download. The file stays publish
 URL so the link in the 0.4.0 README on PyPI does not break. The handbook source and
 `scripts/build_usage_handbook.py` remain in the repository for a future refresh. A test
 guards against the links returning while the handbook is out of date.
+
+## 2026-11-22 Make an explainer video with Remotion and a casual AI voiceover
+
+Build a ~3:15 explainer in a repository-only `video/` Remotion project. It opens with the
+motivation (tuning a RAG app by eye: changing `top_k`, prompts and models, comparing a few answers,
+and losing track of cost) and then walks through the adapter boundary, the trial loop, data,
+search, scoring, reliability and the quickstart result. Remotion is the default for video work,
+and scenes written in React reuse the landing page's look: cream canvas, serif headings, pastel
+halos, and the colour key from the diagrams. The user asked for an AI voiceover that is not too
+serious, so the script is conversational, and it uses Microsoft's free `edge-tts` neural voice
+`en-US-BrianNeural` (casual, approachable). No ElevenLabs key was available. Each scene lasts as
+long as its narration plus padding, read from `src/durations.json`, so re-voicing re-times the
+video.
+
+Revision after the user's review:
+
+- **Pronunciation.** "RAG" is said as one word (like "tag"), and TunaRAG is said "tune-a-rag".
+  The narration therefore spells them `rag` and `Tune-a-rag`, because TTS reads capitals letter by
+  letter.
+- **No fish.** The package has nothing to do with fish, so all fish jokes and the mascot were
+  removed. The name is explained as "as in: tune a RAG".
+- **Voice.** The multilingual Brian voice switched accent for about a second on the short line
+  "Laptop crashed?" (it detects the language for each sentence). It was replaced with the
+  English-only `en-US-BrianNeural`, and the line now reads "Did your laptop crash?".
+- **Music.** A light 105 BPM bed (keys, plucked arpeggio, bass, soft drums) is synthesized
+  locally by `make_music.py`. A paid AI music call was blocked by the permission system, and
+  local synthesis needs no download or licence. The bed sits about 16 dB under the voice and
+  lifts for the outro.
+
+## 2026-11-22 Publish the explainer video on the landing page
+
+Embed the explainer in a "Watch" section on the landing page, directly under the hero, with a
+nav link. Serve it from GitHub Pages as `docs/landing/media/tunarag-explainer.mp4` instead of
+YouTube or a release asset. Pages supports byte-range requests, so seeking works, and the site
+needs no third-party embed or tracking. The 34 MB Remotion render is re-encoded for the web
+(H.264 CRF 27, AAC 128 kbps, `+faststart`) to 12.3 MB at the same 1080p and 3:14 length, which
+keeps the repository and the Pages artifact small. The flat graphics show no visible loss. The
+poster is the title card at 0:36. `preload="metadata"` means visitors download the video only
+when they press play. If the video is re-rendered, re-run the same `ffmpeg` encode (see
+`video/README.md`).
