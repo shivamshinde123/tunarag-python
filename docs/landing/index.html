@@ -116,6 +116,10 @@ section.block { padding: 96px 0; }
 .head .badge { margin-bottom: 20px; box-shadow: none; }
 .head .sub { margin-top: 16px; }
 
+/* video */
+.video-stage { position: relative; max-width: 1040px; margin: 0 auto; padding: 28px; border-radius: 32px; background: var(--wash); }
+.video-stage video { display: block; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; background: var(--white); box-shadow: var(--shadow); }
+
 /* how it works */
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; text-align: center; }
 .icon-circle { width: 64px; height: 64px; border-radius: 100px; display: grid; place-items: center; margin: 0 auto 20px; border: 1px solid rgba(57,55,55,.2); }
@@ -220,7 +224,8 @@ footer a:hover { color: var(--graphite); }
   .steps { gap: 40px; }
   section.block, .band { padding: 72px 0; }
   .works { padding-bottom: 56px; }
-  .code-stage { padding: 14px; }
+  .code-stage, .video-stage { padding: 10px; border-radius: 20px; }
+  .video-stage video { border-radius: 12px; }
   .extras td:first-child { white-space: normal; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
@@ -235,6 +240,7 @@ footer a:hover { color: var(--graphite); }
       TunaRAG
     </a>
     <nav class="nav-links" aria-label="Primary">
+      <a href="#watch">Watch</a>
       <a href="#how">How it works</a>
       <a href="#features">Features</a>
       <a href="#quickstart">Quickstart</a>
@@ -304,6 +310,22 @@ result = optimizer.optimize(dataset)</pre>
         <span class="chip"><i style="background:var(--blush)"></i>RAGAS</span>
         <span class="chip"><i style="background:var(--lav)"></i>MLflow</span>
         <span class="chip"><i style="background:var(--sage)"></i>SQLite</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="watch" style="padding-top:0">
+    <div class="wrap">
+      <div class="head">
+        <span class="badge">Watch</span>
+        <h2>The whole idea in three minutes.</h2>
+        <p class="sub">Why tuning a RAG app by eye stops working, and how TunaRAG turns it into a repeatable experiment.</p>
+      </div>
+      <div class="video-stage">
+        <video controls playsinline preload="metadata" poster="media/tunarag-explainer-poster.jpg" aria-label="TunaRAG explainer video, 3 minutes 14 seconds">
+          <source src="media/tunarag-explainer.mp4" type="video/mp4">
+          <a href="media/tunarag-explainer.mp4">Download the TunaRAG explainer video (MP4)</a>
+        </video>
       </div>
     </div>
   </section>

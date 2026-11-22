@@ -1,0 +1,42 @@
+[
+  {
+    "id": "01-hook",
+    "text": "Okay, quick confession. Tuning a rag app usually goes like this. You bump top K from three to five. You run it. You read three answers and go... hmm. Better? Maybe? Then you swap the prompt. Then the model. And suddenly it's two A M, your API bill has quietly doubled, and the only record of what you tried is a sticky note that says: top K five, good-ish? There had to be a better way."
+  },
+  {
+    "id": "02-meet",
+    "text": "So I built one. Meet Tune-a-rag. As in: tune a rag. It's an open-source Python library that finds the best configuration for the rag app you already have, balancing answer quality, cost, and speed. And it's just one pip install away."
+  },
+  {
+    "id": "03-adapter",
+    "text": "And here's the best part: you don't rebuild anything. Your LangChain chain, your LangGraph graph, or your Google A D K agent stays exactly the way it is. Your index, your prompts, your API keys? All still yours. Tune-a-rag just slides in through an official adapter. Settings and a question go in. An answer and its usage come out. That's it. No funny business."
+  },
+  {
+    "id": "04-loop",
+    "text": "Under the hood, it's one simple loop. Pick some settings. Run your rag on every test question. Grade the answers. Turn those grades into a score. Learn from it. And go again. Each lap is called a trial, and every single trial gets saved to S Q Lite, so nothing ever gets lost."
+  },
+  {
+    "id": "05-data",
+    "text": "For test questions, bring JSON, JSON L, or CSV. No dataset yet? Let an LLM write question and answer pairs for you. It all becomes one versioned dataset, split the same way every time, so your comparisons stay honest."
+  },
+  {
+    "id": "06-search",
+    "text": "Next, you tell it which knobs to turn. Top K, chunk size, prompt, model, whatever you like. Random search gives you a fair, repeatable baseline. Or let an LLM make smarter guesses. And if its ideas go off the rails? Tune-a-rag quietly falls back to random. Grown-up supervision, built right in."
+  },
+  {
+    "id": "07-scoring",
+    "text": "So how does it know what best means? Evaluators. Write your own checks in a few lines, or plug in Ragas. Then the objective weighs quality, cost, and latency into one single number, so slightly better, but three times the price, doesn't sneak past you. And stop rules, like a budget or a time limit, decide when to call it a day."
+  },
+  {
+    "id": "08-reliability",
+    "text": "And because real life is messy, Tune-a-rag is built to survive it. Did your laptop crash? Resume right where you stopped. Same question twice? The cache skips it. Provider having a bad day? Retries have your back. When you're done, export your results to JSON or CSV, or mirror everything to M L flow."
+  },
+  {
+    "id": "09-code",
+    "text": "Here's what it looks like in code. Wrap your chain, define a search space, pick an evaluator and an objective, and call optimize. In this tiny example, top K of one finds half the right context. Top K of two finds all of it. So Tune-a-rag picks two. Science!"
+  },
+  {
+    "id": "10-close",
+    "text": "So stop tuning by vibes. Pip install tune-a-rag python, point it at your pipeline, and let the data pick the winner. Happy tuning!"
+  }
+]

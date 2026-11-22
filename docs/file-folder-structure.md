@@ -39,11 +39,17 @@ Mermaid CLI and sets intrinsic image sizes so tall diagrams do not collapse in b
 
 The "how it works" diagram series lives under `docs/diagrams/`: seven editable `.excalidraw`
 sources (logos embedded), their 2x PNG exports in `docs/diagrams/png/`, and a `README.md` giving
-the reading order and a talk track for each diagram.
+the reading order and a talk track for each diagram. The files are hand-edited sources; the generator
+that first produced them is not part of the repository.
 
 `docs/landing/` holds the static project landing page (`index.html`, published unchanged at
 `/tunarag-python/landing/` and linked from the GitHub About section) and its design reference
-(`DESIGN.md`, excluded from the docs build).
+(`DESIGN.md`, excluded from the docs build). `docs/landing/media/` holds the web-encoded
+explainer video and its poster frame, which the landing page embeds.
+
+`video/` is a repository-only Remotion project for the ~3:15 TunaRAG explainer video: the
+narration script, an `edge-tts` voiceover generator, a local music synthesizer, the scene sources and the framework logos.
+Its `README.md` explains how to preview, re-voice and render it. It never enters PyPI archives.
 
 `docs/audit-2026-11-21/` holds a full code-vs-documentation audit (`README.md`) and the probe and
 real-RAG scripts that reproduce each finding (`scripts/`).
