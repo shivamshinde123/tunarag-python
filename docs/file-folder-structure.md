@@ -41,6 +41,10 @@ The "how it works" diagram series lives under `docs/diagrams/`: seven editable `
 sources (logos embedded), their 2x PNG exports in `docs/diagrams/png/`, and a `README.md` giving
 the reading order and a talk track for each diagram.
 
+`docs/landing/` holds the static project landing page (`index.html`, published unchanged at
+`/tunarag-python/landing/` and linked from the GitHub About section) and its design reference
+(`DESIGN.md`, excluded from the docs build).
+
 `docs/audit-2026-11-21/` holds a full code-vs-documentation audit (`README.md`) and the probe and
 real-RAG scripts that reproduce each finding (`scripts/`).
 

@@ -505,3 +505,18 @@ fixed, each with a regression test in `tests/test_audit_regressions.py`. Key dec
   order-independent, floats are type-tagged in canonical hashes, and fingerprints changed, so
   older in-progress studies cannot resume and old cache entries are not reused. Resume refuses
   explicitly rather than silently mixing semantics.
+
+## 2026-11-22 Add a standalone landing page beside the documentation
+
+Add a hand-written static landing page at `docs/landing/index.html`. MkDocs copies it unchanged
+to `/tunarag-python/landing/`, so it ships through the existing Pages workflow with no new build
+step, and the strict build and link checker cover its relative links. The visual system follows
+the Popcorn style reference on Refero Styles: a centred serif display, pill buttons, a cream
+canvas, and pastel conic-gradient halos behind the product visuals, which here are code and
+ranked-results panels. A first draft used the Vercel monochrome style. The user rejected it as too
+dull and black-and-white, so the page now uses every pastel surface the Popcorn system allows: the
+halos, illustration tiles, the lilac band and the mist-tinted cards. Controls stay neutral.
+`docs/landing/DESIGN.md` records the adapted tokens and is excluded from the docs build. The page
+uses its own slider glyph and no Popcorn branding. GitHub's About section holds only one website
+link, so it points to the landing page, which links to the documentation. Documentation URLs are
+unchanged.
