@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TunaRAG Python: tune the RAG you already have</title>
+<meta name="description" content="TunaRAG is an open-source Python toolkit that tunes existing LangChain, LangGraph and Google ADK RAG pipelines for answer quality, cost and latency.">
+<link rel="canonical" href="https://shivamshinde123.github.io/tunarag-python/landing/">
+<meta property="og:title" content="TunaRAG Python">
+<meta property="og:description" content="Find the best configuration for your existing RAG application.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%23171717'/%3E%3Cg fill='%23fff'%3E%3Crect x='5' y='6' width='14' height='2' rx='1'/%3E%3Crect x='5' y='11' width='14' height='2' rx='1'/%3E%3Crect x='5' y='16' width='14' height='2' rx='1'/%3E%3Ccircle cx='15' cy='7' r='2.2'/%3E%3Ccircle cx='9' cy='12' r='2.2'/%3E%3Ccircle cx='13' cy='17' r='2.2'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;450;500&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: light;
+  --paper: #fafafa; --white: #ffffff; --hairline: #ebebeb; --smoke: #a8a8a8;
+  --slate: #7d7d7d; --stone: #666666; --charcoal: #4d4d4d; --obsidian: #171717;
+  --carbon: #000000; --green: #297a3a;
+  --sans: 'Geist', Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ring: 0 0 0 1px rgba(0,0,0,.08), 0 0 0 2px var(--paper);
+  --ring-ghost: 0 0 0 1px var(--hairline);
+  --gutter: 48px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--paper); color: var(--obsidian);
+  font: 400 16px/1.5 var(--sans); font-feature-settings: "calt" 0, "rlig", "ss11";
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; }
+.wrap { max-width: 1280px; margin: 0 auto; padding: 0 var(--gutter); }
+.eyebrow {
+  font: 400 11px/1.5 var(--mono); letter-spacing: .071em; text-transform: uppercase;
+  color: var(--obsidian); margin: 0 0 12px;
+}
+.eyebrow.muted { color: var(--stone); }
+h1, h2, h3 { font-weight: 450; margin: 0; }
+h2 { font-size: 30px; line-height: 1.1; letter-spacing: -1.5px; }
+h3 { font-size: 18px; line-height: 1.3; letter-spacing: -.3px; font-weight: 500; }
+p { margin: 0; color: var(--charcoal); }
+code { font-family: var(--mono); font-size: .92em; }
+:focus-visible { outline: 2px solid var(--obsidian); outline-offset: 3px; border-radius: 4px; }
+
+/* nav */
+.nav {
+  position: sticky; top: 0; z-index: 10; height: 64px;
+  background: rgba(250,250,250,.82); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.nav .wrap { height: 100%; display: flex; align-items: center; gap: 32px; }
+.brand { display: flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 500; font-size: 15px; }
+.brand svg { width: 22px; height: 22px; flex: none; }
+.nav-links { display: flex; gap: 24px; font-size: 14px; }
+.nav-links a { text-decoration: none; color: var(--charcoal); }
+.nav-links a:hover { color: var(--obsidian); }
+.nav-cta { margin-left: auto; display: flex; gap: 8px; }
+
+/* buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px;
+  border-radius: 6px; font: 400 14px/1 var(--sans); text-decoration: none; border: 0; cursor: pointer;
+  transition: background-color .15s ease, box-shadow .15s ease;
+}
+.btn-primary { background: var(--obsidian); color: #fff; }
+.btn-primary:hover { background: #383838; }
+.btn-ghost { background: transparent; color: var(--charcoal); box-shadow: var(--ring-ghost); }
+.btn-ghost:hover { background: var(--white); color: var(--obsidian); }
+.btn-pill { height: 32px; padding: 0 12px; border-radius: 9999px; }
+
+/* hero */
+.hero { padding: 96px 0 112px; }
+.hero .wrap { display: grid; grid-template-columns: 1.05fr .95fr; gap: 64px; align-items: center; }
+.hero h1 { font-size: 64px; line-height: 1; letter-spacing: -3.84px; margin-bottom: 24px; }
+.hero h1 em { font-style: normal; color: var(--stone); }
+.hero .lede { font-size: 18px; line-height: 1.55; max-width: 540px; margin-bottom: 32px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 32px; }
+.install {
+  display: inline-flex; align-items: center; gap: 12px; height: 44px; padding: 0 6px 0 16px;
+  background: var(--white); box-shadow: var(--ring); border-radius: 6px;
+  font: 400 13px/1 var(--mono); color: var(--obsidian); max-width: 100%;
+}
+.install span.prompt { color: var(--smoke); }
+.install code { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.copy {
+  margin-left: auto; height: 32px; padding: 0 10px; border: 0; border-radius: 6px; cursor: pointer;
+  background: transparent; color: var(--stone); font: 400 11px/1 var(--mono);
+  letter-spacing: .071em; text-transform: uppercase; box-shadow: var(--ring-ghost);
+}
+.copy:hover { color: var(--obsidian); background: var(--paper); }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px; }
+.meta-row span { font: 400 11px/1.5 var(--mono); letter-spacing: .071em; text-transform: uppercase; color: var(--stone); }
+
+/* terminal panel */
+.panel { background: var(--white); box-shadow: var(--ring); border-radius: 6px; overflow: hidden; }
+.panel-bar {
+  display: flex; align-items: center; justify-content: space-between; height: 40px; padding: 0 16px;
+  border-bottom: 1px solid var(--hairline);
+  font: 400 11px/1 var(--mono); letter-spacing: .071em; text-transform: uppercase; color: var(--stone);
+}
+.dots { display: flex; gap: 6px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--hairline); display: block; }
+.term { margin: 0; padding: 20px; font: 400 12.5px/1.75 var(--mono); color: var(--obsidian); overflow-x: auto; }
+.term .c { color: var(--smoke); }
+.term .p { color: var(--obsidian); font-weight: 500; }
+.term .ok { color: var(--green); }
+.term .dim { color: var(--stone); }
+.panel-note { padding: 0 20px 16px; font: 400 11px/1.5 var(--mono); color: var(--smoke); letter-spacing: .03em; }
+
+/* strip */
+.strip { padding: 0 0 112px; }
+.strip .wrap { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 40px; }
+.strip .eyebrow { margin: 0 8px 0 0; color: var(--stone); }
+.strip b { font-weight: 500; font-size: 19px; letter-spacing: -.4px; color: var(--slate); }
+
+/* sections */
+section.block { padding: 0 0 128px; }
+.section-head { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: end; margin-bottom: 40px; }
+.section-head p { max-width: 520px; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.card { background: var(--white); box-shadow: var(--ring); border-radius: 6px; padding: 24px; }
+.card .num { font: 400 11px/1 var(--mono); letter-spacing: .071em; color: var(--stone); margin-bottom: 40px; display: block; }
+.card h3 { margin-bottom: 8px; }
+.card p { font-size: 14.5px; line-height: 1.55; }
+.card code { color: var(--obsidian); }
+
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.features .card { min-height: 200px; display: flex; flex-direction: column; }
+.features .card .eyebrow { margin-bottom: auto; padding-bottom: 32px; color: var(--stone); }
+.card.inverted { background: var(--obsidian); box-shadow: none; color: #fff; }
+.card.inverted p { color: #a8a8a8; }
+.card.inverted .eyebrow { color: #8f8f8f; }
+.card.inverted code { color: #fff; }
+.accent { color: var(--green); }
+
+/* code */
+.split { display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; align-items: start; }
+.split .copytext p { margin-top: 16px; }
+.checks { list-style: none; margin: 24px 0 0; padding: 0; display: grid; gap: 10px; font-size: 14.5px; color: var(--charcoal); }
+.checks li { display: flex; gap: 10px; }
+.checks li::before { content: "✓"; color: var(--green); font-family: var(--mono); }
+.term.code { font-size: 12.5px; line-height: 1.7; }
+.term .k { color: var(--obsidian); font-weight: 500; }
+.term .s { color: var(--green); }
+
+/* extras table */
+.extras { width: 100%; border-collapse: collapse; background: var(--white); box-shadow: var(--ring); border-radius: 6px; overflow: hidden; }
+.extras th, .extras td { text-align: left; padding: 14px 20px; border-bottom: 1px solid var(--hairline); font-size: 14px; vertical-align: top; }
+.extras th { font: 400 11px/1.5 var(--mono); letter-spacing: .071em; text-transform: uppercase; color: var(--stone); font-weight: 400; }
+.extras tr:last-child td { border-bottom: 0; }
+.extras td:first-child { color: var(--obsidian); width: 34%; }
+.extras td code { color: var(--charcoal); word-break: break-word; }
+.table-wrap { overflow-x: auto; }
+
+/* cta + footer */
+.cta { text-align: left; padding: 0 0 128px; }
+.cta .card { padding: 48px; display: flex; flex-wrap: wrap; gap: 32px; align-items: center; justify-content: space-between; }
+.cta h2 { font-size: 40px; letter-spacing: -2px; max-width: 620px; }
+footer { border-top: 1px solid var(--hairline); padding: 32px 0 48px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+footer nav { display: flex; flex-wrap: wrap; gap: 20px; }
+footer a, footer small { font: 400 11px/1.5 var(--mono); letter-spacing: .071em; text-transform: uppercase; color: var(--stone); text-decoration: none; }
+footer a:hover { color: var(--obsidian); }
+
+@media (max-width: 1000px) {
+  :root { --gutter: 32px; }
+  .hero .wrap, .split, .section-head { grid-template-columns: 1fr; }
+  .hero .wrap { gap: 48px; }
+  .steps, .features { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 720px) {
+  :root { --gutter: 16px; }
+  .nav-links { display: none; }
+  .nav .btn-ghost { display: none; }
+  .hero { padding: 56px 0 72px; }
+  .hero h1 { font-size: 44px; letter-spacing: -2.4px; }
+  .hero .lede { font-size: 16px; }
+  h2 { font-size: 26px; letter-spacing: -1.1px; }
+  .cta h2 { font-size: 30px; letter-spacing: -1.4px; }
+  .cta .card { padding: 28px; }
+  .steps, .features { grid-template-columns: 1fr; }
+  .install { width: 100%; }
+  .strip, section.block, .cta { padding-bottom: 80px; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn, .copy { transition: none; } }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="TunaRAG home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#000"/><g fill="#fff"><rect x="5" y="6" width="14" height="2" rx="1"/><rect x="5" y="11" width="14" height="2" rx="1"/><rect x="5" y="16" width="14" height="2" rx="1"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="12" r="2.2"/><circle cx="13" cy="17" r="2.2"/></g></svg>
+      TunaRAG
+    </a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="../usage/">Usage guide</a>
+      <a href="../reference/">API reference</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-pill" href="https://github.com/shivamshinde123/tunarag-python">GitHub</a>
+      <a class="btn btn-primary btn-pill" href="../">Docs</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Open-source RAG optimization for Python</p>
+        <h1>Tune the RAG you already&nbsp;have. <em>Stop guessing top_k.</em></h1>
+        <p class="lede">TunaRAG connects to your existing LangChain, LangGraph or Google ADK pipeline, runs structured studies over its configuration on your own data, and finds the best tradeoff between answer quality, cost and latency.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="../usage/#end-to-end-quickstart">Get started →</a>
+          <a class="btn btn-ghost" href="https://github.com/shivamshinde123/tunarag-python">View on GitHub</a>
+        </div>
+        <div class="install">
+          <span class="prompt">$</span>
+          <code id="pip">pip install tunarag-python</code>
+          <button class="copy" type="button" data-copy="pip install tunarag-python" aria-label="Copy install command">Copy</button>
+        </div>
+        <div class="meta-row">
+          <span>v0.4.0</span><span>Python 3.10–3.13</span><span>MIT licensed</span><span>import tunarag</span>
+        </div>
+      </div>
+
+      <div class="panel" aria-label="Example study output">
+        <div class="panel-bar"><div class="dots"><i></i><i></i><i></i></div><span>study · langchain-rag</span></div>
+<pre class="term"><span class="p">› python tune.py</span>
+<span class="c"># RandomSearch(seed=7), top_k in IntegerRange(1, 2)</span>
+<span class="dim">  trial  top_k  recall  status</span>
+  #1     1      0.50    <span class="ok">✓ ok</span>
+  #2     2      1.00    <span class="ok">✓ ok</span>
+
+<span class="ok">✓</span> study completed · 2 trials · 0 failed
+<span class="ok">✓</span> best candidate  <span class="p">{"top_k": 2}</span>  objective 1.00
+<span class="ok">✓</span> trials written   artifacts/trials.csv
+<span class="dim">  resume anytime with SQLiteStore("study.db")</span></pre>
+        <p class="panel-note">Output shaped from the offline README quickstart; values match its documented result.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="strip" aria-label="Integrations">
+    <div class="wrap">
+      <p class="eyebrow">Works with</p>
+      <b>LangChain</b><b>LangGraph</b><b>Google ADK</b><b>RAGAS</b><b>MLflow</b><b>SQLite</b>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">How it works</p>
+          <h2>Your pipeline stays yours. TunaRAG owns the experiment around it.</h2>
+        </div>
+        <p>Your application keeps retrieval, generation, indexes, provider clients and credentials. TunaRAG schedules trials, isolates failures, persists every result, and hands back a ranking you can inspect.</p>
+      </div>
+      <div class="steps">
+        <div class="card">
+          <span class="num">01 / CONNECT</span>
+          <h3>Wrap your existing pipeline</h3>
+          <p>Use <code>LangChainAdapter</code>, <code>LangGraphAdapter</code> or <code>GoogleADKAdapter</code> with a factory that builds your pipeline for each candidate configuration.</p>
+        </div>
+        <div class="card">
+          <span class="num">02 / DEFINE</span>
+          <h3>Describe what to search and how to score</h3>
+          <p>Declare a <code>SearchSpace</code>, pick evaluators (custom metrics or RAGAS), and combine them into a weighted <code>Objective</code> across quality, cost and latency.</p>
+        </div>
+        <div class="card">
+          <span class="num">03 / OPTIMIZE</span>
+          <h3>Run, resume and inspect</h3>
+          <p><code>Optimizer.optimize()</code> runs the study with retries, caching and stop rules, then returns ranked trials you can export to JSON or CSV.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Features</p>
+          <h2>Structured, repeatable studies instead of eyeballing a few answers.</h2>
+        </div>
+        <p>Every trial is recorded, every failure is isolated, and every run can be reproduced. Tune <code>top_k</code>, chunking, prompts, models, reranking or generation settings.</p>
+      </div>
+      <div class="features">
+        <div class="card inverted">
+          <p class="eyebrow">Objective</p>
+          <h3>Quality, cost and latency in one score</h3>
+          <p>Weight answer quality against provider cost and response time. Cost reports say whether they are <code>exact</code>, <code>estimated</code> or <code>unavailable</code>.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Search</p>
+          <h3>Random or LLM-guided</h3>
+          <p>Deterministic <code>RandomSearch</code> with a seed, or provider-neutral <code>LLMSearch</code> that proposes the next candidate from past observations.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Evaluation</p>
+          <h3>Your metrics or RAGAS</h3>
+          <p>Write a <code>MetricEvaluator</code> in a line of Python, or plug in <code>RagasEvaluator</code> with RAGAS metrics such as faithfulness and answer relevancy.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Persistence</p>
+          <h3>SQLite records and resume</h3>
+          <p><code>SQLiteStore</code> records every trial. An interrupted study picks up where it stopped instead of paying for the same calls twice.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Runtime</p>
+          <h3>Caching, retries and budgets</h3>
+          <p>Retry policies, concurrency, a <code>SQLiteCache</code>, and stop rules such as <code>MaxTrials</code>, <code>CostBudget</code>, <code>TimeBudget</code> and <code>NoImprovement</code>.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Data</p>
+          <h3>Bring a dataset or synthesize one</h3>
+          <p>Load records into <code>EvaluationDataset</code>, or build question-and-answer pairs from your documents with <code>SyntheticDatasetBuilder</code>. Held-out splits keep tuning honest.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="code">
+    <div class="wrap split">
+      <div class="copytext">
+        <p class="eyebrow">Quickstart</p>
+        <h2>A study in a few lines.</h2>
+        <p>Point an adapter at your chain, describe the space, choose a score. The full offline example runs without API keys.</p>
+        <ul class="checks">
+          <li>Typed public API, imported as <code>tunarag</code></li>
+          <li>No paid provider calls unless you make them</li>
+          <li>Deterministic, redacted reports</li>
+          <li>Callbacks for MLflow and your own tooling</li>
+        </ul>
+        <div class="hero-actions" style="margin-top:32px">
+          <a class="btn btn-ghost" href="../usage/#end-to-end-quickstart">Full quickstart</a>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-bar"><div class="dots"><i></i><i></i><i></i></div><span>tune.py</span></div>
+<pre class="term code"><span class="k">from</span> tunarag <span class="k">import</span> (
+    IntegerRange, LangChainAdapter, MetricEvaluator,
+    Objective, ObjectiveTerm, Optimizer, RandomSearch, SearchSpace,
+)
+
+optimizer = Optimizer(
+    adapter=LangChainAdapter(
+        factory=build_chain,  <span class="c"># your chain, built per candidate</span>
+        input_mapper=<span class="k">lambda</span> example, candidate: example.query,
+        identity={<span class="s">"app"</span>: <span class="s">"my-rag"</span>, <span class="s">"revision"</span>: <span class="s">1</span>},
+    ),
+    strategy=RandomSearch(
+        SearchSpace({<span class="s">"top_k"</span>: IntegerRange(<span class="s">1</span>, <span class="s">8</span>)}), seed=<span class="s">7</span>
+    ),
+    evaluators=(MetricEvaluator(<span class="s">"retrieval_recall"</span>, recall),),
+    objective=Objective((ObjectiveTerm(<span class="s">"retrieval_recall"</span>),)),
+)
+<span class="k">try</span>:
+    result = optimizer.optimize(dataset, study_name=<span class="s">"my-rag"</span>)
+    print(result.best_candidate.parameters)
+    result.write_csv(<span class="s">"artifacts/trials.csv"</span>)
+<span class="k">finally</span>:
+    optimizer.close()</pre>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="install">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Install</p>
+          <h2>Lightweight core, optional extras.</h2>
+        </div>
+        <p>The wheel ships runtime code only. Framework dependencies load lazily, so install the extra for your pipeline before you construct its adapter.</p>
+      </div>
+      <div class="table-wrap">
+        <table class="extras">
+          <thead><tr><th scope="col">Feature</th><th scope="col">Command</th></tr></thead>
+          <tbody>
+            <tr><td>Core</td><td><code>python -m pip install tunarag-python</code></td></tr>
+            <tr><td>LangChain</td><td><code>python -m pip install "tunarag-python[langchain]"</code></td></tr>
+            <tr><td>LangGraph</td><td><code>python -m pip install "tunarag-python[langgraph]"</code></td></tr>
+            <tr><td>Google ADK 2.x</td><td><code>python -m pip install "tunarag-python[google-adk]"</code></td></tr>
+            <tr><td>All frameworks</td><td><code>python -m pip install "tunarag-python[frameworks]"</code></td></tr>
+            <tr><td>RAGAS evaluators</td><td><code>python -m pip install "tunarag-python[ragas]"</code></td></tr>
+            <tr><td>MLflow callbacks</td><td><code>python -m pip install "tunarag-python[mlflow]"</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <div class="card">
+        <div>
+          <p class="eyebrow">Read the docs</p>
+          <h2>Find the best configuration for your RAG, <span class="accent">with evidence.</span></h2>
+        </div>
+        <div class="hero-actions" style="margin:0">
+          <a class="btn btn-primary" href="../">Documentation</a>
+          <a class="btn btn-ghost" href="../TunaRAG_Python_Usage_Handbook.docx">Usage handbook (.docx)</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <small>© 2026 Shivam Shinde · MIT License</small>
+    <nav aria-label="Footer">
+      <a href="../">Docs</a>
+      <a href="../usage/">Usage</a>
+      <a href="../reference/">API</a>
+      <a href="https://pypi.org/project/tunarag-python/">PyPI</a>
+      <a href="https://github.com/shivamshinde123/tunarag-python">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.copy').forEach(function (button) {
+  button.addEventListener('click', function () {
+    var done = function (label) { button.textContent = label; setTimeout(function () { button.textContent = 'Copy'; }, 1600); };
+    if (!navigator.clipboard) return done('Select');
+    navigator.clipboard.writeText(button.dataset.copy).then(function () { done('Copied'); }, function () { done('Select'); });
+  });
+});
+</script>
+</body>
+</html>

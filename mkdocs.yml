@@ -121,6 +121,7 @@ exclude_docs: |
   illustration-audit.md
   assets/diagrams/README.md
   ui-ux-wireframes.md
+  landing/DESIGN.md
   file-folder-structure.md
   tech-stack.md
   assets/diagrams/*.mmd
