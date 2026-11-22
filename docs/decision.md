@@ -569,26 +569,3 @@ keeps the repository and the Pages artifact small. The flat graphics show no vis
 poster is the title card at 0:36. `preload="metadata"` means visitors download the video only
 when they press play. If the video is re-rendered, re-run the same `ffmpeg` encode (see
 `video/README.md`).
-
-## 2026-11-22 Redraw the "how it works" diagrams in a sketchbook style (v4)
-
-The user found the v3 diagrams correct but not attractive enough. They must still read as
-hand-drawn Excalidraw, not as a web page, so v4 adds texture and hand-made marks instead of
-UI patterns:
-
-- **Fill tells you importance.** The main thing on each page (TunaRAG, the dataset, the
-  strategies, the objective, the result) is filled solid; supporting pieces use Excalidraw's
-  hachure. Held-back data is cross-hatched. Before, every box was equally solid, so nothing led.
-- **Paper and marker.** A warm off-white background (`#fffdf8`, close to the landing page's
-  cream) and an orange marker swipe behind each title, in place of the thin underline.
-- **Sticky note, not a banner.** The takeaway is now a small taped sticky note, rotated slightly
-  and labelled "remember". The full-width yellow bar read like a website banner.
-- **Drawn details.** Curved, flowing arrows, with thicker arrows on the main path; paper sheets
-  with a folded corner for JSON/JSONL/CSV; hand-drawn dials on the search knobs; empty
-  checkboxes for the stop rules (they were pill-shaped chips, which look like badges); and a few
-  small sparkles.
-- **Diagram 3 is drawn to scale.** The optimize / validation / test split is one bar cut 80 / 10 / 10,
-  the default in the code, instead of three equal boxes.
-
-The content, colour key, page order and talk track are unchanged. Every page is 1600 px wide
-(exported at 2x) and has an invisible, locked frame, so all exports share the same width and margins.

@@ -39,8 +39,7 @@ Mermaid CLI and sets intrinsic image sizes so tall diagrams do not collapse in b
 
 The "how it works" diagram series lives under `docs/diagrams/`: seven editable `.excalidraw`
 sources (logos embedded), their 2x PNG exports in `docs/diagrams/png/`, and a `README.md` giving
-the reading order and a talk track for each diagram. The files are hand-edited sources; the generator
-that first produced them is not part of the repository.
+the reading order and a talk track for each diagram.
 
 `docs/landing/` holds the static project landing page (`index.html`, published unchanged at
 `/tunarag-python/landing/` and linked from the GitHub About section) and its design reference
